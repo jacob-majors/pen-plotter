@@ -1,14 +1,17 @@
 import sys
 import os
+import platform
 import traceback
 import multiprocessing
 
-# Required on macOS to prevent crashes when MediaPipe spawns subprocesses
 if __name__ == "__main__":
-    multiprocessing.set_start_method("spawn", force=True)
+    # Required on macOS/Windows to prevent crashes when MediaPipe spawns subprocesses
+    if platform.system() in ("Darwin", "Windows"):
+        multiprocessing.set_start_method("spawn", force=True)
 
-# Must be set before importing PyQt6 on macOS to avoid camera permission issues
-os.environ.setdefault("QT_MAC_WANTS_LAYER", "1")
+# macOS-specific: avoid camera permission issues with PyQt6
+if platform.system() == "Darwin":
+    os.environ.setdefault("QT_MAC_WANTS_LAYER", "1")
 
 # Log file for crash debugging
 _LOG = os.path.expanduser("~/Desktop/opencv_error.log")
@@ -89,12 +92,19 @@ def main():
     shown_file = os.path.expanduser("~/.opencvcontroller_accessibility_shown")
     if not os.path.exists(shown_file):
         msg = QMessageBox(window)
-        msg.setWindowTitle("Accessibility Permission")
-        msg.setText(
-            "To control other apps (games, browsers, etc.), OpenCV needs Accessibility access.\n\n"
-            "System Settings → Privacy & Security → Accessibility → ＋ → add OpenCV\n\n"
-            "Without this, face tracking works but keypresses won't reach other apps."
-        )
+        msg.setWindowTitle("Permissions Note")
+        if platform.system() == "Windows":
+            msg.setText(
+                "OpenCV is ready to use.\n\n"
+                "On Windows, keypresses to other apps work automatically — no extra setup needed.\n\n"
+                "Make sure your camera is connected and not in use by another app."
+            )
+        else:
+            msg.setText(
+                "To control other apps (games, browsers, etc.), OpenCV needs Accessibility access.\n\n"
+                "System Settings → Privacy & Security → Accessibility → ＋ → add OpenCV\n\n"
+                "Without this, face tracking works but keypresses won't reach other apps."
+            )
         msg.setIcon(QMessageBox.Icon.Information)
         msg.setStandardButtons(QMessageBox.StandardButton.Ok)
         msg.exec()

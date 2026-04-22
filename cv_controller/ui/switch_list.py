@@ -163,6 +163,16 @@ class SwitchListWidget(QWidget):
         )
         outer.addWidget(header)
 
+        self._empty_label = QLabel(
+            "Select a body part in the Mouse panel to move the cursor.\n\n"
+            "Starter switches: open palm for left click and blink for right click."
+        )
+        self._empty_label.setWordWrap(True)
+        self._empty_label.setStyleSheet(
+            "color: #888; font-size: 11px; padding: 0 8px 10px 8px;"
+        )
+        outer.addWidget(self._empty_label)
+
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setFrameShape(QFrame.Shape.NoFrame)
@@ -215,3 +225,6 @@ class SwitchListWidget(QWidget):
         row = self._rows.get(switch_id)
         if row:
             row.flash()
+
+    def set_prompt(self, text: str):
+        self._empty_label.setText(text)

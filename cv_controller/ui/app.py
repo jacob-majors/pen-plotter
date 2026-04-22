@@ -1,18 +1,20 @@
 import json
 import os
 import shutil
+import time
 from pathlib import Path
 
+import cv2
 from PyQt6.QtCore import Qt, pyqtSlot
 from PyQt6.QtGui import QAction, QIcon
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QHBoxLayout, QSplitter,
     QPushButton, QToolBar, QLabel, QComboBox, QMessageBox,
-    QInputDialog, QSystemTrayIcon, QMenu, QSizePolicy,
+    QInputDialog, QSystemTrayIcon, QMenu, QSizePolicy, QStyle,
 )
 
 from cv_controller.core.tracker import FaceTracker
-from cv_controller.core.switches import SwitchDefinition, SwitchEngine
+from cv_controller.core.switches import MOUSE_SOURCES, SwitchDefinition, SwitchEngine
 from cv_controller.core.emitter import ActionEmitter
 from cv_controller.core.hotkey import HotkeyListener
 from cv_controller.core.serial_reader import SerialThread
@@ -20,11 +22,22 @@ from cv_controller.ui.camera_widget import CameraWidget
 from cv_controller.ui.switch_list import SwitchListWidget
 from cv_controller.ui.switch_dialog import SwitchDialog
 from cv_controller.ui.arduino_panel import ArduinoPanel
+from cv_controller.ui.mouse_panel import MouseControlPanel
 
-PROFILES_DIR = Path.home() / "Library" / "Application Support" / "CVController" / "profiles"
+import platform as _platform
+if _platform.system() == "Windows":
+    _appdata = os.environ.get("APPDATA", str(Path.home()))
+    PROFILES_DIR = Path(_appdata) / "CVController" / "profiles"
+elif _platform.system() == "Darwin":
+    PROFILES_DIR = Path.home() / "Library" / "Application Support" / "CVController" / "profiles"
+else:
+    PROFILES_DIR = Path.home() / ".config" / "CVController" / "profiles"
 _RES         = Path(__file__).parent.parent.parent / "resources"
 MODEL_PATH   = _RES / "face_landmarker.task"
 GESTURE_PATH = _RES / "gesture_recognizer.task"
+
+_MOUSE_CALIBRATION_WINDOW = 90
+_MOUSE_CALIBRATION_PADDING = 0.02
 
 
 class MainWindow(QMainWindow):
@@ -56,6 +69,11 @@ class MainWindow(QMainWindow):
         self._emitter = ActionEmitter()
         self._hotkey  = HotkeyListener()
         self._current_profile_path: Path | None = None
+        self._selected_camera_index = 0
+        self._mouse_paused = False
+        self._last_thumbs_up = False
+        self._last_mouse_toggle = 0.0
+        self._mouse_ranges: dict[str, dict[str, float]] = {}
 
         self._serial_thread: SerialThread | None = None
         self._prev_serial: dict = {k: 0 for k in ["b1", "b2", "j1", "j2", "j3", "j4"]}
@@ -66,6 +84,35 @@ class MainWindow(QMainWindow):
         self._load_default_profile()
         self._hotkey.triggered.connect(self._toggle_tracking)
         self._hotkey.start()
+
+    def _starter_switches(self) -> list[SwitchDefinition]:
+        return [
+            SwitchDefinition(
+                id="starter-open-palm-left-click",
+                name="Open Palm -> Left Click",
+                movement="gesture_Open_Palm",
+                threshold=0.45,
+                action_type="mouse_left",
+                action_key="left_click",
+                cooldown_ms=450,
+                enabled=True,
+            ),
+            SwitchDefinition(
+                id="starter-blink-right-click",
+                name="Blink -> Right Click",
+                movement="eyeBlinkBoth",
+                threshold=0.32,
+                action_type="mouse_right",
+                action_key="right_click",
+                cooldown_ms=700,
+                enabled=True,
+            ),
+        ]
+
+    def _normalize_switches_for_profile(self, path: Path, switches: list[SwitchDefinition]) -> list[SwitchDefinition]:
+        if path.name.lower() == "default.json":
+            return self._starter_switches()
+        return switches or self._starter_switches()
 
     def _setup_ui(self):
         toolbar = QToolBar()
@@ -82,6 +129,17 @@ class MainWindow(QMainWindow):
         self.stop_btn.clicked.connect(self.stop_tracking)
         self.stop_btn.setEnabled(False)
         toolbar.addWidget(self.stop_btn)
+
+        toolbar.addSeparator()
+        toolbar.addWidget(QLabel("  Camera: "))
+        self.camera_combo = QComboBox()
+        self.camera_combo.setMinimumWidth(170)
+        self.camera_combo.currentIndexChanged.connect(self._on_camera_selected)
+        toolbar.addWidget(self.camera_combo)
+
+        refresh_cameras_btn = QPushButton("Refresh")
+        refresh_cameras_btn.clicked.connect(self._refresh_camera_list)
+        toolbar.addWidget(refresh_cameras_btn)
 
         toolbar.addSeparator()
         toolbar.addWidget(QLabel("  Profile: "))
@@ -109,6 +167,13 @@ class MainWindow(QMainWindow):
         self._arduino_btn.setToolTip("Show / hide the Arduino physical controller panel")
         self._arduino_btn.toggled.connect(self._toggle_arduino_panel)
         toolbar.addWidget(self._arduino_btn)
+
+        self._mouse_btn = QPushButton("🖱 Mouse")
+        self._mouse_btn.setCheckable(True)
+        self._mouse_btn.setChecked(True)
+        self._mouse_btn.setToolTip("Show / hide the Mouse Control panel")
+        self._mouse_btn.toggled.connect(self._toggle_mouse_panel)
+        toolbar.addWidget(self._mouse_btn)
 
         self.flip_btn = QPushButton("⇄ Flip")
         self.flip_btn.setCheckable(True)
@@ -158,11 +223,20 @@ class MainWindow(QMainWindow):
         self.arduino_panel.mappings_changed.connect(self._on_arduino_mappings_changed)
         self._splitter.addWidget(self.arduino_panel)
 
-        self._splitter.setSizes([580, 260, 260])
+        self.mouse_panel = MouseControlPanel()
+        self.mouse_panel.source_changed.connect(self._on_mouse_source_changed)
+        self.mouse_panel.sensitivity_changed.connect(self._on_mouse_sensitivity_changed)
+        self._splitter.addWidget(self.mouse_panel)
+
+        self._splitter.setSizes([580, 220, 220, 200])
         self._splitter.setHandleWidth(1)
+        self._refresh_camera_list()
 
     def _setup_tray(self):
         icon = self.windowIcon()
+        if icon.isNull():
+            icon = self.style().standardIcon(QStyle.StandardPixmap.SP_ComputerIcon)
+            self.setWindowIcon(icon)
         self.tray = QSystemTrayIcon(icon, self)
 
         menu = QMenu()
@@ -196,20 +270,28 @@ class MainWindow(QMainWindow):
         if self._tracker and self._tracker.isRunning():
             return
         if not MODEL_PATH.exists():
+            import platform as _plt
+            setup_cmd = "setup.bat" if _plt.system() == "Windows" else "setup.sh"
             QMessageBox.critical(self, "Model Missing",
-                f"Face model not found:\n{MODEL_PATH}\n\nRun setup.sh first.")
+                f"Face model not found:\n{MODEL_PATH}\n\nRun {setup_cmd} first.")
             return
 
         gesture_path = str(GESTURE_PATH) if GESTURE_PATH.exists() else None
         self._tracker = FaceTracker(
             model_path=str(MODEL_PATH),
             gesture_model_path=gesture_path,
+            camera_index=self._selected_camera_index,
         )
         self._tracker.frame_ready.connect(self.camera_widget.update_frame)
         self._tracker.face_data.connect(self.camera_widget.update_face_data)
         self._tracker.face_data.connect(self._on_face_data)
         self._tracker.tracking_error.connect(self._on_tracking_error)
         self._tracker.start()
+        self._mouse_paused = False
+        self._last_thumbs_up = False
+        self._reset_mouse_calibration()
+        self._apply_mouse_settings()
+        self.mouse_panel.set_mouse_enabled(True)
 
         self.start_btn.setEnabled(False)
         self.stop_btn.setEnabled(True)
@@ -222,6 +304,11 @@ class MainWindow(QMainWindow):
             self._emitter.release_all()
             self._tracker.stop()
             self._tracker = None
+        self._mouse_paused = False
+        self._last_thumbs_up = False
+        self._reset_mouse_calibration()
+        self.camera_widget.set_mouse_target(None)
+        self.mouse_panel.set_active(False)
         self.start_btn.setEnabled(True)
         self.stop_btn.setEnabled(False)
         self._set_status("● Stopped", "#555")
@@ -234,8 +321,8 @@ class MainWindow(QMainWindow):
 
     @pyqtSlot(dict)
     def _on_face_data(self, data: dict):
-        if not data.get("face_detected"):
-            return
+        self._handle_mouse_toggle_gesture(data)
+        self._update_mouse_from_face_data(data)
         events = self._engine.evaluate(data)
         self.switch_list.update_values({e.switch.id: e.current_value for e in events})
         for event in events:
@@ -261,11 +348,163 @@ class MainWindow(QMainWindow):
     def _toggle_arduino_panel(self, visible: bool):
         sizes = self._splitter.sizes()
         if visible:
-            # Restore panel — give it 260px, take equally from the other two
             total = sum(sizes)
-            self._splitter.setSizes([total - 520, 260, 260])
+            self._splitter.setSizes([total - sizes[1] - 220 - sizes[3], sizes[1], 220, sizes[3]])
         else:
-            self._splitter.setSizes([sizes[0] + sizes[2], sizes[1], 0])
+            self._splitter.setSizes([sizes[0] + sizes[2], sizes[1], 0, sizes[3]])
+
+    def _toggle_mouse_panel(self, visible: bool):
+        sizes = self._splitter.sizes()
+        if visible:
+            total = sum(sizes)
+            self._splitter.setSizes([total - sizes[1] - sizes[2] - 200, sizes[1], sizes[2], 200])
+        else:
+            self._splitter.setSizes([sizes[0] + sizes[3], sizes[1], sizes[2], 0])
+
+    def _on_mouse_source_changed(self, source: str):
+        self._mouse_paused = False
+        self._reset_mouse_calibration()
+        self._apply_mouse_settings()
+        if source == "none":
+            self.camera_widget.set_mouse_target(None)
+        self.mouse_panel.set_mouse_enabled(
+            bool(self._tracker and self._tracker.isRunning() and not self._mouse_paused and source != "none")
+        )
+        self._save_profile_if_ready()
+
+    def _refresh_camera_list(self):
+        available = self._detect_cameras()
+        current = self._selected_camera_index
+
+        self.camera_combo.blockSignals(True)
+        self.camera_combo.clear()
+        for index, label in available:
+            self.camera_combo.addItem(label, index)
+
+        selected_idx = self.camera_combo.findData(current)
+        if selected_idx < 0 and self.camera_combo.count():
+            selected_idx = 0
+            self._selected_camera_index = self.camera_combo.itemData(0)
+        if selected_idx >= 0:
+            self.camera_combo.setCurrentIndex(selected_idx)
+        self.camera_combo.blockSignals(False)
+
+    def _detect_cameras(self) -> list[tuple[int, str]]:
+        cameras: list[tuple[int, str]] = []
+        for index in range(8):
+            cap = cv2.VideoCapture(index)
+            try:
+                if cap.isOpened():
+                    ok, _ = cap.read()
+                    if ok:
+                        cameras.append((index, f"Camera {index}"))
+            finally:
+                cap.release()
+
+        if not cameras:
+            cameras.append((0, "Camera 0"))
+        return cameras
+
+    def _on_camera_selected(self, index: int):
+        camera_index = self.camera_combo.itemData(index)
+        if camera_index is None:
+            return
+        self._selected_camera_index = int(camera_index)
+        self._save_profile_if_ready()
+        if self._tracker and self._tracker.isRunning():
+            self.stop_tracking()
+            self.start_tracking()
+
+    def _apply_mouse_settings(self):
+        source = self.mouse_panel.get_source()
+        if source == "none" or self._mouse_paused:
+            self._emitter.set_mouse_control(None)
+        else:
+            self._emitter.set_mouse_control(source)
+
+    def _on_mouse_sensitivity_changed(self, sensitivity: float):
+        self._save_profile_if_ready()
+
+    def _update_mouse_from_face_data(self, data: dict):
+        source = self.mouse_panel.get_source()
+        if source == "none" or self._mouse_paused:
+            self.camera_widget.set_mouse_target(None)
+            return
+        sensitivity = self.mouse_panel.get_sensitivity()
+
+        pos = None
+        if source in ("nose", "forehead", "chin", "head"):
+            if not data.get("face_detected"):
+                return
+            body_points = data.get("body_points", {})
+            pos = body_points.get(source)
+        elif source == "hand":
+            hp = data.get("hand_position", {})
+            if hp:
+                pos = (hp.get("x", 0.5), hp.get("y", 0.5))
+        elif source == "index_tip":
+            it = data.get("index_tip", {})
+            if it:
+                pos = (it.get("x", 0.5), it.get("y", 0.5))
+
+        if pos:
+            x, y = self._expand_mouse_range(source, pos, sensitivity)
+            self._emitter.update_mouse_position(x, y)
+            self.camera_widget.set_mouse_target((x, y), f"Cursor - {MOUSE_SOURCES.get(source, source)}")
+        else:
+            self.camera_widget.set_mouse_target(None)
+
+    def _handle_mouse_toggle_gesture(self, data: dict):
+        gestures = data.get("gestures", {})
+        thumbs_up = gestures.get("Thumb_Up", 0.0) >= 0.55
+        now = time.time()
+        if (
+            thumbs_up
+            and not self._last_thumbs_up
+            and self.mouse_panel.get_source() != "none"
+            and now - self._last_mouse_toggle >= 1.0
+        ):
+            self._mouse_paused = not self._mouse_paused
+            self._last_mouse_toggle = now
+            self._apply_mouse_settings()
+            self.mouse_panel.set_mouse_enabled(not self._mouse_paused)
+            if self._mouse_paused:
+                self.camera_widget.set_mouse_target(None)
+        self._last_thumbs_up = thumbs_up
+
+    def _expand_mouse_range(self, source: str, pos: tuple[float, float], sensitivity: float) -> tuple[float, float]:
+        x = self._normalize_mouse_axis(source, "x", pos[0], sensitivity)
+        y = self._normalize_mouse_axis(source, "y", pos[1], sensitivity)
+        x = max(0.0, min(1.0, x))
+        y = max(0.0, min(1.0, y))
+        return x, y
+
+    def _normalize_mouse_axis(self, source: str, axis: str, value: float, sensitivity: float) -> float:
+        ranges = self._mouse_ranges.setdefault(source, {})
+        min_key = f"{axis}_min"
+        max_key = f"{axis}_max"
+
+        if min_key not in ranges:
+            ranges[min_key] = value
+            ranges[max_key] = value
+        else:
+            ranges[min_key] = min(ranges[min_key], value)
+            ranges[max_key] = max(ranges[max_key], value)
+
+        observed_min = ranges[min_key]
+        observed_max = ranges[max_key]
+        span = max(0.04, observed_max - observed_min)
+
+        padding = max(_MOUSE_CALIBRATION_PADDING, span * 0.1)
+        padded_min = max(0.0, observed_min - padding)
+        padded_max = min(1.0, observed_max + padding)
+        padded_span = max(0.03, padded_max - padded_min)
+
+        normalized = (value - padded_min) / padded_span
+        return 0.5 + (normalized - 0.5) * max(1.0, sensitivity)
+
+    def _reset_mouse_calibration(self):
+        self._mouse_ranges.clear()
 
     def _connect_arduino(self, port: str, baud: int):
         if self._serial_thread and self._serial_thread.isRunning():
@@ -335,6 +574,7 @@ class MainWindow(QMainWindow):
             sw = dlg.get_switch()
             self._engine.switches.append(sw)
             self.switch_list.add_switch(sw)
+            self._save_profile_if_ready()
 
     def _edit_switch(self, switch_id: str):
         sw = next((s for s in self._engine.switches if s.id == switch_id), None)
@@ -344,10 +584,12 @@ class MainWindow(QMainWindow):
         if dlg.exec():
             dlg.get_switch(existing=sw)
             self.switch_list.refresh_switch(sw)
+            self._save_profile_if_ready()
 
     def _delete_switch(self, switch_id: str):
         self._engine.switches = [s for s in self._engine.switches if s.id != switch_id]
         self.switch_list.remove_switch(switch_id)
+        self._save_profile_if_ready()
 
     # ── Profiles ─────────────────────────────────────────────────────────────
 
@@ -368,20 +610,47 @@ class MainWindow(QMainWindow):
 
     def _load_default_profile(self):
         default = PROFILES_DIR / "default.json"
-        if default.exists():
-            self._load_profile(default)
+        if not default.exists():
+            self._current_profile_path = default
+            self._engine.switches = self._starter_switches()
+            self.switch_list.clear()
+            for sw in self._engine.switches:
+                self.switch_list.add_switch(sw)
+            self.mouse_panel.set_source("none")
+            self.mouse_panel.set_sensitivity(2.5)
+            self._save_profile()
+        self._load_profile(default)
 
     def _load_profile(self, path: Path):
         try:
             with open(path) as f:
                 data = json.load(f)
             self._current_profile_path = path
-            self._engine.switches = [SwitchDefinition.from_dict(s) for s in data.get("switches", [])]
+            raw_switches = [SwitchDefinition.from_dict(s) for s in data.get("switches", [])]
+            self._engine.switches = self._normalize_switches_for_profile(path, raw_switches)
             self.switch_list.clear()
             for sw in self._engine.switches:
                 self.switch_list.add_switch(sw)
             if "arduino" in data:
                 self.arduino_panel.set_mappings(data["arduino"])
+            mouse_settings = data.get("mouse", {})
+            self._selected_camera_index = int(data.get("camera_index", 0))
+            self._mouse_paused = False
+            self._reset_mouse_calibration()
+            self.camera_combo.blockSignals(True)
+            self._refresh_camera_list()
+            self.camera_combo.blockSignals(False)
+            self.mouse_panel.source_combo.blockSignals(True)
+            self.mouse_panel.sens_slider.blockSignals(True)
+            self.mouse_panel.set_source(mouse_settings.get("source", "none"))
+            self.mouse_panel.set_sensitivity(mouse_settings.get("sensitivity", 1.0))
+            self.mouse_panel.source_combo.blockSignals(False)
+            self.mouse_panel.sens_slider.blockSignals(False)
+            self.mouse_panel.set_active(bool(self._tracker and self._tracker.isRunning()))
+            if self._tracker and self._tracker.isRunning():
+                self._apply_mouse_settings()
+            if path.name.lower() == "default.json":
+                self._save_profile()
             for i in range(self.profile_combo.count()):
                 if self.profile_combo.itemData(i) == str(path):
                     self.profile_combo.blockSignals(True)
@@ -403,18 +672,31 @@ class MainWindow(QMainWindow):
             json.dump({
                 "name":    path.stem,
                 "version": 1,
+                "camera_index": self._selected_camera_index,
                 "switches": [s.to_dict() for s in self._engine.switches],
                 "arduino":  self.arduino_panel.get_mappings(),
+                "mouse": {
+                    "source": self.mouse_panel.get_source(),
+                    "sensitivity": self.mouse_panel.get_sensitivity(),
+                },
             }, f, indent=2)
         self._refresh_profile_list()
+
+    def _save_profile_if_ready(self):
+        if self._current_profile_path:
+            self._save_profile()
 
     def _new_profile(self):
         name, ok = QInputDialog.getText(self, "New Profile", "Profile name:")
         if not ok or not name.strip():
             return
         self._current_profile_path = PROFILES_DIR / f"{name.strip()}.json"
-        self._engine.switches = []
+        self._engine.switches = self._starter_switches()
         self.switch_list.clear()
+        for sw in self._engine.switches:
+            self.switch_list.add_switch(sw)
+        self.mouse_panel.set_source("none")
+        self.mouse_panel.set_sensitivity(2.5)
         self._save_profile()
         self._refresh_profile_list()
 

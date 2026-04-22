@@ -37,6 +37,20 @@ MOVEMENT_LABELS = {
     "hand_right": "Hand Move Right",
     "hand_up":    "Hand Move Up",
     "hand_down":  "Hand Move Down",
+    # ── Finger extended ──────────────────────────────────────────────────────
+    "finger_index": "Index Finger Extended",
+    "finger_pinky": "Pinky Finger Extended",
+}
+
+# Body parts that can drive the mouse cursor
+MOUSE_SOURCES = {
+    "none":      "Disabled",
+    "nose":      "Nose Tip",
+    "forehead":  "Forehead",
+    "chin":      "Chin",
+    "hand":      "Hand (wrist)",
+    "index_tip": "Index Fingertip",
+    "head":      "Head Center",
 }
 
 MOVEMENTS = list(MOVEMENT_LABELS.keys())
@@ -53,6 +67,7 @@ MOVEMENT_GROUPS = {
         "gesture_Open_Palm", "gesture_Pointing_Up", "gesture_ILoveYou",
     ],
     "Hand Position": ["hand_left", "hand_right", "hand_up", "hand_down"],
+    "Fingers": ["finger_index", "finger_pinky"],
 }
 
 ACTION_LABELS = {
@@ -153,6 +168,12 @@ class SwitchEngine:
                 return max(0.0, (_HAND_ZONE - y) / _HAND_ZONE)
             if movement == "hand_down":
                 return max(0.0, (y - (1 - _HAND_ZONE)) / _HAND_ZONE)
+
+        fingers = face_data.get("fingers", {})
+        if movement == "finger_index":
+            return float(fingers.get("index", 0))
+        if movement == "finger_pinky":
+            return float(fingers.get("pinky", 0))
 
         return 0.0
 

@@ -1,7 +1,10 @@
 from __future__ import annotations
+import threading
+import time
 from pynput import keyboard, mouse
 from pynput.keyboard import Key, Controller as KeyController
 from pynput.mouse import Button, Controller as MouseController
+from PyQt6.QtGui import QGuiApplication
 
 
 # Map friendly key names → pynput Key enum
@@ -69,6 +72,44 @@ class ActionEmitter:
         self._kb = KeyController()
         self._mouse = MouseController()
         self._held_keys: dict[str, list] = {}  # switch_id → list of pressed keys
+        self._mouse_control_active = False
+        self._mouse_source: str | None = None   # which body part drives the mouse
+        self._mouse_thread: threading.Thread | None = None
+        self._mouse_pos = (0.5, 0.5)            # normalized (x, y) from tracker
+        self._mouse_lock = threading.Lock()
+
+    def set_mouse_control(self, source: str | None):
+        """Enable or disable mouse control. source is e.g. 'nose', 'hand', 'head'."""
+        with self._mouse_lock:
+            self._mouse_source = source
+            self._mouse_control_active = source is not None
+        if source and (self._mouse_thread is None or not self._mouse_thread.is_alive()):
+            self._mouse_thread = threading.Thread(target=self._mouse_loop, daemon=True)
+            self._mouse_thread.start()
+
+    def update_mouse_position(self, x: float, y: float):
+        """Called from tracker with normalized 0–1 coords."""
+        with self._mouse_lock:
+            self._mouse_pos = (x, y)
+
+    def _mouse_loop(self):
+        while True:
+            with self._mouse_lock:
+                active = self._mouse_control_active
+                x, y = self._mouse_pos
+            if not active:
+                break
+            try:
+                screen = QGuiApplication.primaryScreen()
+                if screen is not None:
+                    geometry = screen.geometry()
+                    self._mouse.position = (
+                        geometry.left() + int(x * geometry.width()),
+                        geometry.top() + int(y * geometry.height()),
+                    )
+            except Exception:
+                pass
+            time.sleep(0.016)  # ~60 Hz
 
     def execute(self, action_type: str, action_key: str, switch_id: str, active: bool):
         try:
@@ -88,6 +129,7 @@ class ActionEmitter:
             pass  # Accessibility permission not granted — fail silently
 
     def release_all(self):
+        self.set_mouse_control(None)
         for key_list in self._held_keys.values():
             for k in key_list:
                 try:

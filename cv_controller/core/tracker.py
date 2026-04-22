@@ -124,7 +124,7 @@ class FaceTracker(QObject):
                         model_asset_path=self.gesture_model_path
                     ),
                     running_mode=RunningMode.VIDEO,
-                    num_hands=1,
+                    num_hands=2,
                 )
                 gesture_recognizer = mp_vision.GestureRecognizer.create_from_options(g_options)
             except Exception:
@@ -192,20 +192,41 @@ class FaceTracker(QObject):
                 "roll":  round(degrees(roll),   2),
             }
 
+        # Key face landmark indices (MediaPipe 478-point model)
+        # 1=nose tip, 10=forehead, 152=chin, 168=between eyes
+        h, w = frame_shape[:2]
+        raw = result.face_landmarks[0]
+        def _lm(idx):
+            lm = raw[idx]
+            return round(lm.x, 4), round(lm.y, 4)
+
+        body_points = {
+            "nose":     _lm(1),
+            "forehead": _lm(10),
+            "chin":     _lm(152),
+            "head":     _lm(168),
+        }
+
         return {
             "face_detected": True,
             "blendshapes": blendshapes,
             "pose": pose,
             "landmarks": landmarks,
+            "body_points": body_points,
             "gestures": {},
             "hand_position": {},
             "hand_landmarks": [],
+            "fingers": {},
         }
 
     def _parse_gestures(self, result, frame_shape) -> dict:
         gestures = {}
         hand_position = {}
+        hand_positions = []
         hand_landmarks = []
+        fingers = {}
+        index_tip = {}
+        hands_together = False
 
         if result.gestures:
             for gesture_list in result.gestures:
@@ -214,15 +235,32 @@ class FaceTracker(QObject):
 
         if result.hand_landmarks:
             h, w = frame_shape[:2]
-            lms = result.hand_landmarks[0]
-            hand_landmarks = [(int(lm.x * w), int(lm.y * h)) for lm in lms]
-            # Wrist is landmark 0
-            wrist_x = lms[0].x  # 0=left edge, 1=right edge (already flipped)
-            wrist_y = lms[0].y
-            hand_position = {"x": round(wrist_x, 4), "y": round(wrist_y, 4)}
+            all_hands = result.hand_landmarks[:2]
+            for hand_idx, lms in enumerate(all_hands):
+                wrist_x = round(lms[0].x, 4)
+                wrist_y = round(lms[0].y, 4)
+                hand_positions.append({"x": wrist_x, "y": wrist_y})
+
+                if hand_idx == 0:
+                    hand_landmarks = [(int(lm.x * w), int(lm.y * h)) for lm in lms]
+                    hand_position = {"x": wrist_x, "y": wrist_y}
+                    index_tip = {"x": round(lms[8].x, 4), "y": round(lms[8].y, 4)}
+                    fingers = {
+                        "index": 1 if lms[8].y < lms[6].y else 0,
+                        "pinky": 1 if lms[20].y < lms[18].y else 0,
+                    }
+
+            if len(hand_positions) >= 2:
+                dx = hand_positions[0]["x"] - hand_positions[1]["x"]
+                dy = hand_positions[0]["y"] - hand_positions[1]["y"]
+                hands_together = (dx * dx + dy * dy) ** 0.5 <= 0.12
 
         return {
             "gestures": gestures,
             "hand_position": hand_position,
+            "hand_positions": hand_positions,
             "hand_landmarks": hand_landmarks,
+            "index_tip": index_tip,
+            "fingers": fingers,
+            "hands_together": hands_together,
         }
