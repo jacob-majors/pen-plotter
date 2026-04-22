@@ -2,7 +2,7 @@
 
 Control your Mac with your face, head movements, and hand gestures.
 
-Made by **Jacob Majors** for Ramsey Mussalum's Design for Social Good class
+Made by **Jacob Majors** and **Troy Pappas** for Ramsey Mussalum's Design for Social Good class
 at **Sonoma Academy** — March 2026
 
 ---
