@@ -922,6 +922,11 @@ footer { border-top: 1px solid var(--border); padding: 2.75rem 0 1.25rem; }
           <div class="pp-section">
             <div class="pp-title">Motion</div>
             <div class="pp-row pp-scale-row">
+              <label class="pp-label">Line Passes</label>
+              <input type="number" id="linePasses" class="pp-num" value="2" min="1" max="8" step="1">
+              <span class="pp-unit">× thick</span>
+            </div>
+            <div class="pp-row pp-scale-row">
               <label class="pp-label">XY Speed</label>
               <input type="number" id="xySpeed" class="pp-num" value="12000" min="100" max="20000" step="100">
               <span class="pp-unit">mm/min</span>
@@ -1369,6 +1374,7 @@ function applyBrushSize(sz) {
 function togglePen() {
   penDown = !penDown;
   prevX = null; prevY = null;
+  resetStrokeBuffer();
   showToast(penDown ? "✏️ Pen down" : "✋ Pen up", penDown ? "drawing" : "lifted");
   if (serialWriter) movePenZ(penDown ? penDownZ : penUpZ);
 }
@@ -2119,20 +2125,25 @@ function previewSVG(paths, scale) {
 // Send SVG paths to printer as G-code
 async function plotSVGPaths(paths, scale) {
   const bw = boundTR.x - boundBL.x, bh = boundTR.y - boundBL.y;
+  const passes = parseInt(document.getElementById("linePasses")?.value || "1", 10);
+  const spd = parseFloat(xySpeedEl.value);
   await movePenZ(penUpZ);
   for (const pts of paths) {
     if (!pts.length) continue;
-    // travel to start of path
-    const s = pts[0];
-    const sx = (boundBL.x + s.x * bw * scale).toFixed(2);
-    const sy = (boundBL.y + s.y * bh * scale).toFixed(2);
-    await sendGcode(`G1 X${sx} Y${sy} F${TRAVEL_FEED}\n`);
+    const gcPts = pts.map(p => ({
+      gx: (boundBL.x + p.x * bw * scale).toFixed(2),
+      gy: (boundBL.y + p.y * bh * scale).toFixed(2)
+    }));
+    // Travel to path start
+    await sendGcode(`G1 X${gcPts[0].gx} Y${gcPts[0].gy} F${TRAVEL_FEED}\n`);
     await movePenZ(penDownZ);
-    for (let i = 1; i < pts.length; i++) {
-      const gx = (boundBL.x + pts[i].x * bw * scale).toFixed(2);
-      const gy = (boundBL.y + pts[i].y * bh * scale).toFixed(2);
-      await sendGcode(`G1 X${gx} Y${gy} F${parseFloat(xySpeedEl.value)}\n`);
-      await new Promise(r => setTimeout(r, 8)); // small yield so UI stays responsive
+    // Draw N passes (alternating direction for efficiency)
+    for (let pass = 0; pass < passes; pass++) {
+      const dir = pass % 2 === 0 ? gcPts : [...gcPts].reverse();
+      for (const pt of dir) {
+        await sendGcode(`G1 X${pt.gx} Y${pt.gy} F${spd}\n`);
+        await new Promise(r => setTimeout(r, 8));
+      }
     }
     await movePenZ(penUpZ);
   }
@@ -2298,21 +2309,52 @@ async function sendGcode(line) {
 
 // Called from the tracking loop whenever we have a new smoothed position.
 // canvasX / canvasY are in drawCanvas pixel coords (0..W, 0..H).
+// When penDown + passes > 1, we buffer the recent stroke and replay it after each segment
+// to make the physical line thicker (more ink deposited).
+const strokeBuffer = [];          // [{gx,gy}] — recent drawn positions for multi-pass
+const STROKE_BUFFER_MAX = 40;     // how many positions to remember for re-trace
+
 function maybeSendToprinter(canvasX, canvasY) {
   if (!serialWriter) return;
   if (
     lastGcodeX !== null &&
     Math.hypot(canvasX - lastGcodeX, canvasY - lastGcodeY) < GCODE_STEP_PX
-  ) return; // not enough movement — skip to avoid flooding serial
+  ) return;
 
   lastGcodeX = canvasX; lastGcodeY = canvasY;
 
-  // Map canvas pixels → Ender 3 bed mm, clamped within safe margins
   const gx = (BED_MIN_MM + (canvasX / W) * (BED_MAX_MM - BED_MIN_MM)).toFixed(2);
   const gy = (BED_MIN_MM + (canvasY / H) * (BED_MAX_MM - BED_MIN_MM)).toFixed(2);
-  const feed = penDown ? DRAW_FEED : TRAVEL_FEED;
-  sendGcode(`G1 X${gx} Y${gy} F${feed}\n`);
+
+  if (!penDown) {
+    // Pen up — travel move, flush buffer
+    strokeBuffer.length = 0;
+    sendGcode(`G1 X${gx} Y${gy} F${TRAVEL_FEED}\n`);
+    return;
+  }
+
+  const passes = parseInt(document.getElementById("linePasses")?.value || "1", 10);
+
+  // First pass — normal move
+  sendGcode(`G1 X${gx} Y${gy} F${DRAW_FEED}\n`);
+
+  if (passes > 1) {
+    // Buffer this point
+    strokeBuffer.push({ gx, gy });
+    if (strokeBuffer.length > STROKE_BUFFER_MAX) strokeBuffer.shift();
+
+    // Every STROKE_BUFFER_MAX/2 points do an extra pass over recent buffer (forward + backward)
+    if (strokeBuffer.length >= 6 && strokeBuffer.length % 6 === 0) {
+      for (let p = 1; p < passes; p++) {
+        const dir = p % 2 === 0 ? strokeBuffer : [...strokeBuffer].reverse();
+        dir.forEach(pt => sendGcode(`G1 X${pt.gx} Y${pt.gy} F${DRAW_FEED}\n`));
+      }
+    }
+  }
 }
+
+// Reset stroke buffer when pen is lifted or drawing stops
+function resetStrokeBuffer() { strokeBuffer.length = 0; }
 
 </script>
 </body>
