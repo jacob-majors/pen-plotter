@@ -1,6 +1,7 @@
-/* ═══════════════════════════════════
-   PLOTTER — stylesheet
-   ═══════════════════════════════════ */
+@charset "UTF-8";
+/* ===================================
+   PLOTTER - stylesheet
+   =================================== */
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { scroll-behavior: smooth; }
@@ -18,7 +19,7 @@ a  { text-decoration: none; color: inherit; }
 img, canvas, svg { display: block; max-width: 100%; }
 button { font-family: inherit; cursor: pointer; border: none; background: none; }
 
-/* ── Tokens ── */
+/* -- Tokens -- */
 :root {
   --blue:   #2d7ae0;
   --blue-l: #5b9ef5;
@@ -31,7 +32,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   --dim:   rgba(255,255,255,0.22);
 }
 
-/* ═══ NAV ═══ */
+/* === NAV === */
 #nav {
   position: fixed; top: 0; left: 0; right: 0; z-index: 100;
   border-bottom: 1px solid transparent;
@@ -74,7 +75,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 }
 .nav-gh:hover { border-color: rgba(255,255,255,.18) !important; color: #fff !important; }
 
-/* ═══ HERO ═══ */
+/* === HERO === */
 .hero {
   min-height: 100vh; display: flex; align-items: center;
   padding: 6rem 1.5rem 4rem; position: relative; overflow: hidden;
@@ -183,7 +184,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 }
 .mockup-body canvas { width:100%; height:auto; }
 
-/* ═══ SHARED SECTION STYLES ═══ */
+/* === SHARED SECTION STYLES === */
 .section { padding: 6rem 0; }
 .container { max-width: 1180px; margin: 0 auto; padding: 0 1.5rem; }
 
@@ -207,7 +208,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   line-height: 1.7; margin-bottom: 2.8rem;
 }
 
-/* ═══ DEMO ═══ */
+/* === DEMO === */
 .demo-section {
   border-top: 1px solid var(--border);
   background: radial-gradient(ellipse 80% 50% at 50% 0%, rgba(13,53,117,.08), transparent);
@@ -233,7 +234,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   display: block; width: 100%; height: auto;
 }
 
-/* Overlay canvas — sits directly on top of drawCanvas */
+/* Overlay canvas - sits directly on top of drawCanvas */
 .canvas-area canvas#overlayCanvas {
   position: absolute;
   top: 0; left: 0;
@@ -398,7 +399,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   box-shadow: 0 2px 6px rgba(45,122,224,.35);
 }
 
-/* ═══ FEATURES ═══ */
+/* === FEATURES === */
 .feat-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -420,7 +421,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 .feat-card h3 { font-size: .95rem; font-weight: 700; color: #fff; margin-bottom: .45rem; }
 .feat-card p  { font-size: .84rem; color: var(--muted); line-height: 1.65; }
 
-/* ═══ HOW IT WORKS ═══ */
+/* === HOW IT WORKS === */
 .how-section { border-top: 1px solid var(--border); }
 .steps {
   display: grid; grid-template-columns: repeat(4,1fr); gap: 1.5rem; margin-top: 1rem;
@@ -435,7 +436,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 .step h3 { font-size: .9rem; font-weight: 700; color: #fff; margin-bottom: .4rem; }
 .step p   { font-size: .8rem; color: var(--muted); line-height: 1.6; }
 
-/* ═══ STORY ═══ */
+/* === STORY === */
 .story-section { border-top: 1px solid var(--border); }
 .story-grid {
   display: grid; grid-template-columns: 340px 1fr; gap: 5rem; align-items: start;
@@ -468,7 +469,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   border-radius: 0 8px 8px 0;
 }
 
-/* ═══ CTA ═══ */
+/* === CTA === */
 .cta-section { border-top: 1px solid var(--border); text-align: center; overflow: hidden; }
 .cta-inner { position: relative; max-width: 600px; margin: 0 auto; padding: 0 1.5rem;
   display: flex; flex-direction: column; align-items: center; gap: 1.1rem; }
@@ -478,7 +479,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   background: radial-gradient(ellipse, rgba(45,122,224,.11) 0%, transparent 70%);
 }
 
-/* ═══ FOOTER ═══ */
+/* === FOOTER === */
 footer { border-top: 1px solid var(--border); padding: 2.75rem 0 1.25rem; }
 .footer-inner {
   display: flex; justify-content: space-between; gap: 2.5rem;
@@ -501,7 +502,7 @@ footer { border-top: 1px solid var(--border); padding: 2.75rem 0 1.25rem; }
   flex-wrap: wrap; gap: .5rem; font-size: .74rem; color: var(--dim);
 }
 
-/* ═══ SOURCES PAGE ═══ */
+/* === SOURCES PAGE === */
 .sources-page {
   max-width: 880px; margin: 0 auto;
   padding: 7rem 1.5rem 5rem;
@@ -541,7 +542,7 @@ footer { border-top: 1px solid var(--border); padding: 2.75rem 0 1.25rem; }
 .src-credit a { color: var(--blue-l); }
 .src-credit a:hover { text-decoration: underline; }
 
-/* ═══ RESPONSIVE ═══ */
+/* === RESPONSIVE === */
 @media (max-width: 1024px) {
   .demo-wrap  { grid-template-columns: 1fr; }
   .sidebar    { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
