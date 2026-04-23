@@ -954,11 +954,17 @@ footer { border-top: 1px solid var(--border); padding: 2.75rem 0 1.25rem; }
             </div>
             <textarea id="plotText" class="pp-textarea" placeholder="Type text here…" rows="2"></textarea>
             <div class="pp-row pp-scale-row">
-              <label class="pp-label">Letter size</label>
+              <label class="pp-label">Size</label>
               <input type="number" id="textSize" class="pp-num" value="15" min="3" max="80" step="1">
               <span class="pp-unit">mm</span>
             </div>
             <div class="pp-row">
+              <button class="pp-btn" id="textAlignLeft" title="Left align">⬛◻◻</button>
+              <button class="pp-btn pp-btn-accent" id="textAlignCenter" title="Center">◻⬛◻</button>
+              <button class="pp-btn" id="textAlignRight" title="Right align">◻◻⬛</button>
+            </div>
+            <div class="pp-row">
+              <button class="pp-btn" id="previewTextBtn">Preview</button>
               <button class="pp-btn pp-btn-accent" id="plotTextBtn" disabled>Plot Text</button>
               <button class="pp-btn" id="clearTextBtn">Clear</button>
             </div>
@@ -2580,64 +2586,170 @@ const HFONT = {
   ':': [[[3,5],[3,6]],[[3,1],[3,2]]],
 };
 
-const CHAR_W = 7; // cell width (6 + 1 spacing)
+const CHAR_W = 7; // cell width including spacing
 const CHAR_H = 8; // cell height
 
-// Convert text to G-code and send to printer
-async function plotTextToprinter(text, sizeMM) {
-  if (!serialWriter) return;
-  const scale = sizeMM / CHAR_H;
-  const spd = parseFloat(xySpeedEl.value) || 4500;
-  let cursorX = boundBL.x;
-  const baseY = boundTR.y - sizeMM; // start near top of boundary
+// Measure total pixel width of a string on canvas for a given scale
+function textWidthPx(text, scale) {
+  return text.length * CHAR_W * scale;
+}
 
-  await movePenZ(penUpZ);
-
+// Build an array of {stroke:[[cx,cy]...]} objects mapped to canvas pixels.
+// origin = {x,y} in canvas pixels (top-left of text baseline row)
+function buildTextStrokes(text, sizePx) {
+  const scale = sizePx / CHAR_H;
+  const strokes = [];
+  let cursorX = 0;
   for (const ch of text.toUpperCase()) {
-    if (ch === '\n') {
-      cursorX = boundBL.x;
-      continue;
-    }
-    const strokes = HFONT[ch] ?? HFONT['?'];
-    for (const stroke of strokes) {
-      let first = true;
-      for (const [sx, sy] of stroke) {
-        // Hershey y=0 is baseline at bottom; invert so y increases upward on bed
-        const gx = Math.max(0, Math.min(220, cursorX + sx * scale));
-        const gy = Math.max(0, Math.min(220, baseY  + (CHAR_H - sy) * scale));
-        if (first) {
-          await movePenZ(penUpZ);
-          await sendGcode(`G1 X${gx.toFixed(2)} Y${gy.toFixed(2)} F${TRAVEL_FEED}\n`);
-          await movePenZ(penDownZ);
-          first = false;
-        } else {
-          await sendGcode(`G1 X${gx.toFixed(2)} Y${gy.toFixed(2)} F${spd}\n`);
-          await new Promise(r => setTimeout(r, 5));
-        }
-      }
+    const glyphs = HFONT[ch] ?? [];
+    for (const stroke of glyphs) {
+      strokes.push({
+        offX: cursorX,
+        scale,
+        pts: stroke   // raw [[sx,sy]...] — apply offset + scale at draw/plot time
+      });
     }
     cursorX += CHAR_W * scale;
-    if (cursorX > boundTR.x) break; // ran off the right edge
   }
-  await movePenZ(penUpZ);
+  return { strokes, totalWidth: cursorX };
+}
+
+// Map a raw font point to canvas pixel coords given an origin and scale
+function fontPtToCanvas(sx, sy, originX, originY, scale) {
+  return {
+    cx: originX + sx * scale,
+    cy: originY + (CHAR_H - sy) * scale  // invert Y so 0=baseline at bottom
+  };
+}
+
+// Map canvas pixel → printer bed mm
+function canvasToBed(cx, cy) {
+  return {
+    gx: BED_MIN_MM + (cx / W) * (BED_MAX_MM - BED_MIN_MM),
+    gy: BED_MIN_MM + (cy / H) * (BED_MAX_MM - BED_MIN_MM)
+  };
+}
+
+let textAlign = "center"; // "left" | "center" | "right"
+
+// Preview text on draw canvas
+function previewTextOnCanvas() {
+  const txt  = plotTextEl.value.trim();
+  const sizePx = (parseFloat(textSizeEl.value) || 15) / 220 * W * 2.2; // mm→canvas px approx
+  if (!txt) return;
+
+  dctx.fillStyle = "#0b0e1a";
+  dctx.fillRect(0, 0, W, H);
+
+  const { strokes, totalWidth } = buildTextStrokes(txt, sizePx);
+  let originX;
+  if      (textAlign === "left")   originX = 20;
+  else if (textAlign === "right")  originX = W - totalWidth - 20;
+  else                             originX = (W - totalWidth) / 2;
+  const originY = (H - sizePx) / 2; // vertically centred
+
+  dctx.strokeStyle = brushColor;
+  dctx.lineWidth   = 1.5;
+  dctx.lineCap = "round"; dctx.lineJoin = "round";
+
+  for (const { offX, scale, pts } of strokes) {
+    dctx.beginPath();
+    pts.forEach(([sx, sy], i) => {
+      const { cx, cy } = fontPtToCanvas(sx, sy, originX + offX, originY, scale);
+      i === 0 ? dctx.moveTo(cx, cy) : dctx.lineTo(cx, cy);
+    });
+    dctx.stroke();
+  }
+  textHintEl.textContent = `Preview shown. Click "Plot Text" to print.`;
+}
+
+// Plot text to printer — always lifts pen before travel, drops before drawing
+async function plotTextToprinter(text, sizeMM) {
+  if (!serialWriter) return;
+  const spd = parseFloat(xySpeedEl.value) || 4500;
+
+  // Size in bed mm
+  const scale = sizeMM / CHAR_H;
+  const { strokes, totalWidth: totalMM } = buildTextStrokes(text, scale);
+
+  // Compute origin on bed matching current alignment + boundary
+  const bedW = boundTR.x - boundBL.x;
+  const bedH = boundTR.y - boundBL.y;
+  let originX;
+  if      (textAlign === "left")   originX = boundBL.x;
+  else if (textAlign === "right")  originX = boundTR.x - totalMM;
+  else                             originX = boundBL.x + (bedW - totalMM) / 2;
+  const originY = boundBL.y + (bedH - sizeMM) / 2; // centre vertically in boundary
+
+  await movePenZ(penUpZ); // ensure pen is up before we start
+
+  for (const { offX, scale: sc, pts } of strokes) {
+    // Always lift before travelling to stroke start
+    await movePenZ(penUpZ);
+    const [sx0, sy0] = pts[0];
+    const { gx: startX, gy: startY } = canvasToBed(
+      ...(() => {
+        const { cx, cy } = fontPtToCanvas(sx0, sy0, originX + offX, originY, sc);
+        // convert canvas px back — we used bed coords directly, skip canvas mapping
+        return [0, 0]; // placeholder — use bed directly below
+      })()
+    );
+    // Use bed coords directly (no canvas roundtrip)
+    const bedX0 = Math.max(0, Math.min(220, originX + offX + pts[0][0] * sc));
+    const bedY0 = Math.max(0, Math.min(220, originY + (CHAR_H - pts[0][1]) * sc));
+    await sendGcode(`G1 X${bedX0.toFixed(2)} Y${bedY0.toFixed(2)} F${TRAVEL_FEED}\n`);
+    await movePenZ(penDownZ); // drop pen — now drawing
+
+    for (let i = 1; i < pts.length; i++) {
+      const bx = Math.max(0, Math.min(220, originX + offX + pts[i][0] * sc));
+      const by = Math.max(0, Math.min(220, originY + (CHAR_H - pts[i][1]) * sc));
+      await sendGcode(`G1 X${bx.toFixed(2)} Y${by.toFixed(2)} F${spd}\n`);
+      await new Promise(r => setTimeout(r, 4));
+    }
+  }
+
+  await movePenZ(penUpZ); // lift when done
 }
 
 // ── Text panel wiring ──
-const plotTextBtn  = document.getElementById("plotTextBtn");
-const clearTextBtn = document.getElementById("clearTextBtn");
-const plotTextEl   = document.getElementById("plotText");
-const textSizeEl   = document.getElementById("textSize");
-const textHintEl   = document.getElementById("textHint");
-const dictateBtn   = document.getElementById("dictateBtn");
+const plotTextBtn    = document.getElementById("plotTextBtn");
+const clearTextBtn   = document.getElementById("clearTextBtn");
+const previewTextBtn = document.getElementById("previewTextBtn");
+const plotTextEl     = document.getElementById("plotText");
+const textSizeEl     = document.getElementById("textSize");
+const textHintEl     = document.getElementById("textHint");
+const dictateBtn     = document.getElementById("dictateBtn");
 
-// Enable plot button when printer connected (handled in connect block)
+// Alignment buttons
+["Left","Center","Right"].forEach(a => {
+  document.getElementById(`textAlign${a}`).addEventListener("click", () => {
+    textAlign = a.toLowerCase();
+    document.getElementById(`textAlign${a}`).classList.add("pp-btn-accent");
+    ["Left","Center","Right"].filter(x=>x!==a).forEach(x =>
+      document.getElementById(`textAlign${x}`).classList.remove("pp-btn-accent"));
+    if (plotTextEl.value.trim()) previewTextOnCanvas();
+  });
+});
+// Default center highlighted
+document.getElementById("textAlignCenter").classList.add("pp-btn-accent");
+document.getElementById("textAlignLeft").classList.remove("pp-btn-accent");
+document.getElementById("textAlignRight").classList.remove("pp-btn-accent");
+
+// Live preview on type or size change
 plotTextEl.addEventListener("input", () => {
+  if (plotTextEl.value.trim()) previewTextOnCanvas();
   if (serialWriter) plotTextBtn.disabled = !plotTextEl.value.trim();
 });
+textSizeEl.addEventListener("input", () => {
+  if (plotTextEl.value.trim()) previewTextOnCanvas();
+});
+
+previewTextBtn.addEventListener("click", () => previewTextOnCanvas());
 
 plotTextBtn.addEventListener("click", async () => {
   const txt = plotTextEl.value.trim();
   if (!txt || !serialWriter) return;
+  previewTextOnCanvas(); // show on canvas too
   plotTextBtn.disabled = true;
   plotTextBtn.textContent = "Plotting…";
   textHintEl.textContent = `Plotting: "${txt}"`;
@@ -2650,6 +2762,8 @@ plotTextBtn.addEventListener("click", async () => {
 clearTextBtn.addEventListener("click", () => {
   plotTextEl.value = "";
   plotTextBtn.disabled = true;
+  dctx.fillStyle = "#0b0e1a";
+  dctx.fillRect(0, 0, W, H);
   textHintEl.textContent = serialWriter ? "Type text and click Plot Text." : "Connect printer to plot text.";
 });
 
