@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Plotter — Draw with Your Body</title>
-  <meta name="description" content="An accessible art tool. Move any limb in front of a webcam and a plotter mimics it to paint and draw." />
+  <title>Plotter — Repurposed 3D Printers as Accessible Art Machines</title>
+  <meta name="description" content="Plotter gives discarded 3D printers a second life as accessible art machines. Move any limb in front of a webcam and the repurposed printer draws it on real paper." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
@@ -354,6 +354,20 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 }
 .start-btn.stop:hover { background: rgba(239,68,68,.25); }
 
+.printer-btn {
+  display: flex; align-items: center; justify-content: center; gap: .5rem;
+  width: 100%; padding: .65rem 1rem; border-radius: 10px;
+  background: rgba(14,165,200,.12); border: 1px solid rgba(14,165,200,.28);
+  color: var(--teal); font-size: .84rem; font-weight: 600;
+  transition: background .2s, border-color .2s;
+}
+.printer-btn:hover { background: rgba(14,165,200,.22); border-color: rgba(14,165,200,.5); }
+.printer-btn.connected {
+  background: rgba(34,197,94,.12); border-color: rgba(34,197,94,.35);
+  color: #4ade80;
+}
+.printer-btn.connected:hover { background: rgba(239,68,68,.12); border-color: rgba(239,68,68,.35); color: #fca5a5; }
+
 .status-pill {
   display: flex; align-items: center; gap: .45rem;
   padding: .45rem .7rem; border-radius: 7px;
@@ -614,17 +628,18 @@ footer { border-top: 1px solid var(--border); padding: 2.75rem 0 1.25rem; }
   <div class="hero-body">
     <div class="eyebrow-tag">
       <span class="live-dot"></span>
-      Free &amp; open source · Runs in your browser · No hardware required
+      Repurposing discarded 3D printers · Accessible art for everyone · Open source
     </div>
 
     <h1>
-      Create art with<br>
-      <span class="grad">any movement.</span>
+      Your old 3D printer<br>
+      <span class="grad">becomes your paintbrush.</span>
     </h1>
 
     <p class="hero-p">
-      Plotter tracks any part of your body through a webcam — a hand, your head, a foot —
-      and drives a physical pen plotter to paint and draw on paper.
+      Plotter gives <strong>discarded 3D printers</strong> a second life as accessible art machines.
+      Move any limb in front of a webcam and the repurposed printer — pen strapped where the extruder was —
+      draws it on real paper in real time.
       <strong>Art is for everyone.</strong>
     </p>
 
@@ -657,8 +672,8 @@ footer { border-top: 1px solid var(--border); padding: 2.75rem 0 1.25rem; }
 <section id="demo" class="section demo-section">
   <div class="container">
     <div class="section-tag">Live Demo</div>
-    <h2>Move anything. Draw everything.</h2>
-    <p class="section-sub">Your camera never leaves your device — MediaPipe runs entirely in your browser via WebAssembly.</p>
+    <h2>Move anything. The printer draws everything.</h2>
+    <p class="section-sub">This canvas is a live preview of exactly what a connected repurposed 3D printer would draw on paper. Your camera never leaves your device — MediaPipe runs entirely in your browser via WebAssembly.</p>
 
     <div class="demo-wrap">
 
@@ -731,6 +746,12 @@ footer { border-top: 1px solid var(--border); padding: 2.75rem 0 1.25rem; }
         <button id="startBtn" class="start-btn">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
           <span id="startLabel">Start Camera</span>
+        </button>
+
+        <!-- Printer connect button -->
+        <button id="printerBtn" class="printer-btn" title="Connect your repurposed 3D printer via USB">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="2" width="12" height="8" rx="1"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg>
+          <span id="printerLabel">Connect 3D Printer</span>
         </button>
 
         <div id="statusEl" class="status-pill status-idle">
@@ -834,8 +855,8 @@ footer { border-top: 1px solid var(--border); padding: 2.75rem 0 1.25rem; }
         <div class="feat-icon">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
         </div>
-        <h3>Physical plotter output</h3>
-        <p>Connect a pen plotter or CNC over serial. Live X/Y coordinates stream to the machine — your body becomes the arm.</p>
+        <h3>Repurposed 3D printer as plotter</h3>
+        <p>We strip the extruder from a discarded 3D printer and strap a pen where it was. Your body's X/Y position streams over USB as G-code, driving the same stepper motors that used to push plastic — now pushing ink.</p>
       </div>
       <div class="feat-card">
         <div class="feat-icon">
@@ -852,27 +873,27 @@ footer { border-top: 1px solid var(--border); padding: 2.75rem 0 1.25rem; }
 <section class="section how-section">
   <div class="container">
     <div class="section-tag">Process</div>
-    <h2>Up and running in minutes.</h2>
+    <h2>From discarded printer to art machine in minutes.</h2>
     <div class="steps">
       <div class="step">
         <div class="step-n">01</div>
-        <h3>Open in browser</h3>
-        <p>No install needed. Click "Try in your browser" above and allow camera access when prompted.</p>
+        <h3>Rescue a 3D printer</h3>
+        <p>Find any discarded or broken FDM printer. Remove the extruder and hotend — the frame, rails, and stepper motors are all you need.</p>
       </div>
       <div class="step">
         <div class="step-n">02</div>
-        <h3>Point the camera</h3>
-        <p>Aim the webcam at whichever body part the person can move — head, hand, foot, or elbow.</p>
+        <h3>Attach a pen</h3>
+        <p>Mount a pen or marker where the extruder was. Load paper onto the bed. Your old printer is now a plotter.</p>
       </div>
       <div class="step">
         <div class="step-n">03</div>
-        <h3>Start drawing</h3>
-        <p>Move freely. The mini camera preview shows exactly what the tracker sees in real time.</p>
+        <h3>Connect &amp; point the camera</h3>
+        <p>Plug the printer in over USB and open Plotter in your browser. Aim the webcam at whatever limb someone can move — head, hand, foot, or elbow.</p>
       </div>
       <div class="step">
         <div class="step-n">04</div>
-        <h3>Plotter creates art</h3>
-        <p>The pen arm mirrors every movement — producing real ink on real paper.</p>
+        <h3>Move. The printer draws.</h3>
+        <p>Body position streams as G-code over Web Serial in real time. The same steppers that used to push plastic now push ink — your movement becomes art on paper.</p>
       </div>
     </div>
   </div>
@@ -906,8 +927,9 @@ footer { border-top: 1px solid var(--border); padding: 2.75rem 0 1.25rem; }
       <div class="story-right">
         <p>Plotter started with a simple but powerful question: <strong>what if someone can't hold a brush?</strong> For people with limited motor ability — whether from a condition, an injury, or a disability — traditional art tools are inaccessible. The canvas stays blank not because of a lack of creativity, but because of a lack of tools.</p>
         <p>The idea grew out of <strong>Ramsey Mussalum's Design for Social Good</strong> course at Sonoma Academy — a class built around one idea: design should solve real problems for real people.</p>
-        <p>Plotter moves the paintbrush entirely off the person's body. Point a webcam at whatever limb someone <em>can</em> move — a head, a wrist, a foot — and a physical pen plotter mimics those movements on paper. The person becomes the artist. The machine becomes their hand.</p>
-        <blockquote>No expensive hardware. No subscriptions. Just movement, and art.</blockquote>
+        <p>And there was a second problem hiding in plain sight: <strong>millions of 3D printers are discarded every year</strong> — broken, outdated, or simply abandoned. Those machines still have functional frames, rails, and stepper motors. Instead of the landfill, Plotter gives them a new purpose. Strip the extruder, strap a pen in its place, and the same hardware that once built plastic objects now creates art on paper.</p>
+        <p>Point a webcam at whatever limb someone <em>can</em> move — a head, a wrist, a foot — and body position streams over USB as G-code. The printer's X and Y axes follow in real time. The person becomes the artist. The machine becomes their hand.</p>
+        <blockquote>Rescued hardware. Zero subscriptions. Just movement, and art.</blockquote>
       </div>
     </div>
   </div>
@@ -933,7 +955,7 @@ footer { border-top: 1px solid var(--border); padding: 2.75rem 0 1.25rem; }
       <div class="logo-mark">P</div>
       <div>
         <div class="footer-name">Plotter</div>
-        <div class="footer-desc">Draw with your body. Art without barriers.</div>
+        <div class="footer-desc">Rescued 3D printers. Art without barriers.</div>
       </div>
     </div>
     <div class="footer-cols">
@@ -1244,6 +1266,8 @@ function loop() {
     smoothX = smoothX == null ? px : smoothX + a * (px - smoothX);
     smoothY = smoothY == null ? py : smoothY + a * (py - smoothY);
 
+    maybeSendToprinter(smoothX, smoothY);
+
     if (appMode === "draw") {
       if (prevX !== null) {
         dctx.beginPath();
@@ -1326,6 +1350,81 @@ function brightPt() {
     if(b>max){max=b;const idx=i/4;bx=idx%sz;by=Math.floor(idx/sz);}
   }
   return {x:(bx/sz)*W,y:(by/sz)*H};
+}
+
+// ── Web Serial — 3D printer transmission ──
+// Sends G-code G1 X Y F moves to a connected repurposed 3D printer over USB.
+// Printer bed must be homed (send G28 once on connect). X/Y map to canvas 0-200mm.
+let serialPort = null, serialWriter = null;
+let lastGcodeX = null, lastGcodeY = null;
+const GCODE_STEP_PX = 4;    // only send when movement exceeds this many canvas pixels
+const PRINTER_MM = 200;      // usable bed size in mm (adjust for your printer)
+const FEED_RATE  = 6000;     // mm/min — tweak for speed vs. smoothness
+
+const printerBtn   = document.getElementById("printerBtn");
+const printerLabel = document.getElementById("printerLabel");
+
+printerBtn.addEventListener("click", async () => {
+  if (serialPort) {
+    await disconnectPrinter(); return;
+  }
+  if (!("serial" in navigator)) {
+    alert("Web Serial is not supported in this browser.\nPlease use Chrome or Edge (desktop) and make sure the site is served over HTTPS or localhost.");
+    return;
+  }
+  try {
+    // Baud 115200 covers most Marlin/Klipper boards; change if needed
+    serialPort = await navigator.serial.requestPort();
+    await serialPort.open({ baudRate: 115200 });
+    const encoder = new TextEncoderStream();
+    encoder.readable.pipeTo(serialPort.writable);
+    serialWriter = encoder.writable.getWriter();
+
+    // Home axes, set to relative coords disabled (absolute), and set units to mm
+    await sendGcode("G28 X Y\n");   // home X and Y
+    await sendGcode("G90\n");        // absolute positioning
+    await sendGcode("G21\n");        // millimetres
+    await sendGcode(`G1 F${FEED_RATE}\n`);
+
+    printerBtn.classList.add("connected");
+    printerLabel.textContent = "Disconnect Printer";
+    setStatus("Printer connected", "on");
+  } catch (e) {
+    if (e.name !== "NotFoundError") console.error("Serial connect error:", e);
+    serialPort = null; serialWriter = null;
+  }
+});
+
+async function disconnectPrinter() {
+  try { await serialWriter?.close(); } catch(_) {}
+  try { await serialPort?.close();   } catch(_) {}
+  serialPort = null; serialWriter = null;
+  lastGcodeX = null; lastGcodeY = null;
+  printerBtn.classList.remove("connected");
+  printerLabel.textContent = "Connect 3D Printer";
+}
+
+async function sendGcode(line) {
+  if (serialWriter) {
+    try { await serialWriter.write(line); } catch(e) { console.warn("Serial write error:", e); }
+  }
+}
+
+// Called from the tracking loop whenever we have a new smoothed position.
+// canvasX / canvasY are in drawCanvas pixel coords (0..W, 0..H).
+function maybeSendToprinter(canvasX, canvasY) {
+  if (!serialWriter) return;
+  if (
+    lastGcodeX !== null &&
+    Math.hypot(canvasX - lastGcodeX, canvasY - lastGcodeY) < GCODE_STEP_PX
+  ) return; // not enough movement — skip to avoid flooding serial
+
+  lastGcodeX = canvasX; lastGcodeY = canvasY;
+
+  // Map canvas pixels to printer bed mm (canvas origin top-left → printer origin at home)
+  const gx = ((canvasX / W) * PRINTER_MM).toFixed(2);
+  const gy = ((canvasY / H) * PRINTER_MM).toFixed(2);
+  sendGcode(`G1 X${gx} Y${gy}\n`);
 }
 
 </script>
