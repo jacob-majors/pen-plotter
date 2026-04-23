@@ -368,6 +368,20 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 }
 .printer-btn.connected:hover { background: rgba(239,68,68,.12); border-color: rgba(239,68,68,.35); color: #fca5a5; }
 
+.cam-select-wrap { display: flex; flex-direction: column; gap: .3rem; }
+.cam-select {
+  width: 100%; padding: .48rem .65rem; border-radius: 8px;
+  background: var(--surface); border: 1px solid var(--border);
+  color: #fff; font-size: .82rem; font-family: inherit;
+  appearance: none; -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23ffffff66' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right .6rem center;
+  padding-right: 2rem; cursor: pointer;
+  transition: border-color .2s;
+}
+.cam-select:focus { outline: none; border-color: var(--blue); }
+.cam-select option { background: #1a1f35; color: #fff; }
+
 .gesture-hints {
   background: var(--surface); border: 1px solid var(--border);
   border-radius: 10px; padding: .65rem .8rem; font-size: .78rem;
@@ -755,6 +769,14 @@ footer { border-top: 1px solid var(--border); padding: 2.75rem 0 1.25rem; }
           </button>
         </div>
 
+        <!-- Camera selector -->
+        <div class="cam-select-wrap">
+          <label class="ctrl-label" for="camSelect">Camera</label>
+          <select id="camSelect" class="cam-select">
+            <option value="">Default camera</option>
+          </select>
+        </div>
+
         <!-- Start button -->
         <button id="startBtn" class="start-btn">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
@@ -1069,6 +1091,7 @@ const drawCanvas   = document.getElementById("drawCanvas");
 const overlayCanvas= document.getElementById("overlayCanvas");
 const startBtn     = document.getElementById("startBtn");
 const startLabel   = document.getElementById("startLabel");
+const camSelect    = document.getElementById("camSelect");
 const clearBtn     = document.getElementById("clearBtn");
 const saveBtn      = document.getElementById("saveBtn");
 const statusEl     = document.getElementById("statusEl");
@@ -1376,6 +1399,30 @@ document.querySelectorAll('input[name="trackMode"]').forEach(r => {
   });
 });
 
+// ── Camera enumeration ──
+async function populateCameras() {
+  try {
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const cams = devices.filter(d => d.kind === "videoinput");
+    const prev = camSelect.value;
+    // keep default option, rebuild the rest
+    camSelect.innerHTML = '<option value="">Default camera</option>';
+    cams.forEach((cam, i) => {
+      const opt = document.createElement("option");
+      opt.value = cam.deviceId;
+      opt.textContent = cam.label || `Camera ${i + 1}`;
+      camSelect.appendChild(opt);
+    });
+    // restore selection if still present
+    if (prev && [...camSelect.options].some(o => o.value === prev)) {
+      camSelect.value = prev;
+    }
+  } catch(_) {}
+}
+populateCameras();
+// Re-enumerate after permission changes (labels only appear after first grant)
+navigator.mediaDevices.addEventListener?.("devicechange", populateCameras);
+
 // ── App mode toggle ──
 document.getElementById("drawModeBtn").addEventListener("click", () => setAppMode("draw"));
 document.getElementById("mouseModeBtn").addEventListener("click", () => setAppMode("mouse"));
@@ -1420,9 +1467,15 @@ async function start() {
   startBtn.disabled = true;
 
   try {
-    stream = await navigator.mediaDevices.getUserMedia({
-      video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" }
-    });
+    const selectedId = camSelect.value;
+    const videoConstraints = {
+      width: { ideal: 1280 }, height: { ideal: 720 },
+      ...(selectedId ? { deviceId: { exact: selectedId } } : { facingMode: "user" })
+    };
+    stream = await navigator.mediaDevices.getUserMedia({ video: videoConstraints });
+    // Now that permission is granted, labels will be available — refresh the list
+    await populateCameras();
+    if (selectedId) camSelect.value = selectedId;
     video.srcObject = stream;
     await video.play();
 
