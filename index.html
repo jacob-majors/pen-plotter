@@ -2292,12 +2292,10 @@ printerBtn.addEventListener("click", async () => {
     return;
   }
   try {
-    // Baud 115200 covers most Marlin/Klipper boards; change if needed
     serialPort = await navigator.serial.requestPort();
     await serialPort.open({ baudRate: 115200 });
-    const encoder = new TextEncoderStream();
-    encoder.readable.pipeTo(serialPort.writable);
-    serialWriter = encoder.writable.getWriter();
+    // Get a writer directly on the raw writable — no TextEncoderStream pipe needed
+    serialWriter = serialPort.writable.getWriter();
 
     // Ender 3 / Marlin init sequence
     await sendGcode("M110 N0\n");              // reset line number counter
@@ -2324,7 +2322,8 @@ printerBtn.addEventListener("click", async () => {
 });
 
 async function disconnectPrinter() {
-  try { await serialWriter?.close(); } catch(_) {}
+  _writeQueue = Promise.resolve(); // flush queue
+  try { serialWriter?.releaseLock(); } catch(_) {}
   try { await serialPort?.close();   } catch(_) {}
   serialPort = null; serialWriter = null;
   lastGcodeX = null; lastGcodeY = null;
@@ -2335,10 +2334,17 @@ async function disconnectPrinter() {
   printerPanel.style.display = "none";
 }
 
-async function sendGcode(line) {
-  if (serialWriter) {
-    try { await serialWriter.write(line); } catch(e) { console.warn("Serial write error:", e); }
-  }
+// Serial write queue — prevents overlapping writes that corrupt G-code
+let _writeQueue = Promise.resolve();
+const _enc = new TextEncoder();
+
+function sendGcode(line) {
+  if (!serialWriter) return Promise.resolve();
+  _writeQueue = _writeQueue.then(async () => {
+    try { await serialWriter.write(_enc.encode(line)); }
+    catch(e) { console.warn("Serial write error:", e); }
+  });
+  return _writeQueue;
 }
 
 // Called from the tracking loop whenever we have a new smoothed position.
