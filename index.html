@@ -1016,9 +1016,10 @@ window.addEventListener("scroll", () => {
 </script>
 
 <!-- ── MediaPipe tracking ── -->
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.js" crossorigin="anonymous"></script>
-<script>
-const { FaceLandmarker, HandLandmarker, FilesetResolver } = window.mpTasksVision || {};
+<script type="module">
+import { FaceLandmarker, HandLandmarker, FilesetResolver }
+  from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs";
+
 
 const video        = document.getElementById("video");
 const drawCanvas   = document.getElementById("drawCanvas");
@@ -1326,6 +1327,6 @@ function brightPt() {
   }
   return {x:(bx/sz)*W,y:(by/sz)*H};
 }
+
 </script>
 </body>
-</html>
