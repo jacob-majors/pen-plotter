@@ -4,840 +4,756 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Plotter — Draw with Your Body</title>
-  <meta name="description" content="An accessible art tool that lets anyone create art by moving any limb in front of a webcam. A plotter mimics your movement to paint and draw." />
+  <meta name="description" content="An accessible art tool. Move any limb in front of a webcam and a plotter mimics it to paint and draw." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-  <!-- Nav -->
-  <nav class="nav" id="nav">
-    <div class="nav-inner">
-      <a href="#" class="nav-logo">
-        <div class="nav-logo-mark">P</div>
-        <span class="nav-brand">Plotter</span>
+<!-- ████ NAV ████ -->
+<nav id="nav">
+  <div class="nav-inner">
+    <a href="#" class="logo">
+      <div class="logo-mark">P</div>
+      <span>Plotter</span>
+    </a>
+    <div class="nav-links">
+      <a href="#demo">Try It</a>
+      <a href="#features">Features</a>
+      <a href="#story">Story</a>
+      <a href="sources.html">Sources</a>
+      <a href="https://github.com/troypappas1/Plotter" target="_blank" class="nav-gh">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12c0 4.42 2.87 8.17 6.84 9.49.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.15-1.11-1.46-1.11-1.46-.91-.62.07-.61.07-.61 1 .07 1.53 1.03 1.53 1.03.89 1.52 2.34 1.08 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.56-1.11-4.56-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.65 0 0 .84-.27 2.75 1.02A9.56 9.56 0 0112 6.84c.85 0 1.7.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.38.2 2.4.1 2.65.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.85v2.74c0 .27.18.58.69.48A10 10 0 0022 12c0-5.52-4.48-10-10-10z"/></svg>
+        GitHub
       </a>
-      <div class="nav-links">
-        <a href="#demo">Try It</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ████ HERO ████ -->
+<section class="hero">
+  <div class="hero-glow g1"></div>
+  <div class="hero-glow g2"></div>
+  <div class="hero-glow g3"></div>
+  <div class="hero-grid-bg"></div>
+
+  <div class="hero-body">
+    <div class="eyebrow-tag">
+      <span class="live-dot"></span>
+      Free &amp; open source · Runs in your browser · No hardware required
+    </div>
+
+    <h1>
+      Create art with<br>
+      <span class="grad">any movement.</span>
+    </h1>
+
+    <p class="hero-p">
+      Plotter tracks any part of your body through a webcam — a hand, your head, a foot —
+      and drives a physical pen plotter to paint and draw on paper.
+      <strong>Art is for everyone.</strong>
+    </p>
+
+    <div class="hero-btns">
+      <a href="#demo" class="btn-brand">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
+        Try in your browser
+      </a>
+      <a href="https://github.com/troypappas1/Plotter" target="_blank" class="btn-outline">
+        View on GitHub →
+      </a>
+    </div>
+
+    <p class="fine-print">Chrome &amp; Firefox · Camera stays on your device · Nothing uploaded</p>
+
+    <!-- Browser chrome mockup -->
+    <div class="mockup">
+      <div class="mockup-chrome">
+        <div class="chrome-dots"><span></span><span></span><span></span></div>
+        <div class="chrome-addr">plotter.app</div>
+      </div>
+      <div class="mockup-body">
+        <canvas id="heroCanvas" width="800" height="200"></canvas>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ████ DEMO ████ -->
+<section id="demo" class="section demo-section">
+  <div class="container">
+    <div class="section-tag">Live Demo</div>
+    <h2>Move anything. Draw everything.</h2>
+    <p class="section-sub">Your camera never leaves your device — MediaPipe runs entirely in your browser via WebAssembly.</p>
+
+    <div class="demo-wrap">
+
+      <!-- Canvas area -->
+      <div class="canvas-area">
+        <!-- The drawing canvas -->
+        <canvas id="drawCanvas" width="800" height="480"></canvas>
+
+        <!-- Overlay canvas (tracking dots) sits on top -->
+        <canvas id="overlayCanvas" width="800" height="480"></canvas>
+
+        <!-- PIP camera preview -->
+        <div class="pip" id="pip">
+          <div class="pip-top">
+            <span class="pip-indicator" id="pipIndicator">
+              <span class="pip-dot-inner"></span> LIVE
+            </span>
+            <span class="pip-label" id="pipLabel">nose</span>
+          </div>
+          <div class="pip-body">
+            <video id="video" autoplay playsinline muted></video>
+            <div class="pip-off" id="pipOff">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="2" y1="2" x2="22" y2="22"/><path d="M10.66 6H14a2 2 0 012 2v2.34"/><path d="M6.07 6.07A1.96 1.96 0 006 8v8a2 2 0 002 2h8c.01 0 .02 0 .03-.01"/><path d="M10.73 15.27A2 2 0 0012 16a2 2 0 002-2c0-.48-.17-.91-.46-1.24"/></svg>
+              Camera off
+            </div>
+          </div>
+        </div>
+
+        <!-- Mouse mode info strip -->
+        <div class="mouse-info" id="mouseInfo">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="7" y="2" width="10" height="16" rx="5"/><line x1="12" y1="8" x2="12" y2="12"/></svg>
+          Mouse mode — your body movement steers the real cursor on this page
+        </div>
+
+        <!-- Toolbar -->
+        <div class="toolbar" id="toolbar">
+          <div class="colors">
+            <button class="color-btn active" data-color="#2d7ae0" style="background:#2d7ae0"></button>
+            <button class="color-btn" data-color="#0ea5c8" style="background:#0ea5c8"></button>
+            <button class="color-btn" data-color="#a855f7" style="background:#a855f7"></button>
+            <button class="color-btn" data-color="#f43f5e" style="background:#f43f5e"></button>
+            <button class="color-btn" data-color="#f97316" style="background:#f97316"></button>
+            <button class="color-btn" data-color="#22c55e" style="background:#22c55e"></button>
+            <button class="color-btn" data-color="#facc15" style="background:#facc15"></button>
+            <button class="color-btn" data-color="#ffffff" style="background:#ffffff"></button>
+          </div>
+          <div class="toolbar-right">
+            <button id="clearBtn" class="tool-btn">Clear</button>
+            <button id="saveBtn" class="tool-btn">Save PNG</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Controls sidebar -->
+      <div class="sidebar">
+
+        <!-- Draw / Mouse toggle -->
+        <div class="seg-ctrl">
+          <button class="seg active" id="drawModeBtn" data-mode="draw">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5z"/></svg>
+            Draw
+          </button>
+          <button class="seg" id="mouseModeBtn" data-mode="mouse">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="7" y="2" width="10" height="16" rx="5"/><line x1="12" y1="8" x2="12" y2="12"/></svg>
+            Mouse
+          </button>
+        </div>
+
+        <!-- Start button -->
+        <button id="startBtn" class="start-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
+          <span id="startLabel">Start Camera</span>
+        </button>
+
+        <div id="statusEl" class="status-pill status-idle">
+          <span class="status-dot-el"></span>
+          <span id="statusText">Ready</span>
+        </div>
+
+        <hr class="divider">
+
+        <!-- Track mode -->
+        <div class="ctrl-section">
+          <div class="ctrl-label">Track</div>
+          <div class="track-opts">
+            <label class="track-opt">
+              <input type="radio" name="trackMode" value="nose" checked>
+              <div class="track-card">
+                <span class="track-icon">😶</span>
+                <div>
+                  <div class="track-name">Nose</div>
+                  <div class="track-hint">Head movement</div>
+                </div>
+              </div>
+            </label>
+            <label class="track-opt">
+              <input type="radio" name="trackMode" value="hand">
+              <div class="track-card">
+                <span class="track-icon">✋</span>
+                <div>
+                  <div class="track-name">Hand</div>
+                  <div class="track-hint">Wrist / palm</div>
+                </div>
+              </div>
+            </label>
+            <label class="track-opt">
+              <input type="radio" name="trackMode" value="any">
+              <div class="track-card">
+                <span class="track-icon">✦</span>
+                <div>
+                  <div class="track-name">Any object</div>
+                  <div class="track-hint">Bright point</div>
+                </div>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <hr class="divider">
+
+        <!-- Sliders -->
+        <div class="ctrl-section">
+          <div class="ctrl-row">
+            <div class="ctrl-label">Brush size</div>
+            <div class="ctrl-val" id="brushVal">8px</div>
+          </div>
+          <input type="range" id="brushSlider" min="2" max="40" value="8" class="range-input">
+        </div>
+
+        <div class="ctrl-section">
+          <div class="ctrl-row">
+            <div class="ctrl-label">Smoothing</div>
+            <div class="ctrl-val" id="smoothVal">6</div>
+          </div>
+          <input type="range" id="smoothSlider" min="1" max="20" value="6" class="range-input">
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ████ FEATURES ████ -->
+<section id="features" class="section">
+  <div class="container">
+    <div class="section-tag">Capabilities</div>
+    <h2>Any limb. Any movement. Any art.</h2>
+    <p class="section-sub">Built for people who can't hold a brush — but can move something.</p>
+
+    <div class="feat-grid">
+      <div class="feat-card span2">
+        <div class="feat-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="7" r="4"/><path d="M12 11v10M8 21h8"/><path d="M9 14.5L6 19M15 14.5L18 19"/></svg>
+        </div>
+        <h3>Head &amp; face tracking</h3>
+        <p>Nod, tilt, and turn your head to steer the plotter across the full canvas. Full 2D drawing from neck movement alone, using MediaPipe's 478-point face mesh running at 30fps in your browser.</p>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 11V6a2 2 0 00-4 0v1M14 7V4a2 2 0 00-4 0v3M10 7.5V5a2 2 0 00-4 0v6M6 11v2a6 6 0 006 6 6 6 0 006-6v-5a2 2 0 00-4 0"/></svg>
+        </div>
+        <h3>Hand &amp; wrist</h3>
+        <p>Wave a hand in the camera frame — the wrist landmark drives the pen. Fine gestures make fine strokes.</p>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/></svg>
+        </div>
+        <h3>Any bright object</h3>
+        <p>A foot, elbow, or anything that contrasts with the background can become your drawing cursor.</p>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+        </div>
+        <h3>Physical plotter output</h3>
+        <p>Connect a pen plotter or CNC over serial. Live X/Y coordinates stream to the machine — your body becomes the arm.</p>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <h3>Private by design</h3>
+        <p>All vision runs locally in your browser via WebAssembly. Zero video is ever sent to a server.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ████ HOW IT WORKS ████ -->
+<section class="section how-section">
+  <div class="container">
+    <div class="section-tag">Process</div>
+    <h2>Up and running in minutes.</h2>
+    <div class="steps">
+      <div class="step">
+        <div class="step-n">01</div>
+        <h3>Open in browser</h3>
+        <p>No install needed. Click "Try in your browser" above and allow camera access when prompted.</p>
+      </div>
+      <div class="step">
+        <div class="step-n">02</div>
+        <h3>Point the camera</h3>
+        <p>Aim the webcam at whichever body part the person can move — head, hand, foot, or elbow.</p>
+      </div>
+      <div class="step">
+        <div class="step-n">03</div>
+        <h3>Start drawing</h3>
+        <p>Move freely. The mini camera preview shows exactly what the tracker sees in real time.</p>
+      </div>
+      <div class="step">
+        <div class="step-n">04</div>
+        <h3>Plotter creates art</h3>
+        <p>The pen arm mirrors every movement — producing real ink on real paper.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ████ STORY ████ -->
+<section id="story" class="section story-section">
+  <div class="container">
+    <div class="story-grid">
+      <div class="story-left">
+        <div class="section-tag">The Story</div>
+        <h2>Art should have no barriers.</h2>
+        <div class="authors">
+          <div class="author">
+            <div class="avatar">JM</div>
+            <div>
+              <div class="author-name">Jacob Majors</div>
+              <div class="author-role">Creator</div>
+            </div>
+          </div>
+          <div class="author">
+            <div class="avatar">TP</div>
+            <div>
+              <div class="author-name">Troy Pappas</div>
+              <div class="author-role">Creator</div>
+            </div>
+          </div>
+        </div>
+        <div class="story-school">Sonoma Academy · 2026</div>
+      </div>
+      <div class="story-right">
+        <p>Plotter started with a simple but powerful question: <strong>what if someone can't hold a brush?</strong> For people with limited motor ability — whether from a condition, an injury, or a disability — traditional art tools are inaccessible. The canvas stays blank not because of a lack of creativity, but because of a lack of tools.</p>
+        <p>The idea grew out of <strong>Ramsey Mussalum's Design for Social Good</strong> course at Sonoma Academy — a class built around one idea: design should solve real problems for real people.</p>
+        <p>Plotter moves the paintbrush entirely off the person's body. Point a webcam at whatever limb someone <em>can</em> move — a head, a wrist, a foot — and a physical pen plotter mimics those movements on paper. The person becomes the artist. The machine becomes their hand.</p>
+        <blockquote>No expensive hardware. No subscriptions. Just movement, and art.</blockquote>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ████ CTA ████ -->
+<section class="section cta-section">
+  <div class="container cta-inner">
+    <div class="cta-glow"></div>
+    <h2>Ready to create?</h2>
+    <p>Free, open source, and always will be.</p>
+    <div class="hero-btns">
+      <a href="#demo" class="btn-brand btn-lg">Try it now — it's free</a>
+      <a href="https://github.com/troypappas1/Plotter" target="_blank" class="btn-outline btn-lg">Star on GitHub ★</a>
+    </div>
+  </div>
+</section>
+
+<!-- ████ FOOTER ████ -->
+<footer>
+  <div class="container footer-inner">
+    <div class="footer-brand">
+      <div class="logo-mark">P</div>
+      <div>
+        <div class="footer-name">Plotter</div>
+        <div class="footer-desc">Draw with your body. Art without barriers.</div>
+      </div>
+    </div>
+    <div class="footer-cols">
+      <div class="footer-col">
+        <div class="fcol-title">Project</div>
+        <a href="#demo">Try Demo</a>
         <a href="#features">Features</a>
-        <a href="#story">Story</a>
         <a href="sources.html">Sources</a>
-        <a href="https://github.com/troypappas1/Plotter" target="_blank" rel="noopener noreferrer" class="nav-github">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.009-.868-.013-1.703-2.782.604-3.369-1.341-3.369-1.341-.454-1.154-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836c.85.004 1.705.115 2.504.337 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.202 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.741 0 .267.18.578.688.48C19.138 20.163 22 16.418 22 12c0-5.523-4.477-10-10-10z"/></svg>
-          GitHub
-        </a>
+      </div>
+      <div class="footer-col">
+        <div class="fcol-title">Links</div>
+        <a href="https://github.com/troypappas1/Plotter" target="_blank">GitHub</a>
+        <a href="https://github.com/troypappas1/Plotter/issues/new" target="_blank">Report Issue</a>
       </div>
     </div>
-  </nav>
+  </div>
+  <div class="footer-bottom">
+    <span>© 2026 Jacob Majors &amp; Troy Pappas · Sonoma Academy</span>
+    <span>Camera processing runs locally in your browser.</span>
+  </div>
+</footer>
 
-  <main>
+<!-- ── Hero canvas animation ── -->
+<script>
+(function(){
+  const c = document.getElementById("heroCanvas");
+  if (!c) return;
+  const ctx = c.getContext("2d");
+  ctx.fillStyle = "#0b0e1a";
+  ctx.fillRect(0, 0, c.width, c.height);
 
-    <!-- ═══ HERO ═══ -->
-    <section class="hero">
-      <div class="hero-bg">
-        <div class="hero-orb hero-orb-1"></div>
-        <div class="hero-orb hero-orb-2"></div>
-        <div class="hero-orb hero-orb-3"></div>
-        <div class="hero-grid"></div>
-      </div>
-      <div class="hero-content">
-        <div class="hero-eyebrow">
-          <span class="eyebrow-dot"></span>
-          Free &amp; open source &nbsp;·&nbsp; Runs in your browser &nbsp;·&nbsp; No hardware required
-        </div>
+  const strokes = [
+    { color:"#2d7ae0", w:3, pts:[] },
+    { color:"#0ea5c8", w:2, pts:[] },
+    { color:"#a855f7", w:2.5, pts:[] },
+    { color:"#f43f5e", w:2, pts:[] },
+    { color:"#22c55e", w:1.5, pts:[] },
+  ];
+  strokes.forEach((s,i) => {
+    let x = 40 + i*150, y = 80 + Math.sin(i)*40;
+    for(let j=0;j<50;j++){
+      x += 7 + Math.random()*5;
+      y += (Math.random()-0.5)*30;
+      y = Math.max(20, Math.min(c.height-20, y));
+      s.pts.push({x,y});
+    }
+  });
 
-        <h1 class="hero-title">
-          <span class="hero-title-line1">Create art with</span>
-          <span class="hero-title-line2 gradient-text">any movement.</span>
-        </h1>
-
-        <p class="hero-desc">
-          Plotter tracks any part of your body through a webcam — a hand, your head, a foot —
-          and drives a physical pen plotter to paint and draw on paper. Art is for everyone.
-        </p>
-
-        <div class="hero-ctas">
-          <a href="#demo" class="cta-primary">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polygon points="10,8 16,12 10,16"/></svg>
-            Try in your browser
-          </a>
-          <a href="https://github.com/troypappas1/Plotter" target="_blank" rel="noopener noreferrer" class="cta-secondary">
-            View on GitHub
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 17L17 7M17 7H7M17 7v10"/></svg>
-          </a>
-        </div>
-
-        <p class="hero-fine">Works in Chrome &amp; Firefox &nbsp;·&nbsp; Camera stays on your device &nbsp;·&nbsp; Nothing is uploaded</p>
-
-        <!-- Hero visual mockup -->
-        <div class="hero-mockup">
-          <div class="mockup-frame">
-            <div class="mockup-bar">
-              <span class="mockup-dot r"></span>
-              <span class="mockup-dot y"></span>
-              <span class="mockup-dot g"></span>
-              <span class="mockup-url">plotter.app — Live Demo</span>
-            </div>
-            <div class="mockup-canvas">
-              <canvas id="heroCanvas" width="700" height="220"></canvas>
-              <div class="mockup-overlay-text">Move your body. Watch it draw.</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ═══ LIVE DEMO ═══ -->
-    <section id="demo" class="demo-section">
-      <div class="section-inner">
-        <div class="section-eyebrow">
-          <span class="eyebrow-pill">Live Demo</span>
-        </div>
-        <h2 class="section-title">Move anything.<br>Draw everything.</h2>
-        <p class="section-desc">
-          Your camera never leaves your device. MediaPipe runs entirely in your browser.
-        </p>
-
-        <div class="demo-shell">
-
-          <!-- Left: drawing canvas (main) -->
-          <div class="demo-main">
-            <div class="draw-frame">
-              <canvas id="drawCanvas"></canvas>
-
-              <!-- Floating camera pip -->
-              <div class="pip-wrap" id="pipWrap">
-                <div class="pip-header">
-                  <span class="pip-live" id="pipLive">
-                    <span class="pip-dot"></span> LIVE
-                  </span>
-                  <span class="pip-mode" id="pipMode">nose</span>
-                </div>
-                <div class="pip-video-wrap">
-                  <video id="video" autoplay playsinline muted></video>
-                  <canvas id="overlayCanvas"></canvas>
-                  <div class="pip-offline" id="pipOffline">
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/><line x1="1" y1="1" x2="23" y2="23" stroke-width="2"/></svg>
-                    <span>Camera off</span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Mouse mode banner (visible only in mouse mode) -->
-              <div class="mouse-banner" id="mouseBanner">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                Mouse control mode — your tracked point moves the <strong>real cursor</strong> on this page.
-                Move your head/hand to steer.
-              </div>
-
-              <!-- Drawing toolbar (bottom of canvas) -->
-              <div class="draw-toolbar" id="drawToolbar">
-                <div class="toolbar-colors">
-                  <button class="tc active" style="--c:#2d7ae0" data-color="#2d7ae0" title="Blue"></button>
-                  <button class="tc" style="--c:#0ea5c8" data-color="#0ea5c8" title="Cyan"></button>
-                  <button class="tc" style="--c:#a855f7" data-color="#a855f7" title="Purple"></button>
-                  <button class="tc" style="--c:#f43f5e" data-color="#f43f5e" title="Red"></button>
-                  <button class="tc" style="--c:#f97316" data-color="#f97316" title="Orange"></button>
-                  <button class="tc" style="--c:#22c55e" data-color="#22c55e" title="Green"></button>
-                  <button class="tc" style="--c:#facc15" data-color="#facc15" title="Yellow"></button>
-                  <button class="tc" style="--c:#ffffff" data-color="#ffffff" title="White"></button>
-                </div>
-                <div class="toolbar-right">
-                  <button id="clearBtn" class="tb-btn">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
-                    Clear
-                  </button>
-                  <button id="saveBtn" class="tb-btn">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                    Save
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Right: controls panel -->
-          <div class="demo-sidebar">
-
-            <!-- Mode toggle -->
-            <div class="app-mode-toggle">
-              <button class="app-mode-btn active" id="modeDrawBtn" data-mode="draw">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18z"/></svg>
-                Draw
-              </button>
-              <button class="app-mode-btn" id="mouseModeBtn" data-mode="mouse">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="7" y="2" width="10" height="16" rx="5"/><line x1="12" y1="8" x2="12" y2="12"/></svg>
-                Mouse
-              </button>
-            </div>
-
-            <!-- Start button -->
-            <button id="startBtn" class="start-btn">
-              <svg id="startIcon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><polygon points="10,8 16,12 10,16"/></svg>
-              <span id="startLabel">Start Camera</span>
-            </button>
-
-            <div id="statusBadge" class="status-badge status-off">
-              <span class="status-dot"></span>
-              <span id="statusText">Ready</span>
-            </div>
-
-            <div class="sidebar-divider"></div>
-
-            <!-- Track mode -->
-            <div class="control-block">
-              <div class="control-title">Track mode</div>
-              <div class="mode-options">
-                <label class="mode-opt">
-                  <input type="radio" name="trackMode" value="nose" checked />
-                  <div class="mode-card">
-                    <span class="mode-icon">😶</span>
-                    <span class="mode-name">Nose</span>
-                    <span class="mode-desc">Head movement</span>
-                  </div>
-                </label>
-                <label class="mode-opt">
-                  <input type="radio" name="trackMode" value="hand" />
-                  <div class="mode-card">
-                    <span class="mode-icon">✋</span>
-                    <span class="mode-name">Hand</span>
-                    <span class="mode-desc">Wrist / palm</span>
-                  </div>
-                </label>
-                <label class="mode-opt">
-                  <input type="radio" name="trackMode" value="any" />
-                  <div class="mode-card">
-                    <span class="mode-icon">✦</span>
-                    <span class="mode-name">Any</span>
-                    <span class="mode-desc">Bright object</span>
-                  </div>
-                </label>
-              </div>
-            </div>
-
-            <div class="sidebar-divider"></div>
-
-            <!-- Brush size -->
-            <div class="control-block">
-              <div class="control-title-row">
-                <span class="control-title">Brush size</span>
-                <span id="brushSizeVal" class="control-val">8px</span>
-              </div>
-              <input type="range" id="brushSize" min="2" max="40" value="8" class="slider" />
-            </div>
-
-            <!-- Smoothing -->
-            <div class="control-block">
-              <div class="control-title-row">
-                <span class="control-title">Smoothing</span>
-                <span id="smoothingVal" class="control-val">6</span>
-              </div>
-              <input type="range" id="smoothing" min="1" max="20" value="6" class="slider" />
-            </div>
-
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ═══ FEATURES ═══ -->
-    <section id="features" class="features-section">
-      <div class="section-inner">
-        <div class="section-eyebrow"><span class="eyebrow-pill">Capabilities</span></div>
-        <h2 class="section-title">Any limb.<br>Any movement. Any art.</h2>
-        <p class="section-desc">Built for people who can't hold a brush — but can move something.</p>
-
-        <div class="features-grid">
-          <div class="feat-card feat-card-wide">
-            <div class="feat-icon-wrap">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M12 12v9M8 21h8"/><path d="M9 14l-3 4M15 14l3 4"/></svg>
-            </div>
-            <h3>Head &amp; face tracking</h3>
-            <p>Nod, tilt, and turn your head to steer the plotter across the full canvas. Full 2D drawing from neck movement alone using MediaPipe's 478-point face mesh.</p>
-          </div>
-          <div class="feat-card">
-            <div class="feat-icon-wrap">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 11V6a2 2 0 00-2-2 2 2 0 00-2 2v0M14 10V4a2 2 0 00-2-2 2 2 0 00-2 2v2M10 10.5V6a2 2 0 00-2-2 2 2 0 00-2 2v8M6 14v1a6 6 0 006 6h0a6 6 0 006-6v-5"/></svg>
-            </div>
-            <h3>Hand &amp; wrist</h3>
-            <p>Wave a hand in frame — the wrist landmark drives the pen. Fine gestures make fine lines.</p>
-          </div>
-          <div class="feat-card">
-            <div class="feat-icon-wrap">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-            </div>
-            <h3>Any body part</h3>
-            <p>Foot, elbow, shoulder — in "bright object" mode, anything that contrasts with the background becomes the drawing cursor.</p>
-          </div>
-          <div class="feat-card">
-            <div class="feat-icon-wrap">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
-            </div>
-            <h3>Physical plotter output</h3>
-            <p>Connect a pen plotter or CNC over serial. Live X/Y coordinates stream from the browser to the machine — your body becomes the arm.</p>
-          </div>
-          <div class="feat-card">
-            <div class="feat-icon-wrap">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-            </div>
-            <h3>Private by design</h3>
-            <p>All vision runs locally in your browser via WebAssembly. Zero video is ever sent to a server.</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ═══ HOW IT WORKS ═══ -->
-    <section class="how-section">
-      <div class="section-inner">
-        <div class="section-eyebrow"><span class="eyebrow-pill">Process</span></div>
-        <h2 class="section-title">Up and running<br>in minutes.</h2>
-
-        <div class="steps-wrap">
-          <div class="steps-line"></div>
-          <div class="steps-grid">
-            <div class="step-item">
-              <div class="step-num">01</div>
-              <h3>Open in browser</h3>
-              <p>No install. Click "Try in your browser" above, allow camera access when prompted.</p>
-            </div>
-            <div class="step-item">
-              <div class="step-num">02</div>
-              <h3>Point the camera</h3>
-              <p>Aim at whichever body part the person can move — head, hand, foot, or elbow.</p>
-            </div>
-            <div class="step-item">
-              <div class="step-num">03</div>
-              <h3>Start drawing</h3>
-              <p>Move freely. The mini camera preview shows exactly what the tracker sees.</p>
-            </div>
-            <div class="step-item">
-              <div class="step-num">04</div>
-              <h3>Plotter creates art</h3>
-              <p>The pen arm mirrors your movement — producing real ink on real paper.</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ═══ STORY ═══ -->
-    <section id="story" class="story-section">
-      <div class="section-inner">
-        <div class="story-layout">
-          <div class="story-left">
-            <div class="section-eyebrow"><span class="eyebrow-pill">The Story</span></div>
-            <h2 class="section-title">Art should have<br>no barriers.</h2>
-            <div class="story-authors">
-              <div class="author-chip">
-                <div class="author-avatar">JM</div>
-                <div>
-                  <div class="author-name">Jacob Majors</div>
-                  <div class="author-role">Creator</div>
-                </div>
-              </div>
-              <div class="author-chip">
-                <div class="author-avatar">TP</div>
-                <div>
-                  <div class="author-name">Troy Pappas</div>
-                  <div class="author-role">Creator</div>
-                </div>
-              </div>
-            </div>
-            <div class="story-meta">Sonoma Academy &nbsp;·&nbsp; 2026</div>
-          </div>
-          <div class="story-right">
-            <p>
-              Plotter started with a simple but powerful question:
-              <strong>what if someone can't hold a brush?</strong>
-              For people with limited motor ability — whether from a condition, an injury, or a disability —
-              traditional art tools are inaccessible. The canvas stays blank not because of a lack of
-              creativity, but because of a lack of tools.
-            </p>
-            <p>
-              The idea grew out of <strong>Ramsey Mussalum's Design for Social Good</strong> course
-              at Sonoma Academy — a class built around one idea: design should solve real problems
-              for real people.
-            </p>
-            <p>
-              Plotter moves the paintbrush entirely off the person's body. Point a webcam at whatever
-              limb someone <em>can</em> move — a head, a wrist, a foot — and a physical pen plotter
-              mimics those movements on paper. The person becomes the artist. The machine becomes
-              their hand.
-            </p>
-            <p class="story-tagline">No expensive hardware. No subscriptions. Just movement and art.</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ═══ CTA ═══ -->
-    <section class="cta-section">
-      <div class="cta-inner">
-        <div class="cta-orb"></div>
-        <h2 class="cta-title">Ready to create?</h2>
-        <p class="cta-desc">Free, open source, and always will be.</p>
-        <div class="cta-buttons">
-          <a href="#demo" class="cta-primary cta-primary-lg">Try it now — it's free</a>
-          <a href="https://github.com/troypappas1/Plotter" target="_blank" rel="noopener noreferrer" class="cta-secondary">
-            Star on GitHub
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14 2 9.27l6.91-1.01z"/></svg>
-          </a>
-        </div>
-      </div>
-    </section>
-
-  </main>
-
-  <!-- Footer -->
-  <footer class="footer">
-    <div class="footer-inner">
-      <div class="footer-left">
-        <div class="footer-brand">
-          <div class="nav-logo-mark" style="width:28px;height:28px;font-size:0.75rem;">P</div>
-          <span>Plotter</span>
-        </div>
-        <p class="footer-tagline">Draw with your body. Art without barriers.</p>
-      </div>
-      <div class="footer-links">
-        <div class="footer-col">
-          <div class="footer-col-title">Project</div>
-          <a href="#demo">Try Demo</a>
-          <a href="#features">Features</a>
-          <a href="sources.html">Sources</a>
-        </div>
-        <div class="footer-col">
-          <div class="footer-col-title">Links</div>
-          <a href="https://github.com/troypappas1/Plotter" target="_blank" rel="noopener noreferrer">GitHub</a>
-          <a href="https://github.com/troypappas1/Plotter/issues/new" target="_blank" rel="noopener noreferrer">Report Issue</a>
-        </div>
-      </div>
-    </div>
-    <div class="footer-bottom">
-      <span>© 2026 Jacob Majors &amp; Troy Pappas &nbsp;·&nbsp; Sonoma Academy</span>
-      <span>All camera processing runs locally in your browser.</span>
-    </div>
-  </footer>
-
-  <script>
-    // ── Nav scroll effect ──
-    window.addEventListener("scroll", () => {
-      document.getElementById("nav").classList.toggle("nav-scrolled", window.scrollY > 20);
+  let frame = 0;
+  function draw(){
+    ctx.fillStyle = "rgba(11,14,26,0.06)";
+    ctx.fillRect(0,0,c.width,c.height);
+    const p = ((frame % 100) / 100);
+    strokes.forEach(s => {
+      const end = Math.max(2, Math.floor(p * s.pts.length));
+      ctx.beginPath();
+      ctx.moveTo(s.pts[0].x, s.pts[0].y);
+      for(let i=1;i<end;i++) ctx.lineTo(s.pts[i].x, s.pts[i].y);
+      ctx.strokeStyle = s.color;
+      ctx.lineWidth = s.w;
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      ctx.stroke();
+      const tip = s.pts[end-1];
+      ctx.beginPath();
+      ctx.arc(tip.x, tip.y, s.w*2.5, 0, Math.PI*2);
+      ctx.fillStyle = s.color;
+      ctx.fill();
     });
+    frame++;
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
 
-    // ── Hero canvas animated drawing demo ──
-    (function() {
-      const c = document.getElementById("heroCanvas");
-      const ctx = c.getContext("2d");
-      ctx.fillStyle = "#0c0f1a";
-      ctx.fillRect(0, 0, c.width, c.height);
+// Nav scroll
+window.addEventListener("scroll", () => {
+  document.getElementById("nav").classList.toggle("scrolled", window.scrollY > 10);
+});
+</script>
 
-      const curves = [
-        { pts: [], color: "#2d7ae0", w: 3 },
-        { pts: [], color: "#0ea5c8", w: 2 },
-        { pts: [], color: "#a855f7", w: 2.5 },
-        { pts: [], color: "#f43f5e", w: 2 },
-        { pts: [], color: "#22c55e", w: 1.5 },
-      ];
+<!-- ── MediaPipe tracking ── -->
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.js" crossorigin="anonymous"></script>
+<script>
+const { FaceLandmarker, HandLandmarker, FilesetResolver } = window.mpTasksVision || {};
 
-      // pre-generate random wavy paths
-      curves.forEach((curve, ci) => {
-        const startX = 20 + ci * 130;
-        const startY = 80 + Math.random() * 60;
-        let x = startX, y = startY;
-        for (let i = 0; i < 60; i++) {
-          x += 6 + Math.random() * 4;
-          y += (Math.random() - 0.5) * 28;
-          y = Math.max(20, Math.min(c.height - 20, y));
-          curve.pts.push({ x, y });
-        }
-      });
+const video        = document.getElementById("video");
+const drawCanvas   = document.getElementById("drawCanvas");
+const overlayCanvas= document.getElementById("overlayCanvas");
+const startBtn     = document.getElementById("startBtn");
+const startLabel   = document.getElementById("startLabel");
+const clearBtn     = document.getElementById("clearBtn");
+const saveBtn      = document.getElementById("saveBtn");
+const statusEl     = document.getElementById("statusEl");
+const statusText   = document.getElementById("statusText");
+const pipOff       = document.getElementById("pipOff");
+const pipIndicator = document.getElementById("pipIndicator");
+const pipLabel     = document.getElementById("pipLabel");
+const mouseInfo    = document.getElementById("mouseInfo");
+const toolbar      = document.getElementById("toolbar");
+const brushSlider  = document.getElementById("brushSlider");
+const brushVal     = document.getElementById("brushVal");
+const smoothSlider = document.getElementById("smoothSlider");
+const smoothVal    = document.getElementById("smoothVal");
 
-      let frame = 0;
-      const totalFrames = 120;
+const dctx = drawCanvas.getContext("2d");
+const octx = overlayCanvas.getContext("2d");
 
-      function draw() {
-        ctx.fillStyle = "rgba(12,15,26,0.04)";
-        ctx.fillRect(0, 0, c.width, c.height);
+// Fill draw canvas
+dctx.fillStyle = "#0b0e1a";
+dctx.fillRect(0, 0, drawCanvas.width, drawCanvas.height);
 
-        const progress = (frame % totalFrames) / totalFrames;
+const W = drawCanvas.width, H = drawCanvas.height;
 
-        curves.forEach((curve) => {
-          const end = Math.floor(progress * curve.pts.length);
-          if (end < 2) return;
-          ctx.beginPath();
-          ctx.moveTo(curve.pts[0].x, curve.pts[0].y);
-          for (let i = 1; i < end; i++) {
-            ctx.lineTo(curve.pts[i].x, curve.pts[i].y);
-          }
-          ctx.strokeStyle = curve.color;
-          ctx.lineWidth = curve.w;
-          ctx.lineCap = "round";
-          ctx.lineJoin = "round";
-          ctx.globalAlpha = 0.8;
-          ctx.stroke();
-          ctx.globalAlpha = 1;
+let running = false, stream = null;
+let faceLM = null, handLM = null, modelsLoaded = false;
+let brushColor = "#2d7ae0", brushSize = 8, smoothing = 6;
+let prevX = null, prevY = null, smoothX = null, smoothY = null;
+let lastTime = -1;
+let appMode = "draw";
 
-          // draw cursor dot at tip
-          if (end > 0) {
-            const tip = curve.pts[end - 1];
-            ctx.beginPath();
-            ctx.arc(tip.x, tip.y, curve.w * 2, 0, Math.PI * 2);
-            ctx.fillStyle = curve.color;
-            ctx.globalAlpha = 0.9;
-            ctx.fill();
-            ctx.globalAlpha = 1;
-          }
-        });
+// ── Sliders ──
+brushSlider.addEventListener("input", () => {
+  brushSize = +brushSlider.value;
+  brushVal.textContent = brushSize + "px";
+});
+smoothSlider.addEventListener("input", () => {
+  smoothing = +smoothSlider.value;
+  smoothVal.textContent = smoothing;
+});
 
-        frame++;
-        requestAnimationFrame(draw);
+// ── Color buttons ──
+document.querySelectorAll(".color-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".color-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    brushColor = btn.dataset.color;
+  });
+});
+
+// ── Track mode ──
+document.querySelectorAll('input[name="trackMode"]').forEach(r => {
+  r.addEventListener("change", () => {
+    pipLabel.textContent = r.value;
+    prevX = null; prevY = null;
+  });
+});
+
+// ── App mode toggle ──
+document.getElementById("drawModeBtn").addEventListener("click", () => setAppMode("draw"));
+document.getElementById("mouseModeBtn").addEventListener("click", () => setAppMode("mouse"));
+
+function setAppMode(m) {
+  appMode = m;
+  document.getElementById("drawModeBtn").classList.toggle("active", m === "draw");
+  document.getElementById("mouseModeBtn").classList.toggle("active", m === "mouse");
+  toolbar.style.display    = m === "draw"  ? "flex" : "none";
+  mouseInfo.style.display  = m === "mouse" ? "flex" : "none";
+  prevX = null; prevY = null;
+}
+
+// ── Clear / Save ──
+clearBtn.addEventListener("click", () => {
+  dctx.fillStyle = "#0b0e1a";
+  dctx.fillRect(0, 0, W, H);
+  prevX = null; prevY = null;
+});
+saveBtn.addEventListener("click", () => {
+  const a = document.createElement("a");
+  a.download = "plotter-art.png";
+  a.href = drawCanvas.toDataURL();
+  a.click();
+});
+
+// ── Status ──
+function setStatus(text, state) {
+  statusText.textContent = text;
+  statusEl.className = "status-pill status-" + state;
+}
+
+// ── Start / Stop ──
+startBtn.addEventListener("click", async () => {
+  if (running) { stop(); return; }
+  await start();
+});
+
+async function start() {
+  setStatus("Requesting camera…", "loading");
+  startLabel.textContent = "Starting…";
+  startBtn.disabled = true;
+
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" }
+    });
+    video.srcObject = stream;
+    await video.play();
+
+    // Show camera immediately
+    pipOff.style.display = "none";
+    pipIndicator.style.opacity = "1";
+    setStatus("Loading AI models…", "loading");
+
+    if (!modelsLoaded) {
+      await loadModels();
+      modelsLoaded = true;
+    }
+
+    running = true;
+    startLabel.textContent = "Stop";
+    startBtn.disabled = false;
+    startBtn.classList.add("stop");
+    setStatus("Tracking", "on");
+    requestAnimationFrame(loop);
+
+  } catch(err) {
+    console.error(err);
+    setStatus(
+      err.name === "NotAllowedError" ? "Camera permission denied — please allow access in browser settings." :
+      err.name === "NotFoundError"   ? "No camera found — please connect a webcam." :
+      "Error: " + err.message,
+      "error"
+    );
+    startLabel.textContent = "Start Camera";
+    startBtn.disabled = false;
+    pipOff.style.display = "flex";
+    pipIndicator.style.opacity = "0";
+  }
+}
+
+async function loadModels() {
+  const vision = await FilesetResolver.forVisionTasks(
+    "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm"
+  );
+  [faceLM, handLM] = await Promise.all([
+    FaceLandmarker.createFromOptions(vision, {
+      baseOptions: {
+        modelAssetPath: "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task",
+        delegate: "GPU"
+      },
+      runningMode: "VIDEO", numFaces: 1,
+      outputFaceBlendshapes: false, outputFacialTransformationMatrixes: false
+    }),
+    HandLandmarker.createFromOptions(vision, {
+      baseOptions: {
+        modelAssetPath: "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task",
+        delegate: "GPU"
+      },
+      runningMode: "VIDEO", numHands: 1
+    })
+  ]);
+}
+
+function stop() {
+  running = false;
+  if (stream) stream.getTracks().forEach(t => t.stop());
+  stream = null; video.srcObject = null;
+  octx.clearRect(0, 0, W, H);
+  pipOff.style.display = "flex";
+  pipIndicator.style.opacity = "0";
+  startLabel.textContent = "Start Camera";
+  startBtn.disabled = false;
+  startBtn.classList.remove("stop");
+  setStatus("Ready", "idle");
+  prevX = null; prevY = null; smoothX = null; smoothY = null;
+}
+
+// ── Main tracking loop ──
+function loop() {
+  if (!running) return;
+  if (video.readyState < 2 || video.currentTime === lastTime) {
+    requestAnimationFrame(loop); return;
+  }
+  lastTime = video.currentTime;
+
+  const mode = document.querySelector('input[name="trackMode"]:checked').value;
+  const now  = performance.now();
+  let tx = null, ty = null;
+
+  octx.clearRect(0, 0, W, H);
+
+  try {
+    if (mode === "hand" && handLM) {
+      const r = handLM.detectForVideo(video, now);
+      if (r.landmarks?.length) {
+        tx = r.landmarks[0][9].x;
+        ty = r.landmarks[0][9].y;
+        drawHand(r.landmarks[0]);
       }
-      draw();
-    })();
-  </script>
-
-  <!-- MediaPipe tracking — loaded as classic script to avoid CORS module issues -->
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.js" crossorigin="anonymous"></script>
-  <script>
-    const { FaceLandmarker, HandLandmarker, FilesetResolver } = window.mpTasksVision || {};
-
-    // ── Elements ──
-    const video        = document.getElementById("video");
-    const overlayCanvas= document.getElementById("overlayCanvas");
-    const drawCanvas   = document.getElementById("drawCanvas");
-    const startBtn     = document.getElementById("startBtn");
-    const startLabel   = document.getElementById("startLabel");
-    const clearBtn     = document.getElementById("clearBtn");
-    const saveBtn      = document.getElementById("saveBtn");
-    const statusText   = document.getElementById("statusText");
-    const statusBadge  = document.getElementById("statusBadge");
-    const pipOffline   = document.getElementById("pipOffline");
-    const pipLive      = document.getElementById("pipLive");
-    const pipMode      = document.getElementById("pipMode");
-    const brushSlider  = document.getElementById("brushSize");
-    const brushValEl   = document.getElementById("brushSizeVal");
-    const smoothSlider = document.getElementById("smoothing");
-    const smoothValEl  = document.getElementById("smoothingVal");
-    const modeDrawBtn  = document.getElementById("modeDrawBtn");
-    const mouseModeBtn = document.getElementById("mouseModeBtn");
-    const mouseBanner  = document.getElementById("mouseBanner");
-    const drawToolbar  = document.getElementById("drawToolbar");
-
-    const W = 800, H = 500;
-
-    // ── Canvas setup ──
-    drawCanvas.width  = W; drawCanvas.height = H;
-    overlayCanvas.width = W; overlayCanvas.height = H;
-
-    const dctx = drawCanvas.getContext("2d");
-    const octx = overlayCanvas.getContext("2d");
-
-    dctx.fillStyle = "#0c0f1a";
-    dctx.fillRect(0, 0, W, H);
-
-    // ── State ──
-    let running = false, stream = null;
-    let faceLM = null, handLM = null;
-    let brushColor = "#2d7ae0", brushSize = 8, smoothing = 6;
-    let prevX = null, prevY = null, smoothX = null, smoothY = null;
-    let lastVideoTime = -1, modelsLoaded = false;
-    let appMode = "draw"; // "draw" | "mouse"
-
-    // ── App mode toggle (draw vs mouse) ──
-    [modeDrawBtn, mouseModeBtn].forEach(btn => {
-      btn.addEventListener("click", () => {
-        appMode = btn.dataset.mode;
-        modeDrawBtn.classList.toggle("active", appMode === "draw");
-        mouseModeBtn.classList.toggle("active", appMode === "mouse");
-        mouseBanner.style.display  = appMode === "mouse" ? "flex" : "none";
-        drawToolbar.style.display  = appMode === "draw"  ? "flex" : "none";
-        prevX = null; prevY = null;
-      });
-    });
-
-    // ── Drawing controls ──
-    brushSlider.addEventListener("input", () => {
-      brushSize = +brushSlider.value;
-      brushValEl.textContent = brushSize + "px";
-    });
-    smoothSlider.addEventListener("input", () => {
-      smoothing = +smoothSlider.value;
-      smoothValEl.textContent = smoothing;
-    });
-    document.querySelectorAll(".tc").forEach(s => {
-      s.addEventListener("click", () => {
-        document.querySelectorAll(".tc").forEach(x => x.classList.remove("active"));
-        s.classList.add("active");
-        brushColor = s.dataset.color;
-      });
-    });
-    document.querySelectorAll('input[name="trackMode"]').forEach(r => {
-      r.addEventListener("change", () => {
-        pipMode.textContent = r.value;
-        prevX = null; prevY = null;
-      });
-    });
-    clearBtn.addEventListener("click", () => {
-      dctx.fillStyle = "#0c0f1a";
-      dctx.fillRect(0, 0, W, H);
-      prevX = null; prevY = null;
-    });
-    saveBtn.addEventListener("click", () => {
-      const a = document.createElement("a");
-      a.download = "plotter-art.png";
-      a.href = drawCanvas.toDataURL("image/png");
-      a.click();
-    });
-
-    // ── Status helpers ──
-    function setStatus(text, state) {
-      statusText.textContent = text;
-      statusBadge.className = "status-badge status-" + state;
-    }
-
-    // ── Start / stop ──
-    startBtn.addEventListener("click", async () => {
-      if (running) { stopCamera(); return; }
-      await startCamera();
-    });
-
-    async function startCamera() {
-      setStatus("Requesting camera…", "loading");
-      startLabel.textContent = "Starting…";
-      startBtn.disabled = true;
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({
-          video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" }
-        });
-        video.srcObject = stream;
-        await video.play();
-        pipOffline.style.display = "none";
-        pipLive.style.opacity = "1";
-        setStatus("Loading AI models…", "loading");
-
-        if (!modelsLoaded) {
-          await loadModels();
-          modelsLoaded = true;
-        }
-
-        running = true;
-        startLabel.textContent = "Stop";
-        startBtn.disabled = false;
-        startBtn.classList.add("start-btn-stop");
-        setStatus("Tracking", "on");
-        requestAnimationFrame(tick);
-
-      } catch (err) {
-        console.error(err);
-        const msg = err.name === "NotAllowedError"
-          ? "Camera permission denied — allow camera access and try again."
-          : err.name === "NotFoundError"
-          ? "No camera found. Please connect a webcam."
-          : "Error: " + err.message;
-        setStatus(msg, "error");
-        startLabel.textContent = "Start Camera";
-        startBtn.disabled = false;
-        pipOffline.style.display = "flex";
-        pipLive.style.opacity = "0";
+    } else if (mode === "nose" && faceLM) {
+      const r = faceLM.detectForVideo(video, now);
+      if (r.faceLandmarks?.length) {
+        tx = r.faceLandmarks[0][4].x;
+        ty = r.faceLandmarks[0][4].y;
+        drawFace(r.faceLandmarks[0]);
       }
+    } else if (mode === "any") {
+      const b = brightPt();
+      tx = b.x / W; ty = b.y / H;
+      drawBright(b.x, b.y);
     }
+  } catch(e) {}
 
-    async function loadModels() {
-      const vision = await FilesetResolver.forVisionTasks(
-        "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm"
-      );
-      [faceLM, handLM] = await Promise.all([
-        FaceLandmarker.createFromOptions(vision, {
-          baseOptions: {
-            modelAssetPath: "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task",
-            delegate: "GPU"
-          },
-          runningMode: "VIDEO", numFaces: 1,
-          outputFaceBlendshapes: false, outputFacialTransformationMatrixes: false
-        }),
-        HandLandmarker.createFromOptions(vision, {
-          baseOptions: {
-            modelAssetPath: "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task",
-            delegate: "GPU"
-          },
-          runningMode: "VIDEO", numHands: 1
-        })
-      ]);
-    }
+  if (tx !== null) {
+    const px = (1 - tx) * W, py = ty * H;
+    const a  = 1 / smoothing;
+    smoothX = smoothX == null ? px : smoothX + a * (px - smoothX);
+    smoothY = smoothY == null ? py : smoothY + a * (py - smoothY);
 
-    function stopCamera() {
-      running = false;
-      if (stream) stream.getTracks().forEach(t => t.stop());
-      stream = null; video.srcObject = null;
-      octx.clearRect(0, 0, W, H);
-      pipOffline.style.display = "flex";
-      pipLive.style.opacity = "0";
-      startLabel.textContent = "Start Camera";
-      startBtn.disabled = false;
-      startBtn.classList.remove("start-btn-stop");
-      setStatus("Ready", "off");
-      prevX = null; prevY = null; smoothX = null; smoothY = null;
-    }
-
-    // ── Main tracking loop ──
-    function tick() {
-      if (!running) return;
-      if (video.readyState < 2) { requestAnimationFrame(tick); return; }
-      if (video.currentTime === lastVideoTime) { requestAnimationFrame(tick); return; }
-      lastVideoTime = video.currentTime;
-
-      const trackMode = document.querySelector('input[name="trackMode"]:checked').value;
-      const now = performance.now();
-      let tx = null, ty = null;
-
-      octx.clearRect(0, 0, W, H);
-
-      try {
-        if (trackMode === "hand" && handLM) {
-          const r = handLM.detectForVideo(video, now);
-          if (r.landmarks?.length) {
-            const lm = r.landmarks[0][9];
-            tx = lm.x; ty = lm.y;
-            drawHandSkeleton(r.landmarks[0]);
-          }
-        } else if (trackMode === "nose" && faceLM) {
-          const r = faceLM.detectForVideo(video, now);
-          if (r.faceLandmarks?.length) {
-            const lm = r.faceLandmarks[0][4];
-            tx = lm.x; ty = lm.y;
-            drawFaceDots(r.faceLandmarks[0]);
-          }
-        } else if (trackMode === "any") {
-          const b = brightestPoint();
-          tx = b.x / W; ty = b.y / H;
-          drawBrightCursor(b.x, b.y);
-        }
-      } catch(e) { /* model not ready yet */ }
-
-      if (tx !== null) {
-        const px = (1 - tx) * W;
-        const py = ty * H;
-        const a = 1 / smoothing;
-        smoothX = smoothX == null ? px : smoothX + a * (px - smoothX);
-        smoothY = smoothY == null ? py : smoothY + a * (py - smoothY);
-
-        if (appMode === "draw") {
-          // ── Draw mode: paint on canvas ──
-          if (prevX !== null) {
-            dctx.beginPath();
-            dctx.moveTo(prevX, prevY);
-            dctx.lineTo(smoothX, smoothY);
-            dctx.strokeStyle = brushColor;
-            dctx.lineWidth   = brushSize;
-            dctx.lineCap     = "round";
-            dctx.lineJoin    = "round";
-            dctx.stroke();
-          }
-          prevX = smoothX; prevY = smoothY;
-
-          // cursor on overlay
-          octx.beginPath();
-          octx.arc(smoothX, smoothY, brushSize / 2 + 6, 0, Math.PI * 2);
-          octx.strokeStyle = brushColor; octx.lineWidth = 2; octx.stroke();
-          octx.beginPath();
-          octx.arc(smoothX, smoothY, 3, 0, Math.PI * 2);
-          octx.fillStyle = brushColor; octx.fill();
-
-        } else {
-          // ── Mouse mode: move the real page cursor ──
-          // Map canvas coords → screen coords relative to the draw canvas element
-          const rect = drawCanvas.getBoundingClientRect();
-          const screenX = rect.left + (smoothX / W) * rect.width;
-          const screenY = rect.top  + (smoothY / H) * rect.height;
-
-          // Dispatch a synthetic mousemove so the browser cursor follows
-          document.elementFromPoint(screenX, screenY)?.dispatchEvent(
-            new MouseEvent("mousemove", { clientX: screenX, clientY: screenY, bubbles: true })
-          );
-
-          // Draw a custom cursor indicator on the overlay
-          octx.beginPath();
-          octx.arc(smoothX, smoothY, 14, 0, Math.PI * 2);
-          octx.strokeStyle = "rgba(168,85,247,0.9)";
-          octx.lineWidth = 2.5; octx.stroke();
-          octx.beginPath();
-          octx.arc(smoothX, smoothY, 4, 0, Math.PI * 2);
-          octx.fillStyle = "#a855f7"; octx.fill();
-
-          // Animated "scan" ring
-          const t = (Date.now() % 1200) / 1200;
-          octx.beginPath();
-          octx.arc(smoothX, smoothY, 14 + t * 16, 0, Math.PI * 2);
-          octx.strokeStyle = `rgba(168,85,247,${0.5 * (1 - t)})`;
-          octx.lineWidth = 1.5; octx.stroke();
-
-          prevX = null; prevY = null; // no drawing trail in mouse mode
-        }
-      } else {
-        prevX = null; prevY = null;
+    if (appMode === "draw") {
+      if (prevX !== null) {
+        dctx.beginPath();
+        dctx.moveTo(prevX, prevY);
+        dctx.lineTo(smoothX, smoothY);
+        dctx.strokeStyle = brushColor;
+        dctx.lineWidth   = brushSize;
+        dctx.lineCap = "round"; dctx.lineJoin = "round";
+        dctx.stroke();
       }
-
-      requestAnimationFrame(tick);
-    }
-
-    // ── Overlay helpers ──
-    function drawHandSkeleton(lms) {
-      const conn = [
-        [0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],
-        [0,9],[9,10],[10,11],[11,12],[0,13],[13,14],[14,15],[15,16],
-        [0,17],[17,18],[18,19],[19,20],[5,9],[9,13],[13,17]
-      ];
-      octx.strokeStyle = "rgba(45,122,224,0.55)"; octx.lineWidth = 1.5;
-      conn.forEach(([a,b]) => {
-        const la=lms[a], lb=lms[b];
-        octx.beginPath();
-        octx.moveTo((1-la.x)*W, la.y*H);
-        octx.lineTo((1-lb.x)*W, lb.y*H);
-        octx.stroke();
-      });
-      lms.forEach((lm,i) => {
-        octx.beginPath();
-        octx.arc((1-lm.x)*W, lm.y*H, i===0?5:2.5, 0, Math.PI*2);
-        octx.fillStyle = i===0 ? "#2d7ae0" : "rgba(45,122,224,0.9)";
-        octx.fill();
-      });
-    }
-
-    function drawFaceDots(lms) {
-      [4,33,263,61,291,199,10,152,234,454].forEach(i => {
-        if (!lms[i]) return;
-        octx.beginPath();
-        octx.arc((1-lms[i].x)*W, lms[i].y*H, 3, 0, Math.PI*2);
-        octx.fillStyle = "rgba(14,165,200,0.75)"; octx.fill();
-      });
-    }
-
-    function drawBrightCursor(x, y) {
-      octx.beginPath(); octx.arc(x,y,12,0,Math.PI*2);
-      octx.strokeStyle="rgba(250,204,21,0.9)"; octx.lineWidth=2; octx.stroke();
+      prevX = smoothX; prevY = smoothY;
+      // cursor ring
       octx.beginPath();
-      octx.moveTo(x-18,y); octx.lineTo(x+18,y);
-      octx.moveTo(x,y-18); octx.lineTo(x,y+18);
-      octx.strokeStyle="rgba(250,204,21,0.5)"; octx.lineWidth=1; octx.stroke();
+      octx.arc(smoothX, smoothY, brushSize/2 + 6, 0, Math.PI*2);
+      octx.strokeStyle = brushColor; octx.lineWidth = 2; octx.stroke();
+      octx.beginPath();
+      octx.arc(smoothX, smoothY, 3, 0, Math.PI*2);
+      octx.fillStyle = brushColor; octx.fill();
+    } else {
+      // Mouse mode — synthetic cursor movement over canvas
+      prevX = null; prevY = null;
+      octx.beginPath();
+      octx.arc(smoothX, smoothY, 16, 0, Math.PI*2);
+      octx.strokeStyle = "rgba(168,85,247,0.9)"; octx.lineWidth = 2.5; octx.stroke();
+      octx.beginPath();
+      octx.arc(smoothX, smoothY, 4, 0, Math.PI*2);
+      octx.fillStyle = "#a855f7"; octx.fill();
+      const t = (Date.now() % 1000) / 1000;
+      octx.beginPath();
+      octx.arc(smoothX, smoothY, 16 + t*18, 0, Math.PI*2);
+      octx.strokeStyle = `rgba(168,85,247,${0.5*(1-t)})`; octx.lineWidth = 1.5; octx.stroke();
     }
+  } else {
+    prevX = null; prevY = null;
+  }
 
-    function brightestPoint() {
-      const sz=100, tmp=document.createElement("canvas");
-      tmp.width=sz; tmp.height=sz;
-      const tc=tmp.getContext("2d");
-      tc.drawImage(video,0,0,sz,sz);
-      const d=tc.getImageData(0,0,sz,sz).data;
-      let max=-1,bx=sz/2,by=sz/2;
-      for(let i=0;i<d.length;i+=4){
-        const b=0.299*d[i]+0.587*d[i+1]+0.114*d[i+2];
-        if(b>max){max=b;const idx=i/4;bx=idx%sz;by=Math.floor(idx/sz);}
-      }
-      return {x:(bx/sz)*W,y:(by/sz)*H};
-    }
-  </script>
+  requestAnimationFrame(loop);
+}
 
+function drawHand(lms) {
+  [[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],
+   [0,9],[9,10],[10,11],[11,12],[0,13],[13,14],[14,15],[15,16],
+   [0,17],[17,18],[18,19],[19,20],[5,9],[9,13],[13,17]].forEach(([a,b]) => {
+    octx.beginPath();
+    octx.moveTo((1-lms[a].x)*W, lms[a].y*H);
+    octx.lineTo((1-lms[b].x)*W, lms[b].y*H);
+    octx.strokeStyle = "rgba(45,122,224,0.5)"; octx.lineWidth = 1.5; octx.stroke();
+  });
+  lms.forEach((lm,i) => {
+    octx.beginPath();
+    octx.arc((1-lm.x)*W, lm.y*H, i===0?5:2.5, 0, Math.PI*2);
+    octx.fillStyle = i===0?"#2d7ae0":"rgba(45,122,224,0.85)"; octx.fill();
+  });
+}
+function drawFace(lms) {
+  [4,33,263,61,291,199,10,152,234,454].forEach(i => {
+    if(!lms[i]) return;
+    octx.beginPath();
+    octx.arc((1-lms[i].x)*W, lms[i].y*H, 3, 0, Math.PI*2);
+    octx.fillStyle = "rgba(14,165,200,0.75)"; octx.fill();
+  });
+}
+function drawBright(x,y) {
+  octx.beginPath(); octx.arc(x,y,12,0,Math.PI*2);
+  octx.strokeStyle="rgba(250,204,21,0.9)"; octx.lineWidth=2; octx.stroke();
+  octx.beginPath();
+  octx.moveTo(x-20,y); octx.lineTo(x+20,y);
+  octx.moveTo(x,y-20); octx.lineTo(x,y+20);
+  octx.strokeStyle="rgba(250,204,21,0.4)"; octx.lineWidth=1; octx.stroke();
+}
+function brightPt() {
+  const sz=100, tmp=document.createElement("canvas");
+  tmp.width=sz; tmp.height=sz;
+  const tc=tmp.getContext("2d");
+  tc.drawImage(video,0,0,sz,sz);
+  const d=tc.getImageData(0,0,sz,sz).data;
+  let max=-1,bx=sz/2,by=sz/2;
+  for(let i=0;i<d.length;i+=4){
+    const b=0.299*d[i]+0.587*d[i+1]+0.114*d[i+2];
+    if(b>max){max=b;const idx=i/4;bx=idx%sz;by=Math.floor(idx/sz);}
+  }
+  return {x:(bx/sz)*W,y:(by/sz)*H};
+}
+</script>
 </body>
 </html>
