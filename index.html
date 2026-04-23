@@ -3,29 +3,28 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>OpenCV — Adaptive Vision Controller</title>
-  <meta name="description" content="Control your computer with your face, head movements, and hand gestures. Built for accessibility by Jacob Majors at Sonoma Academy." />
-  <meta property="og:title" content="OpenCV — Adaptive Vision Controller" />
-  <meta property="og:description" content="Control any app or game with your face and hands." />
+  <title>Plotter — Draw with Your Body</title>
+  <meta name="description" content="An accessible art tool that lets anyone create art by moving any limb in front of a webcam. A plotter mimics your movement to paint and draw." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+
   <!-- Nav -->
   <nav class="nav">
     <div class="nav-inner">
       <div class="nav-logo">
-        <img src="logo.png" alt="OpenCV" width="32" height="32" class="logo-img" onerror="this.style.display='none'" />
-        <span class="nav-brand">OpenCV</span>
+        <img src="logo.png" alt="Plotter" width="32" height="32" class="logo-img" onerror="this.style.display='none'" />
+        <span class="nav-brand">Plotter</span>
       </div>
       <div class="nav-links">
+        <a href="#demo">Try It</a>
         <a href="#features">Features</a>
         <a href="#story">Story</a>
         <a href="sources.html">Sources</a>
         <a href="https://github.com/troypappas1/Plotter" target="_blank" rel="noopener noreferrer">GitHub</a>
-        <a href="https://github.com/troypappas1/Plotter/releases/latest" class="btn-download-sm">Download</a>
       </div>
     </div>
   </nav>
@@ -38,72 +37,160 @@
       <div class="hero-content">
         <div class="badge">
           <span class="badge-dot"></span>
-          Free &amp; open source &nbsp;·&nbsp; Windows &amp; macOS &nbsp;·&nbsp; No hardware required
+          Free &amp; open source &nbsp;·&nbsp; Runs in your browser &nbsp;·&nbsp; No hardware required
         </div>
         <div class="hero-logo-wrap">
-          <img src="logo.png" alt="OpenCV" width="120" height="120" class="logo-img-lg glow" onerror="this.style.display='none'" />
+          <img src="logo.png" alt="Plotter" width="120" height="120" class="logo-img-lg glow" onerror="this.style.display='none'" />
         </div>
         <h1 class="hero-title">
-          Control your computer<br />
-          <span class="gradient-text">with your face.</span>
+          Create art with<br />
+          <span class="gradient-text">any movement.</span>
         </h1>
         <p class="hero-sub">
-          OpenCV uses your webcam to detect facial movements, head rotations, and hand gestures —
-          then turns them into real keypresses. Control any game, app, or tool hands-free.
+          Plotter uses your webcam to track any part of your body — a hand, your head, a foot —
+          and sends those movements to a physical plotter that paints and draws for you.
+          Art is for everyone.
         </p>
         <div class="hero-actions">
-          <a href="https://github.com/troypappas1/Plotter/releases/latest" class="btn-primary glow">
-            <span>↓</span>
-            Download
-            <span class="btn-label">Free</span>
+          <a href="#demo" class="btn-primary glow">
+            Try it in the browser
           </a>
           <a href="https://github.com/troypappas1/Plotter" target="_blank" rel="noopener noreferrer" class="btn-ghost">
             View on GitHub →
           </a>
         </div>
-        <p class="hero-note">Windows 10+ &amp; macOS 12+ &nbsp;·&nbsp; Requires camera &amp; Accessibility permission</p>
+        <p class="hero-note">Works in Chrome &amp; Firefox &nbsp;·&nbsp; Camera stays on your device &nbsp;·&nbsp; Nothing is uploaded</p>
+      </div>
+    </section>
+
+    <!-- Live Demo -->
+    <section id="demo" class="section section-border">
+      <div class="section-inner">
+        <div class="section-header">
+          <span class="label-teal">Live Demo</span>
+          <h2 class="section-title" style="margin-top:0.75rem;">Move anything. Draw everything.</h2>
+          <p class="section-sub">
+            Point your camera at any part of your body. Plotter tracks it and draws on the canvas in real time —
+            exactly how the physical plotter would respond.
+          </p>
+        </div>
+
+        <div class="demo-layout">
+          <!-- Controls -->
+          <div class="demo-controls glass">
+            <div class="control-group">
+              <label class="control-label">Track</label>
+              <div class="radio-group">
+                <label class="radio-btn">
+                  <input type="radio" name="trackMode" value="nose" checked />
+                  <span>Nose tip</span>
+                </label>
+                <label class="radio-btn">
+                  <input type="radio" name="trackMode" value="hand" />
+                  <span>Hand / wrist</span>
+                </label>
+                <label class="radio-btn">
+                  <input type="radio" name="trackMode" value="any" />
+                  <span>Brightest point</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="control-group">
+              <label class="control-label">Brush size</label>
+              <input type="range" id="brushSize" min="2" max="32" value="8" class="slider" />
+              <span id="brushSizeVal" class="slider-val">8px</span>
+            </div>
+
+            <div class="control-group">
+              <label class="control-label">Color</label>
+              <div class="color-swatches">
+                <button class="swatch active" style="background:#2d7ae0" data-color="#2d7ae0"></button>
+                <button class="swatch" style="background:#0ea5c8" data-color="#0ea5c8"></button>
+                <button class="swatch" style="background:#e05c2d" data-color="#e05c2d"></button>
+                <button class="swatch" style="background:#2de07a" data-color="#2de07a"></button>
+                <button class="swatch" style="background:#e0c82d" data-color="#e0c82d"></button>
+                <button class="swatch" style="background:#e02d7a" data-color="#e02d7a"></button>
+                <button class="swatch" style="background:#ffffff" data-color="#ffffff"></button>
+              </div>
+            </div>
+
+            <div class="control-group">
+              <label class="control-label">Smoothing</label>
+              <input type="range" id="smoothing" min="1" max="20" value="6" class="slider" />
+              <span id="smoothingVal" class="slider-val">6</span>
+            </div>
+
+            <div class="demo-buttons">
+              <button id="startBtn" class="btn-primary" style="font-size:0.9rem;padding:0.6rem 1.2rem;">
+                Start Camera
+              </button>
+              <button id="clearBtn" class="btn-ghost" style="font-size:0.9rem;padding:0.6rem 1.2rem;">
+                Clear
+              </button>
+              <button id="saveBtn" class="btn-ghost" style="font-size:0.9rem;padding:0.6rem 1.2rem;">
+                Save PNG
+              </button>
+            </div>
+
+            <div id="statusMsg" class="status-msg">Camera off</div>
+          </div>
+
+          <!-- Canvases -->
+          <div class="demo-canvases">
+            <div class="canvas-wrap">
+              <div class="canvas-label">Camera feed</div>
+              <video id="video" autoplay playsinline muted></video>
+              <canvas id="overlayCanvas"></canvas>
+            </div>
+            <div class="canvas-wrap">
+              <div class="canvas-label">Drawing canvas (plotter output)</div>
+              <canvas id="drawCanvas"></canvas>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
 
     <!-- Features -->
-    <section id="features" class="section">
+    <section id="features" class="section section-border">
       <div class="section-inner">
         <div class="section-header">
-          <h2 class="section-title">Every movement is a button.</h2>
+          <h2 class="section-title">Any limb. Any movement. Any art.</h2>
           <p class="section-sub">
-            Map any facial movement or hand gesture to any key — with adjustable sensitivity and cooldown.
+            Plotter is built for people who can't hold a brush — but can move something.
           </p>
         </div>
         <div class="features-grid">
           <div class="card">
-            <div class="card-icon">👁</div>
-            <h3>Eye Blinks</h3>
-            <p>Blink left, right, or both eyes to trigger any key. Precise threshold control.</p>
-          </div>
-          <div class="card">
-            <div class="card-icon">↕</div>
-            <h3>Head Movement</h3>
-            <p>Turn, tilt, and roll your head in 6 directions. Works with any degree of motion.</p>
-          </div>
-          <div class="card">
-            <div class="card-icon">😮</div>
-            <h3>Mouth &amp; Brows</h3>
-            <p>Open your mouth, raise eyebrows, or smile — each maps to a separate action.</p>
-          </div>
-          <div class="card">
-            <div class="card-icon">👍</div>
-            <h3>Hand Gestures</h3>
-            <p>Thumbs up, peace sign, fist, open palm and more. No gloves or hardware needed.</p>
+            <div class="card-icon">🎨</div>
+            <h3>Head tracking</h3>
+            <p>Nod, tilt, and turn your head to steer the plotter. Full 2D drawing from neck movement alone.</p>
           </div>
           <div class="card">
             <div class="card-icon">✋</div>
-            <h3>Hand Position</h3>
-            <p>Move your hand left, right, up or down in frame to trigger directional controls.</p>
+            <h3>Hand &amp; wrist</h3>
+            <p>Wave a hand or move a wrist in the camera frame. Fine motor control maps to fine brushstrokes.</p>
           </div>
           <div class="card">
-            <div class="card-icon">⌨️</div>
-            <h3>Full Keyboard</h3>
-            <p>Tap, hold, or combo any key — space, arrows, WASD, F-keys, Cmd+anything.</p>
+            <div class="card-icon">🦶</div>
+            <h3>Any body part</h3>
+            <p>Foot, elbow, shoulder — if the camera can see it move, Plotter can draw with it.</p>
+          </div>
+          <div class="card">
+            <div class="card-icon">🖊️</div>
+            <h3>Physical plotter output</h3>
+            <p>Connects to a real pen plotter or CNC over serial. Your movements become actual ink on paper.</p>
+          </div>
+          <div class="card">
+            <div class="card-icon">🌐</div>
+            <h3>Browser demo</h3>
+            <p>No install needed. The live preview above runs fully in your browser with MediaPipe.</p>
+          </div>
+          <div class="card">
+            <div class="card-icon">🔒</div>
+            <h3>Private by design</h3>
+            <p>All vision processing runs locally. No video is ever sent to a server.</p>
           </div>
         </div>
       </div>
@@ -113,28 +200,28 @@
     <section class="section section-border">
       <div class="section-inner">
         <div class="section-header">
-          <h2 class="section-title">Up and running in minutes.</h2>
+          <h2 class="section-title">How it works.</h2>
         </div>
         <div class="steps-grid">
           <div class="step">
             <div class="step-num">1</div>
-            <h3>Download &amp; open</h3>
-            <p>Download the app, double-click, allow camera access.</p>
+            <h3>Open the app</h3>
+            <p>Use the browser demo above or download the desktop app and connect your plotter over USB.</p>
           </div>
           <div class="step">
             <div class="step-num">2</div>
-            <h3>Grant accessibility</h3>
-            <p>Allow Accessibility in System Settings so keypresses reach other apps.</p>
+            <h3>Point the camera</h3>
+            <p>Aim the webcam at whichever body part the person can move — head, hand, foot, or elbow.</p>
           </div>
           <div class="step">
             <div class="step-num">3</div>
-            <h3>Configure switches</h3>
-            <p>Map any movement to any key. Set threshold and cooldown per switch.</p>
+            <h3>Start drawing</h3>
+            <p>Move freely. The tracker follows the target point and translates it into X/Y coordinates.</p>
           </div>
           <div class="step">
             <div class="step-num">4</div>
-            <h3>Start tracking</h3>
-            <p>Hit Start or press the hotkey from anywhere — even while a game is running.</p>
+            <h3>Plotter creates art</h3>
+            <p>The physical plotter moves its pen arm to mirror your movements — producing real artwork on paper.</p>
           </div>
         </div>
       </div>
@@ -145,44 +232,45 @@
       <div class="section-inner">
         <div class="section-header">
           <span class="label-teal">The Story</span>
-          <h2 class="section-title" style="margin-top:0.75rem;">Built for people who need it most.</h2>
+          <h2 class="section-title" style="margin-top:0.75rem;">Art should have no barriers.</h2>
         </div>
         <div class="story-card glass">
           <p>
-            OpenCV started in a classroom at <strong>Sonoma Academy</strong>, in
-            <strong>Ramsey Mussalum's Design for Social Good</strong> course —
-            a class built around one idea: design should solve real problems for real people.
+            Plotter started with a simple but powerful question: <strong>what if someone can't hold a brush?</strong>
+            For people with limited motor ability — whether from a condition, an injury, or a disability —
+            traditional art tools are inaccessible. The canvas stays blank not because of a lack of creativity,
+            but because of a lack of tools.
           </p>
           <p>
-            The assignment was to create something that made a meaningful difference. The question became:
-            what do people with limited motor ability use to interact with technology? Expensive,
-            proprietary hardware. Complex setups. Devices that cost thousands of dollars.
+            The idea grew out of work at <strong>Sonoma Academy</strong>, in
+            <strong>Ramsey Mussalum's Design for Social Good</strong> course — a class built around one idea:
+            design should solve real problems for real people.
           </p>
           <p>
-            OpenCV is the answer: a free, open-source adaptive controller that works with just a webcam.
-            No special hardware. No subscriptions. Just your face and your computer.
+            Plotter's answer is to move the paintbrush entirely off the person's body. You point a webcam at
+            whatever limb someone <em>can</em> move — a head, a wrist, a foot — and a physical pen plotter
+            mimics that movement on paper. The person becomes the artist; the machine becomes their hand.
           </p>
           <p>
-            Whether you have a condition that limits hand mobility, are recovering from an injury,
-            or simply want a new way to interact with your computer — OpenCV turns the camera
-            you already have into a full input device.
+            No expensive hardware. No proprietary software. Just a webcam, a plotter, and the freedom to create.
           </p>
           <div class="story-footer">
-            <p>Made by <strong>Jacob Majors</strong> &nbsp;·&nbsp; Sonoma Academy &nbsp;·&nbsp; March 2026</p>
+            <p>
+              Made by <strong>Jacob Majors</strong> &amp; <strong>Troy Pappas</strong>
+              &nbsp;·&nbsp; Sonoma Academy &nbsp;·&nbsp; 2026
+            </p>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Download CTA -->
+    <!-- CTA -->
     <section class="section section-border">
       <div class="section-inner cta-center">
-        <h2 class="section-title">Ready to try it?</h2>
+        <h2 class="section-title">Ready to create?</h2>
         <p class="section-sub">Free, open source, and always will be.</p>
         <div class="hero-actions" style="justify-content:center;">
-          <a href="https://github.com/troypappas1/Plotter/releases/latest" class="btn-primary glow">
-            ↓ Download
-          </a>
+          <a href="#demo" class="btn-primary glow">Try it now</a>
           <a href="https://github.com/troypappas1/Plotter/issues/new" target="_blank" rel="noopener noreferrer" class="btn-ghost">
             Report an Issue
           </a>
@@ -196,15 +284,316 @@
     <div class="footer-inner">
       <div class="footer-logo">
         <img src="logo.png" alt="" width="20" height="20" class="footer-logo-img" onerror="this.style.display='none'" />
-        <span>OpenCV — Adaptive Vision Controller</span>
+        <span>Plotter — Draw with Your Body</span>
       </div>
       <div class="footer-links">
         <a href="sources.html">Sources</a>
         <a href="https://github.com/troypappas1/Plotter" target="_blank" rel="noopener noreferrer">GitHub</a>
         <a href="https://github.com/troypappas1/Plotter/issues/new" target="_blank" rel="noopener noreferrer">Report Issue</a>
       </div>
-      <span>Made by Jacob Majors &nbsp;·&nbsp; Sonoma Academy &nbsp;·&nbsp; 2026</span>
+      <span>Jacob Majors &amp; Troy Pappas &nbsp;·&nbsp; Sonoma Academy &nbsp;·&nbsp; 2026</span>
     </div>
   </footer>
+
+  <!-- MediaPipe via CDN (runs entirely in browser, no server) -->
+  <script type="module">
+    import {
+      FaceLandmarker,
+      HandLandmarker,
+      FilesetResolver,
+      DrawingUtils
+    } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs";
+
+    // ── Elements ──
+    const video       = document.getElementById("video");
+    const overlayCanvas = document.getElementById("overlayCanvas");
+    const drawCanvas  = document.getElementById("drawCanvas");
+    const startBtn    = document.getElementById("startBtn");
+    const clearBtn    = document.getElementById("clearBtn");
+    const saveBtn     = document.getElementById("saveBtn");
+    const statusMsg   = document.getElementById("statusMsg");
+    const brushSlider = document.getElementById("brushSize");
+    const brushVal    = document.getElementById("brushSizeVal");
+    const smoothSlider= document.getElementById("smoothing");
+    const smoothVal   = document.getElementById("smoothingVal");
+    const swatches    = document.querySelectorAll(".swatch");
+
+    const octx  = overlayCanvas.getContext("2d");
+    const dctx  = drawCanvas.getContext("2d");
+
+    // ── State ──
+    let running   = false;
+    let faceLM    = null;
+    let handLM    = null;
+    let brushColor= "#2d7ae0";
+    let brushSize = 8;
+    let smoothing = 6;
+    let prevX = null, prevY = null;
+    let smoothX = null, smoothY = null;
+    let lastVideoTime = -1;
+    let stream = null;
+
+    const W = 640, H = 480;
+
+    function resizeCanvases() {
+      overlayCanvas.width  = W; overlayCanvas.height = H;
+      drawCanvas.width     = W; drawCanvas.height    = H;
+      dctx.fillStyle = "#07090f";
+      dctx.fillRect(0, 0, W, H);
+    }
+    resizeCanvases();
+
+    // ── Brush / color controls ──
+    brushSlider.addEventListener("input", () => {
+      brushSize = +brushSlider.value;
+      brushVal.textContent = brushSize + "px";
+    });
+    smoothSlider.addEventListener("input", () => {
+      smoothing = +smoothSlider.value;
+      smoothVal.textContent = smoothing;
+    });
+    swatches.forEach(s => {
+      s.addEventListener("click", () => {
+        swatches.forEach(x => x.classList.remove("active"));
+        s.classList.add("active");
+        brushColor = s.dataset.color;
+      });
+    });
+
+    clearBtn.addEventListener("click", () => {
+      dctx.fillStyle = "#07090f";
+      dctx.fillRect(0, 0, W, H);
+      prevX = null; prevY = null;
+    });
+
+    saveBtn.addEventListener("click", () => {
+      const a = document.createElement("a");
+      a.download = "plotter-drawing.png";
+      a.href = drawCanvas.toDataURL("image/png");
+      a.click();
+    });
+
+    // ── Start / stop ──
+    startBtn.addEventListener("click", async () => {
+      if (running) {
+        stop();
+      } else {
+        await start();
+      }
+    });
+
+    async function start() {
+      statusMsg.textContent = "Loading models…";
+      startBtn.textContent  = "Loading…";
+      startBtn.disabled     = true;
+
+      try {
+        const vision = await FilesetResolver.forVisionTasks(
+          "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm"
+        );
+
+        faceLM = await FaceLandmarker.createFromOptions(vision, {
+          baseOptions: {
+            modelAssetPath: "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task",
+            delegate: "GPU"
+          },
+          runningMode: "VIDEO",
+          numFaces: 1,
+          outputFaceBlendshapes: false,
+          outputFacialTransformationMatrixes: false
+        });
+
+        handLM = await HandLandmarker.createFromOptions(vision, {
+          baseOptions: {
+            modelAssetPath: "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task",
+            delegate: "GPU"
+          },
+          runningMode: "VIDEO",
+          numHands: 1
+        });
+
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { width: W, height: H, facingMode: "user" }
+        });
+        video.srcObject = stream;
+        await new Promise(r => video.onloadedmetadata = r);
+        video.play();
+
+        running = true;
+        startBtn.textContent  = "Stop";
+        startBtn.disabled     = false;
+        statusMsg.textContent = "Tracking…";
+        requestAnimationFrame(tick);
+
+      } catch (err) {
+        statusMsg.textContent = "Error: " + err.message;
+        startBtn.textContent  = "Start Camera";
+        startBtn.disabled     = false;
+        console.error(err);
+      }
+    }
+
+    function stop() {
+      running = false;
+      if (stream) stream.getTracks().forEach(t => t.stop());
+      octx.clearRect(0, 0, W, H);
+      startBtn.textContent  = "Start Camera";
+      statusMsg.textContent = "Camera off";
+      prevX = null; prevY = null;
+      smoothX = null; smoothY = null;
+    }
+
+    // ── Main tracking loop ──
+    function tick() {
+      if (!running) return;
+
+      if (video.currentTime === lastVideoTime) {
+        requestAnimationFrame(tick);
+        return;
+      }
+      lastVideoTime = video.currentTime;
+
+      const mode = document.querySelector('input[name="trackMode"]:checked').value;
+      let tx = null, ty = null;
+
+      const now = performance.now();
+
+      if (mode === "hand") {
+        const result = handLM.detectForVideo(video, now);
+        if (result.landmarks && result.landmarks.length > 0) {
+          // wrist landmark = index 0
+          const lm = result.landmarks[0][0];
+          tx = lm.x; ty = lm.y;
+
+          // draw skeleton overlay
+          octx.clearRect(0, 0, W, H);
+          drawHandOverlay(result.landmarks[0]);
+        } else {
+          octx.clearRect(0, 0, W, H);
+        }
+      } else if (mode === "nose") {
+        const result = faceLM.detectForVideo(video, now);
+        if (result.faceLandmarks && result.faceLandmarks.length > 0) {
+          // landmark 1 = nose tip
+          const lm = result.faceLandmarks[0][1];
+          tx = lm.x; ty = lm.y;
+
+          octx.clearRect(0, 0, W, H);
+          drawFaceOverlay(result.faceLandmarks[0]);
+        } else {
+          octx.clearRect(0, 0, W, H);
+        }
+      } else {
+        // "any" mode: find brightest point in grayscale frame
+        const { x, y } = brightestPoint();
+        tx = x / W; ty = y / H;
+
+        octx.clearRect(0, 0, W, H);
+        octx.beginPath();
+        octx.arc(x, y, 10, 0, Math.PI * 2);
+        octx.strokeStyle = "#2d7ae0";
+        octx.lineWidth = 2;
+        octx.stroke();
+      }
+
+      if (tx !== null && ty !== null) {
+        // flip x because video is mirrored
+        const px = (1 - tx) * W;
+        const py = ty * H;
+
+        // exponential smoothing
+        const alpha = 1 / smoothing;
+        smoothX = smoothX === null ? px : smoothX + alpha * (px - smoothX);
+        smoothY = smoothY === null ? py : smoothY + alpha * (py - smoothY);
+
+        if (prevX !== null) {
+          dctx.beginPath();
+          dctx.moveTo(prevX, prevY);
+          dctx.lineTo(smoothX, smoothY);
+          dctx.strokeStyle = brushColor;
+          dctx.lineWidth   = brushSize;
+          dctx.lineCap     = "round";
+          dctx.lineJoin    = "round";
+          dctx.stroke();
+        }
+
+        prevX = smoothX;
+        prevY = smoothY;
+
+        // draw cursor dot on overlay
+        octx.beginPath();
+        octx.arc(smoothX, smoothY, brushSize / 2 + 4, 0, Math.PI * 2);
+        octx.strokeStyle = brushColor;
+        octx.lineWidth = 2;
+        octx.stroke();
+      } else {
+        prevX = null; prevY = null;
+      }
+
+      requestAnimationFrame(tick);
+    }
+
+    // ── Overlay helpers ──
+    function drawHandOverlay(landmarks) {
+      const connections = [
+        [0,1],[1,2],[2,3],[3,4],
+        [0,5],[5,6],[6,7],[7,8],
+        [0,9],[9,10],[10,11],[11,12],
+        [0,13],[13,14],[14,15],[15,16],
+        [0,17],[17,18],[18,19],[19,20],
+        [5,9],[9,13],[13,17]
+      ];
+      octx.strokeStyle = "rgba(45,122,224,0.6)";
+      octx.lineWidth = 1.5;
+      connections.forEach(([a, b]) => {
+        const la = landmarks[a], lb = landmarks[b];
+        octx.beginPath();
+        octx.moveTo((1-la.x)*W, la.y*H);
+        octx.lineTo((1-lb.x)*W, lb.y*H);
+        octx.stroke();
+      });
+      landmarks.forEach((lm, i) => {
+        octx.beginPath();
+        octx.arc((1-lm.x)*W, lm.y*H, i===0?5:3, 0, Math.PI*2);
+        octx.fillStyle = i===0 ? "#2d7ae0" : "rgba(45,122,224,0.8)";
+        octx.fill();
+      });
+    }
+
+    function drawFaceOverlay(landmarks) {
+      // draw a sparse set of face outline points
+      const keyPoints = [1,33,263,61,291,199,10,152];
+      keyPoints.forEach(i => {
+        const lm = landmarks[i];
+        if (!lm) return;
+        octx.beginPath();
+        octx.arc((1-lm.x)*W, lm.y*H, 3, 0, Math.PI*2);
+        octx.fillStyle = "rgba(14,165,200,0.7)";
+        octx.fill();
+      });
+    }
+
+    function brightestPoint() {
+      // draw video frame to a tiny offscreen canvas and find max brightness
+      const size = 80;
+      const tmp = document.createElement("canvas");
+      tmp.width = size; tmp.height = size;
+      const tc = tmp.getContext("2d");
+      tc.drawImage(video, 0, 0, size, size);
+      const data = tc.getImageData(0, 0, size, size).data;
+      let maxBright = -1, bx = size/2, by = size/2;
+      for (let i = 0; i < data.length; i += 4) {
+        const bright = 0.299*data[i] + 0.587*data[i+1] + 0.114*data[i+2];
+        if (bright > maxBright) {
+          maxBright = bright;
+          const idx = i / 4;
+          bx = idx % size;
+          by = Math.floor(idx / size);
+        }
+      }
+      return { x: (bx / size) * W, y: (by / size) * H };
+    }
+  </script>
+
 </body>
 </html>
