@@ -895,18 +895,18 @@ footer { border-top: 1px solid var(--border); padding: 2.75rem 0 1.25rem; }
             <!-- Live Z slider -->
             <div class="z-slider-wrap">
               <span class="z-tick z-tick-top">50</span>
-              <input type="range" id="zLiveSlider" class="z-slider" min="-10" max="50" step="0.5" value="8">
-              <span class="z-tick z-tick-bot">-10</span>
+              <input type="range" id="zLiveSlider" class="z-slider" min="-50" max="50" step="0.5" value="8">
+              <span class="z-tick z-tick-bot">-50</span>
             </div>
             <!-- Preset rows -->
             <div class="pp-row pp-scale-row">
               <label class="pp-label">Pen Up</label>
-              <input type="number" id="penUpZ" class="pp-num" value="8" min="-10" max="50" step="0.5">
+              <input type="number" id="penUpZ" class="pp-num" value="8" min="-50" max="50" step="0.5">
               <button class="pp-btn pp-btn-sm" id="liftBtn">Set ↑</button>
             </div>
             <div class="pp-row pp-scale-row">
               <label class="pp-label">Pen Down</label>
-              <input type="number" id="penDownZ" class="pp-num" value="2" min="-10" max="50" step="0.5">
+              <input type="number" id="penDownZ" class="pp-num" value="2" min="-50" max="50" step="0.5">
               <button class="pp-btn pp-btn-sm pp-btn-accent" id="dropBtn">Set ↓</button>
             </div>
           </div>
@@ -1610,7 +1610,10 @@ async function populateCameras() {
     cams.forEach((cam, i) => {
       const opt = document.createElement("option");
       opt.value = cam.deviceId;
-      opt.textContent = cam.label || `Camera ${i + 1}`;
+      const label = cam.label || `Camera ${i + 1}`;
+      // Flag virtual cameras (Camo, OBS, etc.) so they're easy to spot
+      const isVirtual = /camo|obs|virtual|snap|mmhmm|continuity/i.test(label);
+      opt.textContent = isVirtual ? `📱 ${label}` : label;
       camSelect.appendChild(opt);
     });
     // restore selection if still present
@@ -1699,11 +1702,15 @@ async function start() {
   startBtn.disabled = true;
 
   try {
+    // Stop any previous stream first (important for virtual cameras like Camo)
+    if (stream) stream.getTracks().forEach(t => t.stop());
+    stream = null;
+
     const selectedId = camSelect.value;
-    const videoConstraints = {
-      width: { ideal: 1280 }, height: { ideal: 720 },
-      ...(selectedId ? { deviceId: { exact: selectedId } } : { facingMode: "user" })
-    };
+    const videoConstraints = selectedId
+      ? { deviceId: { exact: selectedId }, width: { ideal: 1280 }, height: { ideal: 720 } }
+      : { width: { ideal: 1280 }, height: { ideal: 720 } };
+
     stream = await navigator.mediaDevices.getUserMedia({ video: videoConstraints });
     // Now that permission is granted, labels will be available — refresh the list
     await populateCameras();
@@ -1962,10 +1969,12 @@ const boundsHintEl  = document.getElementById("boundsHint");
 // ── Pen heights ──
 const zLiveSlider = document.getElementById("zLiveSlider");
 
-// Live slider — sends G-code immediately on every tick
+// Live slider — drop-skips intermediate values so dragging feels instant
 zLiveSlider.addEventListener("input", () => {
   const z = parseFloat(zLiveSlider.value);
-  movePenZ(z);
+  currentZ = z;
+  liveZLabel.textContent = `Live Z ${z.toFixed(1)} mm`;
+  sendZLive(z);
 });
 
 penUpZEl.addEventListener("change",   () => { penUpZ   = parseFloat(penUpZEl.value)   || 8; });
@@ -1987,7 +1996,7 @@ async function movePenZ(z) {
   currentZ = z;
   zLiveSlider.value = z;
   liveZLabel.textContent = `Live Z ${parseFloat(z).toFixed(1)} mm`;
-  await sendGcode(`G1 Z${parseFloat(z).toFixed(2)} F600\n`);
+  await sendGcode(`G1 Z${parseFloat(z).toFixed(2)} F3000\n`);
 }
 
 // Override penDown toggle to also move Z
@@ -2334,17 +2343,39 @@ async function disconnectPrinter() {
   printerPanel.style.display = "none";
 }
 
-// Serial write queue — prevents overlapping writes that corrupt G-code
-let _writeQueue = Promise.resolve();
+// Serial write — fire and forget, no queue accumulation
 const _enc = new TextEncoder();
+let _writing = false;
+let _writeQueue = Promise.resolve();
 
 function sendGcode(line) {
   if (!serialWriter) return Promise.resolve();
+  // Chain writes but don't let the queue grow unbounded for live moves
   _writeQueue = _writeQueue.then(async () => {
     try { await serialWriter.write(_enc.encode(line)); }
     catch(e) { console.warn("Serial write error:", e); }
   });
   return _writeQueue;
+}
+
+// For live/rapid moves (Z slider, tracking loop) — drops intermediate values,
+// only sends when the port is free. Prevents queue pile-up on fast drags.
+let _zPending = null;
+let _zBusy = false;
+function sendZLive(z) {
+  if (!serialWriter) return;
+  _zPending = z;
+  if (_zBusy) return; // will be picked up when current write finishes
+  _zBusy = true;
+  (async () => {
+    while (_zPending !== null) {
+      const val = _zPending;
+      _zPending = null;
+      try { await serialWriter.write(_enc.encode(`G1 Z${val.toFixed(2)} F3000\n`)); }
+      catch(e) { console.warn("Z write error:", e); }
+    }
+    _zBusy = false;
+  })();
 }
 
 // Called from the tracking loop whenever we have a new smoothed position.
