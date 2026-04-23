@@ -368,6 +368,19 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 }
 .printer-btn.connected:hover { background: rgba(239,68,68,.12); border-color: rgba(239,68,68,.35); color: #fca5a5; }
 
+.gesture-hints {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 10px; padding: .65rem .8rem; font-size: .78rem;
+}
+.gesture-hints-title {
+  font-size: .65rem; font-weight: 700; letter-spacing: .09em;
+  text-transform: uppercase; color: var(--dim); margin-bottom: .45rem;
+}
+.gesture-list { display: flex; flex-direction: column; gap: .3rem; }
+.gesture-row { display: flex; align-items: center; gap: .5rem; }
+.gesture-icon { font-size: .9rem; width: 1.4rem; text-align: center; flex-shrink: 0; }
+.gesture-desc { color: var(--muted); line-height: 1.4; }
+
 .status-pill {
   display: flex; align-items: center; gap: .45rem;
   padding: .45rem .7rem; border-radius: 7px;
@@ -748,6 +761,14 @@ footer { border-top: 1px solid var(--border); padding: 2.75rem 0 1.25rem; }
           <span id="startLabel">Start Camera</span>
         </button>
 
+        <!-- Gesture cheat-sheet -->
+        <div class="gesture-hints" id="gestureHints">
+          <div class="gesture-hints-title">Gesture controls</div>
+          <div class="gesture-list" id="gestureList">
+            <!-- filled by JS based on track mode -->
+          </div>
+        </div>
+
         <!-- Printer connect button -->
         <button id="printerBtn" class="printer-btn" title="Connect your repurposed 3D printer via USB">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="2" width="12" height="8" rx="1"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg>
@@ -1078,6 +1099,227 @@ let prevX = null, prevY = null, smoothX = null, smoothY = null;
 let lastTime = -1;
 let appMode = "draw";
 
+// ── Gesture state ──
+let penDown = true;               // false = pen lifted (no drawing)
+let gestureHoldTimer = null;      // debounce repeated triggers
+const GESTURE_COOLDOWN = 1200;    // ms between gesture fires
+
+// Blink state (face mode)
+let blinkFrames = 0;
+const BLINK_FRAMES_NEEDED = 3;   // consecutive frames both eyes must be closed
+
+// Hand gesture state
+let lastHandGesture = "";        // tracks gesture across frames for debounce
+
+// Foot/any-limb dwell state
+let dwellX = null, dwellY = null, dwellStart = null;
+const DWELL_RADIUS_PX = 18;      // pixels — hold still within this circle
+const DWELL_MS = 1000;           // hold still for 1 second → toggle pen
+
+// Color palette cycled by pinch
+const PALETTE = ["#2d7ae0","#0ea5c8","#a855f7","#f59e0b","#ef4444","#22c55e","#ffffff","#f97316"];
+let paletteIdx = 0;
+
+// ── Toast HUD ──
+function showToast(msg, sub = "") {
+  let el = document.getElementById("gestureToast");
+  if (!el) {
+    el = document.createElement("div");
+    el.id = "gestureToast";
+    el.style.cssText = [
+      "position:absolute","bottom:90px","left:50%","transform:translateX(-50%)",
+      "background:rgba(11,14,26,.88)","border:1px solid rgba(255,255,255,.15)",
+      "backdrop-filter:blur(12px)","border-radius:10px","padding:.55rem 1.1rem",
+      "color:#fff","font-size:.82rem","font-weight:600","z-index:20",
+      "pointer-events:none","transition:opacity .35s","white-space:nowrap",
+      "display:flex","align-items:center","gap:.55rem","font-family:Inter,sans-serif"
+    ].join(";");
+    overlayCanvas.parentElement.appendChild(el);
+  }
+  el.innerHTML = `<span style="font-size:1rem">${msg}</span>${sub ? `<span style="font-weight:400;color:rgba(255,255,255,.6)">${sub}</span>` : ""}`;
+  el.style.opacity = "1";
+  clearTimeout(el._hide);
+  el._hide = setTimeout(() => { el.style.opacity = "0"; }, 1800);
+}
+
+// ── Gesture cooldown helper ──
+function fireGesture(fn) {
+  if (gestureHoldTimer) return;
+  fn();
+  gestureHoldTimer = setTimeout(() => { gestureHoldTimer = null; }, GESTURE_COOLDOWN);
+}
+
+// ── Set brush color by palette index ──
+function applyPaletteColor(idx) {
+  brushColor = PALETTE[idx];
+  // sync color buttons if one matches
+  document.querySelectorAll(".color-btn").forEach(b => {
+    b.classList.toggle("active", b.dataset.color === brushColor);
+  });
+}
+
+// ── Set brush size (clamped) ──
+function applyBrushSize(sz) {
+  brushSize = Math.max(2, Math.min(40, sz));
+  brushSlider.value = brushSize;
+  brushVal.textContent = brushSize + "px";
+}
+
+// ── Toggle pen up / down ──
+function togglePen() {
+  penDown = !penDown;
+  prevX = null; prevY = null;
+  showToast(penDown ? "✏️ Pen down" : "✋ Pen up", penDown ? "drawing" : "lifted");
+}
+
+// ── Eye Aspect Ratio for blink detection ──
+// Uses face landmark indices for each eye's 6 control points.
+function eyeAR(lms, pts) {
+  // pts = [p1,p2,p3,p4,p5,p6] — standard EAR formula
+  const d = (a, b) => Math.hypot(lms[a].x - lms[b].x, lms[a].y - lms[b].y);
+  return (d(pts[1], pts[5]) + d(pts[2], pts[4])) / (2 * d(pts[0], pts[3]));
+}
+// MediaPipe FaceLandmarker eye landmark indices
+const LEFT_EYE  = [362, 385, 387, 263, 373, 380];
+const RIGHT_EYE = [33,  160, 158, 133, 153, 144];
+const EAR_THRESHOLD = 0.22;   // below this = eye closed
+
+// Returns number of extended fingers (0-5).
+// Tip landmarks: 4(thumb),8(index),12(middle),16(ring),20(pinky)
+// PIP (bend joint) landmarks: 3,6,10,14,18
+function countExtendedFingers(lms) {
+  let count = 0;
+  // Thumb: compare x (mirrored), not y
+  const thumbExtended = Math.abs(lms[4].x - lms[17].x) > Math.abs(lms[3].x - lms[17].x);
+  if (thumbExtended) count++;
+  // Other fingers: tip.y < pip.y means extended (y increases downward in image)
+  [[8,6],[12,10],[16,14],[20,18]].forEach(([tip, pip]) => {
+    if (lms[tip].y < lms[pip].y) count++;
+  });
+  return count;
+}
+
+// Pinch: thumb tip (4) and index tip (8) close together
+function isPinching(lms) {
+  return Math.hypot(lms[4].x - lms[8].x, lms[4].y - lms[8].y) < 0.06;
+}
+
+// Peace sign: index + middle extended, ring + pinky curled
+function isPeace(lms) {
+  const indexUp  = lms[8].y  < lms[6].y;
+  const middleUp = lms[12].y < lms[10].y;
+  const ringDown = lms[16].y > lms[14].y;
+  const pinkyDown= lms[20].y > lms[18].y;
+  return indexUp && middleUp && ringDown && pinkyDown;
+}
+
+// ── Process face gestures (called when mode === "nose") ──
+function processFaceGestures(lms) {
+  try {
+    const leftEAR  = eyeAR(lms, LEFT_EYE);
+    const rightEAR = eyeAR(lms, RIGHT_EYE);
+    const bothClosed = leftEAR < EAR_THRESHOLD && rightEAR < EAR_THRESHOLD;
+    if (bothClosed) {
+      blinkFrames++;
+      if (blinkFrames >= BLINK_FRAMES_NEEDED) {
+        fireGesture(togglePen);
+        blinkFrames = 0;
+      }
+    } else {
+      blinkFrames = 0;
+    }
+  } catch(_) {}
+}
+
+// ── Process hand gestures (called when mode === "hand") ──
+function processHandGestures(lms) {
+  try {
+    const fingers = countExtendedFingers(lms);
+    const pinching = isPinching(lms);
+    const peace = isPeace(lms);
+
+    // Pinch → cycle color
+    if (pinching) {
+      fireGesture(() => {
+        paletteIdx = (paletteIdx + 1) % PALETTE.length;
+        applyPaletteColor(paletteIdx);
+        showToast("🎨 Color", brushColor);
+      });
+      lastHandGesture = "pinch";
+      return;
+    }
+
+    // Peace ✌️ → clear canvas
+    if (peace) {
+      fireGesture(() => {
+        dctx.fillStyle = "#0b0e1a";
+        dctx.fillRect(0, 0, W, H);
+        prevX = null; prevY = null;
+        showToast("✌️ Canvas cleared");
+      });
+      lastHandGesture = "peace";
+      return;
+    }
+
+    // Fist (0 fingers) → decrease brush size
+    if (fingers === 0) {
+      fireGesture(() => {
+        applyBrushSize(brushSize - 4);
+        showToast("✊ Brush", brushSize + "px");
+      });
+      lastHandGesture = "fist";
+      return;
+    }
+
+    // Open hand (5 fingers) → increase brush size
+    if (fingers === 5) {
+      fireGesture(() => {
+        applyBrushSize(brushSize + 4);
+        showToast("🖐 Brush", brushSize + "px");
+      });
+      lastHandGesture = "open";
+      return;
+    }
+
+    // Thumbs up (thumb only) → toggle pen up/down
+    if (fingers === 1 && lms[4].y < lms[3].y && lms[8].y > lms[6].y) {
+      fireGesture(togglePen);
+      lastHandGesture = "thumb";
+      return;
+    }
+
+    lastHandGesture = "";
+  } catch(_) {}
+}
+
+// ── Foot / any-limb dwell detection ──
+// Hold still for DWELL_MS → toggle pen up/down
+function processDwell(cx, cy) {
+  if (dwellX === null) {
+    dwellX = cx; dwellY = cy; dwellStart = Date.now();
+    return;
+  }
+  const dist = Math.hypot(cx - dwellX, cy - dwellY);
+  if (dist > DWELL_RADIUS_PX) {
+    dwellX = cx; dwellY = cy; dwellStart = Date.now();
+    return;
+  }
+  const held = Date.now() - dwellStart;
+  // Draw a dwell arc on the overlay showing progress
+  const frac = Math.min(held / DWELL_MS, 1);
+  if (frac > 0.05) {
+    octx.beginPath();
+    octx.arc(cx, cy, 24, -Math.PI / 2, -Math.PI / 2 + frac * 2 * Math.PI);
+    octx.strokeStyle = `rgba(250,204,21,${0.5 + 0.5 * frac})`;
+    octx.lineWidth = 3;
+    octx.stroke();
+  }
+  if (held >= DWELL_MS) {
+    fireGesture(togglePen);
+    dwellX = cx; dwellY = cy; dwellStart = Date.now();
+  }
+}
+
 // ── Sliders ──
 brushSlider.addEventListener("input", () => {
   brushSize = +brushSlider.value;
@@ -1097,11 +1339,40 @@ document.querySelectorAll(".color-btn").forEach(btn => {
   });
 });
 
+// ── Gesture hint panel ──
+const GESTURE_HINTS = {
+  nose: [
+    { icon: "😑", desc: "Blink both eyes → pen up / down" },
+    { icon: "↔️", desc: "Move head → draw / steer cursor" },
+  ],
+  hand: [
+    { icon: "✊", desc: "Fist → brush smaller" },
+    { icon: "🖐", desc: "Open hand → brush larger" },
+    { icon: "🤏", desc: "Pinch → cycle color" },
+    { icon: "✌️", desc: "Peace sign → clear canvas" },
+    { icon: "👍", desc: "Thumbs up → pen up / down" },
+  ],
+  any: [
+    { icon: "🦶", desc: "Move foot / limb → draw" },
+    { icon: "⏸️", desc: "Hold still 1 sec → pen up / down" },
+  ],
+};
+function updateGestureHints(mode) {
+  const list = document.getElementById("gestureList");
+  list.innerHTML = (GESTURE_HINTS[mode] || []).map(g =>
+    `<div class="gesture-row"><span class="gesture-icon">${g.icon}</span><span class="gesture-desc">${g.desc}</span></div>`
+  ).join("");
+}
+updateGestureHints("nose");
+
 // ── Track mode ──
 document.querySelectorAll('input[name="trackMode"]').forEach(r => {
   r.addEventListener("change", () => {
     pipLabel.textContent = r.value;
     prevX = null; prevY = null;
+    dwellX = null; dwellY = null; dwellStart = null;
+    blinkFrames = 0;
+    updateGestureHints(r.value);
   });
 });
 
@@ -1242,16 +1513,24 @@ function loop() {
     if (mode === "hand" && handLM) {
       const r = handLM.detectForVideo(video, now);
       if (r.landmarks?.length) {
-        tx = r.landmarks[0][9].x;
-        ty = r.landmarks[0][9].y;
-        drawHand(r.landmarks[0]);
+        const lms = r.landmarks[0];
+        tx = lms[9].x;
+        ty = lms[9].y;
+        drawHand(lms);
+        if (appMode === "draw") processHandGestures(lms);
+      } else {
+        lastHandGesture = "";
       }
     } else if (mode === "nose" && faceLM) {
       const r = faceLM.detectForVideo(video, now);
       if (r.faceLandmarks?.length) {
-        tx = r.faceLandmarks[0][4].x;
-        ty = r.faceLandmarks[0][4].y;
-        drawFace(r.faceLandmarks[0]);
+        const lms = r.faceLandmarks[0];
+        tx = lms[4].x;
+        ty = lms[4].y;
+        drawFace(lms);
+        if (appMode === "draw") processFaceGestures(lms);
+      } else {
+        blinkFrames = 0;
       }
     } else if (mode === "any") {
       const b = brightPt();
@@ -1268,8 +1547,13 @@ function loop() {
 
     maybeSendToprinter(smoothX, smoothY);
 
+    // Foot/any-limb dwell check (mode === "any" only)
+    if (mode === "any" && appMode === "draw") {
+      processDwell(smoothX, smoothY);
+    }
+
     if (appMode === "draw") {
-      if (prevX !== null) {
+      if (penDown && prevX !== null) {
         dctx.beginPath();
         dctx.moveTo(prevX, prevY);
         dctx.lineTo(smoothX, smoothY);
@@ -1278,14 +1562,18 @@ function loop() {
         dctx.lineCap = "round"; dctx.lineJoin = "round";
         dctx.stroke();
       }
-      prevX = smoothX; prevY = smoothY;
-      // cursor ring
+      prevX = penDown ? smoothX : null;
+      prevY = penDown ? smoothY : null;
+      // cursor ring — dashed when pen is up
+      octx.save();
+      if (!penDown) octx.setLineDash([4, 4]);
       octx.beginPath();
       octx.arc(smoothX, smoothY, brushSize/2 + 6, 0, Math.PI*2);
-      octx.strokeStyle = brushColor; octx.lineWidth = 2; octx.stroke();
+      octx.strokeStyle = penDown ? brushColor : "rgba(255,255,255,0.45)"; octx.lineWidth = 2; octx.stroke();
+      octx.restore();
       octx.beginPath();
       octx.arc(smoothX, smoothY, 3, 0, Math.PI*2);
-      octx.fillStyle = brushColor; octx.fill();
+      octx.fillStyle = penDown ? brushColor : "rgba(255,255,255,0.45)"; octx.fill();
     } else {
       // Mouse mode — synthetic cursor movement over canvas
       prevX = null; prevY = null;
