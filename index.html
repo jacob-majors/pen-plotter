@@ -1693,14 +1693,17 @@ function brightPt() {
   return {x:(bx/sz)*W,y:(by/sz)*H};
 }
 
-// ── Web Serial — 3D printer transmission ──
-// Sends G-code G1 X Y F moves to a connected repurposed 3D printer over USB.
-// Printer bed must be homed (send G28 once on connect). X/Y map to canvas 0-200mm.
+// ── Web Serial — Ender 3 transmission ──
+// Ender 3 specs: 220x220mm bed, Marlin firmware, 115200 baud, home = front-left (X0 Y0).
+// We keep a 5mm margin on each edge so the pen never crashes into the frame clips.
 let serialPort = null, serialWriter = null;
 let lastGcodeX = null, lastGcodeY = null;
-const GCODE_STEP_PX = 4;    // only send when movement exceeds this many canvas pixels
-const PRINTER_MM = 200;      // usable bed size in mm (adjust for your printer)
-const FEED_RATE  = 6000;     // mm/min — tweak for speed vs. smoothness
+const GCODE_STEP_PX  = 3;      // send when movement exceeds this many canvas pixels
+const BED_MIN_MM     = 5;      // margin from home corner (mm)
+const BED_MAX_MM     = 215;    // Ender 3 usable travel ~215mm (220 - 5mm margin)
+const FEED_RATE      = 4500;   // mm/min — conservative for pen on paper; raise if too slow
+const DRAW_FEED      = 4500;   // feed while drawing
+const TRAVEL_FEED    = 8000;   // feed while pen is up (faster repositioning)
 
 const printerBtn   = document.getElementById("printerBtn");
 const printerLabel = document.getElementById("printerLabel");
@@ -1721,11 +1724,16 @@ printerBtn.addEventListener("click", async () => {
     encoder.readable.pipeTo(serialPort.writable);
     serialWriter = encoder.writable.getWriter();
 
-    // Home axes, set to relative coords disabled (absolute), and set units to mm
-    await sendGcode("G28 X Y\n");   // home X and Y
-    await sendGcode("G90\n");        // absolute positioning
-    await sendGcode("G21\n");        // millimetres
-    await sendGcode(`G1 F${FEED_RATE}\n`);
+    // Ender 3 / Marlin init sequence
+    await sendGcode("M110 N0\n");              // reset line number counter
+    await sendGcode("M115\n");                 // firmware info (wakes Marlin up)
+    await new Promise(r => setTimeout(r, 400));// brief pause for Marlin to respond
+    await sendGcode("G21\n");                  // units: millimetres
+    await sendGcode("G90\n");                  // absolute positioning
+    await sendGcode("M84 S0\n");               // disable stepper timeout (keep motors on)
+    await sendGcode("G28 X Y\n");              // home X and Y (Z not needed — pen is fixed height)
+    await new Promise(r => setTimeout(r, 3000));// wait for homing to finish (~2-3 s)
+    await sendGcode(`G1 X${BED_MIN_MM} Y${BED_MIN_MM} F${TRAVEL_FEED}\n`); // move to start corner
 
     printerBtn.classList.add("connected");
     printerLabel.textContent = "Disconnect Printer";
@@ -1762,10 +1770,11 @@ function maybeSendToprinter(canvasX, canvasY) {
 
   lastGcodeX = canvasX; lastGcodeY = canvasY;
 
-  // Map canvas pixels to printer bed mm (canvas origin top-left → printer origin at home)
-  const gx = ((canvasX / W) * PRINTER_MM).toFixed(2);
-  const gy = ((canvasY / H) * PRINTER_MM).toFixed(2);
-  sendGcode(`G1 X${gx} Y${gy}\n`);
+  // Map canvas pixels → Ender 3 bed mm, clamped within safe margins
+  const gx = (BED_MIN_MM + (canvasX / W) * (BED_MAX_MM - BED_MIN_MM)).toFixed(2);
+  const gy = (BED_MIN_MM + (canvasY / H) * (BED_MAX_MM - BED_MIN_MM)).toFixed(2);
+  const feed = penDown ? DRAW_FEED : TRAVEL_FEED;
+  sendGcode(`G1 X${gx} Y${gy} F${feed}\n`);
 }
 
 </script>
