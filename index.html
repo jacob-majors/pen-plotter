@@ -466,9 +466,18 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 
 /* Z-axis live slider */
 .z-slider-wrap {
-  display: flex; flex-direction: column; align-items: center; gap: .25rem;
-  padding: .4rem 0;
+  display: flex; flex-direction: row; align-items: center; gap: .4rem;
+  padding: .4rem 0; justify-content: center;
 }
+.z-slider-inner { display: flex; flex-direction: column; align-items: center; gap: .25rem; }
+.z-step-btn { width: 28px; height: 28px; padding: 0; font-size: 1rem; flex-shrink: 0; }
+.pp-textarea {
+  width: 100%; padding: .4rem .55rem; border-radius: 7px; resize: vertical;
+  background: rgba(255,255,255,.06); border: 1px solid var(--border);
+  color: #fff; font-size: .84rem; font-family: inherit; line-height: 1.5;
+}
+.pp-textarea:focus { outline: none; border-color: var(--blue); }
+#dictateBtn.listening { background: rgba(239,68,68,.25); color: #fca5a5; animation: blink 1s ease-in-out infinite; }
 .z-tick { font-size: .68rem; color: var(--dim); font-variant-numeric: tabular-nums; }
 .z-slider {
   -webkit-appearance: slider-vertical; appearance: slider-vertical;
@@ -892,11 +901,15 @@ footer { border-top: 1px solid var(--border); padding: 2.75rem 0 1.25rem; }
             <div class="pp-title">Z Axis
               <span class="pp-live" id="liveZLabel">Live Z —</span>
             </div>
-            <!-- Live Z slider -->
+            <!-- Live Z slider + step buttons -->
             <div class="z-slider-wrap">
-              <span class="z-tick z-tick-top">50</span>
-              <input type="range" id="zLiveSlider" class="z-slider" min="-50" max="50" step="0.5" value="8">
-              <span class="z-tick z-tick-bot">-50</span>
+              <button class="pp-btn pp-btn-sm z-step-btn" id="zStepUp" title="+0.5mm">+</button>
+              <div class="z-slider-inner">
+                <span class="z-tick z-tick-top">50</span>
+                <input type="range" id="zLiveSlider" class="z-slider" min="-50" max="50" step="0.5" value="8">
+                <span class="z-tick z-tick-bot">-50</span>
+              </div>
+              <button class="pp-btn pp-btn-sm z-step-btn" id="zStepDown" title="-0.5mm">−</button>
             </div>
             <!-- Preset rows -->
             <div class="pp-row pp-scale-row">
@@ -932,6 +945,24 @@ footer { border-top: 1px solid var(--border); padding: 2.75rem 0 1.25rem; }
               <button class="pp-btn" id="clearSvgBtn">Clear SVG</button>
             </div>
             <div class="pp-hint" id="svgHint">No SVG loaded. SVGs auto-fit to the active boundary box.</div>
+          </div>
+
+          <!-- Text to Plot -->
+          <div class="pp-section">
+            <div class="pp-title">Text to Plot
+              <button class="pp-btn pp-btn-sm" id="dictateBtn" title="Dictate — say 'print' to plot">🎤</button>
+            </div>
+            <textarea id="plotText" class="pp-textarea" placeholder="Type text here…" rows="2"></textarea>
+            <div class="pp-row pp-scale-row">
+              <label class="pp-label">Letter size</label>
+              <input type="number" id="textSize" class="pp-num" value="15" min="3" max="80" step="1">
+              <span class="pp-unit">mm</span>
+            </div>
+            <div class="pp-row">
+              <button class="pp-btn pp-btn-accent" id="plotTextBtn" disabled>Plot Text</button>
+              <button class="pp-btn" id="clearTextBtn">Clear</button>
+            </div>
+            <div class="pp-hint" id="textHint">Connect printer to plot text.</div>
           </div>
 
           <!-- Motion -->
@@ -1980,6 +2011,30 @@ zLiveSlider.addEventListener("input", () => {
 penUpZEl.addEventListener("change",   () => { penUpZ   = parseFloat(penUpZEl.value)   || 8; });
 penDownZEl.addEventListener("change", () => { penDownZ = parseFloat(penDownZEl.value) || 2; });
 
+// Z step buttons
+function zStep(delta) {
+  const cur = parseFloat(zLiveSlider.value);
+  const next = Math.max(-50, Math.min(50, cur + delta));
+  zLiveSlider.value = next;
+  currentZ = next;
+  liveZLabel.textContent = `Live Z ${next.toFixed(1)} mm`;
+  sendZLive(next);
+}
+document.getElementById("zStepUp").addEventListener("click",   () => zStep(0.5));
+document.getElementById("zStepDown").addEventListener("click", () => zStep(-0.5));
+// Also allow holding the button for continuous movement
+function holdStep(btnId, delta) {
+  let timer;
+  const btn = document.getElementById(btnId);
+  btn.addEventListener("mousedown",   () => { zStep(delta); timer = setInterval(() => zStep(delta), 150); });
+  btn.addEventListener("touchstart",  (e) => { e.preventDefault(); zStep(delta); timer = setInterval(() => zStep(delta), 150); });
+  const stop = () => clearInterval(timer);
+  btn.addEventListener("mouseup",   stop); btn.addEventListener("mouseleave", stop);
+  btn.addEventListener("touchend",  stop); btn.addEventListener("touchcancel", stop);
+}
+holdStep("zStepUp",   0.5);
+holdStep("zStepDown", -0.5);
+
 // Lift/Drop: jump to preset value and sync slider
 liftBtn.addEventListener("click", () => {
   penUpZ = parseFloat(penUpZEl.value) || 8;
@@ -2180,12 +2235,31 @@ async function plotSVGPaths(paths, scale) {
     // Travel to path start
     await sendGcode(`G1 X${gcPts[0].gx} Y${gcPts[0].gy} F${TRAVEL_FEED}\n`);
     await movePenZ(penDownZ);
-    // Draw N passes (alternating direction for efficiency)
-    for (let pass = 0; pass < passes; pass++) {
-      const dir = pass % 2 === 0 ? gcPts : [...gcPts].reverse();
-      for (const pt of dir) {
-        await sendGcode(`G1 X${pt.gx} Y${pt.gy} F${spd}\n`);
-        await new Promise(r => setTimeout(r, 8));
+    // Draw with parallel offset passes for thick lines
+    for (let i = 0; i < passes; i++) {
+      const offset = -((passes - 1) / 2) * PEN_NIB_MM + i * PEN_NIB_MM;
+      const dir = i % 2 === 0 ? gcPts : [...gcPts].reverse();
+      // Travel to start of this pass
+      const sp = dir[0];
+      await movePenZ(penUpZ);
+      // Compute perpendicular at first segment for offset
+      const nx = i === 0 ? 0 : -(parseFloat(dir[1].gy) - parseFloat(dir[0].gy));
+      const ny = i === 0 ? 0 :  (parseFloat(dir[1].gx) - parseFloat(dir[0].gx));
+      const nl = Math.hypot(nx, ny) || 1;
+      const startX = (parseFloat(sp.gx) + (nx/nl) * offset).toFixed(2);
+      const startY = (parseFloat(sp.gy) + (ny/nl) * offset).toFixed(2);
+      await sendGcode(`G1 X${startX} Y${startY} F${TRAVEL_FEED}\n`);
+      await movePenZ(penDownZ);
+      for (let j = 1; j < dir.length; j++) {
+        const prev = dir[j-1], cur = dir[j];
+        const ddx = parseFloat(cur.gx) - parseFloat(prev.gx);
+        const ddy = parseFloat(cur.gy) - parseFloat(prev.gy);
+        const dl = Math.hypot(ddx, ddy) || 1;
+        const ox = (-ddy / dl) * offset, oy = (ddx / dl) * offset;
+        const px2 = Math.max(0, Math.min(220, parseFloat(cur.gx) + ox));
+        const py2 = Math.max(0, Math.min(220, parseFloat(cur.gy) + oy));
+        await sendGcode(`G1 X${px2.toFixed(2)} Y${py2.toFixed(2)} F${spd}\n`);
+        await new Promise(r => setTimeout(r, 5));
       }
     }
     await movePenZ(penUpZ);
@@ -2324,6 +2398,9 @@ printerBtn.addEventListener("click", async () => {
     jogPos = { x: BED_MIN_MM, y: BED_MIN_MM };
     await movePenZ(penUpZ);
     updateBoundsHint();
+    if (document.getElementById("plotText").value.trim())
+      document.getElementById("plotTextBtn").disabled = false;
+    document.getElementById("textHint").textContent = "Type text and click Plot Text.";
   } catch (e) {
     if (e.name !== "NotFoundError") console.error("Serial connect error:", e);
     serialPort = null; serialWriter = null;
@@ -2378,12 +2455,15 @@ function sendZLive(z) {
   })();
 }
 
-// Called from the tracking loop whenever we have a new smoothed position.
-// canvasX / canvasY are in drawCanvas pixel coords (0..W, 0..H).
-// When penDown + passes > 1, we buffer the recent stroke and replay it after each segment
-// to make the physical line thicker (more ink deposited).
-const strokeBuffer = [];          // [{gx,gy}] — recent drawn positions for multi-pass
-const STROKE_BUFFER_MAX = 40;     // how many positions to remember for re-trace
+// ── Thick line fill — parallel offset passes ──
+// Each segment sends (passes) lines spaced PEN_NIB_MM apart perpendicular
+// to the direction of travel, filling in a solid band of ink.
+// e.g. passes=5, nib=0.4mm → 5 lines covering a 1.6mm wide stroke.
+
+const PEN_NIB_MM = 0.4; // pen tip width in mm — adjust for your pen
+
+// Previous printer position in mm (for perpendicular offset calculation)
+let prevGx = null, prevGy = null;
 
 function maybeSendToprinter(canvasX, canvasY) {
   if (!serialWriter) return;
@@ -2394,38 +2474,238 @@ function maybeSendToprinter(canvasX, canvasY) {
 
   lastGcodeX = canvasX; lastGcodeY = canvasY;
 
-  const gx = (BED_MIN_MM + (canvasX / W) * (BED_MAX_MM - BED_MIN_MM)).toFixed(2);
-  const gy = (BED_MIN_MM + (canvasY / H) * (BED_MAX_MM - BED_MIN_MM)).toFixed(2);
+  const gx = BED_MIN_MM + (canvasX / W) * (BED_MAX_MM - BED_MIN_MM);
+  const gy = BED_MIN_MM + (canvasY / H) * (BED_MAX_MM - BED_MIN_MM);
 
   if (!penDown) {
-    // Pen up — travel move, flush buffer
-    strokeBuffer.length = 0;
-    sendGcode(`G1 X${gx} Y${gy} F${TRAVEL_FEED}\n`);
+    prevGx = null; prevGy = null;
+    sendGcode(`G1 X${gx.toFixed(2)} Y${gy.toFixed(2)} F${TRAVEL_FEED}\n`);
     return;
   }
 
   const passes = parseInt(document.getElementById("linePasses")?.value || "1", 10);
 
-  // First pass — normal move
-  sendGcode(`G1 X${gx} Y${gy} F${DRAW_FEED}\n`);
-
-  if (passes > 1) {
-    // Buffer this point
-    strokeBuffer.push({ gx, gy });
-    if (strokeBuffer.length > STROKE_BUFFER_MAX) strokeBuffer.shift();
-
-    // Every STROKE_BUFFER_MAX/2 points do an extra pass over recent buffer (forward + backward)
-    if (strokeBuffer.length >= 6 && strokeBuffer.length % 6 === 0) {
-      for (let p = 1; p < passes; p++) {
-        const dir = p % 2 === 0 ? strokeBuffer : [...strokeBuffer].reverse();
-        dir.forEach(pt => sendGcode(`G1 X${pt.gx} Y${pt.gy} F${DRAW_FEED}\n`));
-      }
-    }
+  if (passes <= 1 || prevGx === null) {
+    // Single pass or first point — just move
+    sendGcode(`G1 X${gx.toFixed(2)} Y${gy.toFixed(2)} F${DRAW_FEED}\n`);
+    prevGx = gx; prevGy = gy;
+    return;
   }
+
+  // Direction vector of this segment
+  const dx = gx - prevGx, dy = gy - prevGy;
+  const len = Math.hypot(dx, dy);
+  if (len < 0.01) { prevGx = gx; prevGy = gy; return; }
+
+  // Perpendicular unit vector (rotated 90°)
+  const px = -dy / len, py = dx / len;
+
+  // Total width to fill = (passes-1) * nib, centred on the line
+  const half = ((passes - 1) / 2) * PEN_NIB_MM;
+
+  // Send each parallel pass: alternate direction to avoid travel moves
+  for (let i = 0; i < passes; i++) {
+    const offset = -half + i * PEN_NIB_MM;
+    const fromX = (prevGx + px * offset);
+    const fromY = (prevGy + py * offset);
+    const toX   = (gx    + px * offset);
+    const toY   = (gy    + py * offset);
+    // Clamp to bed
+    const cfx = Math.max(0, Math.min(220, fromX));
+    const cfy = Math.max(0, Math.min(220, fromY));
+    const ctx2 = Math.max(0, Math.min(220, toX));
+    const cty = Math.max(0, Math.min(220, toY));
+    if (i > 0) {
+      // Lift-travel to start of this pass, drop, draw
+      sendGcode(`G1 Z${penUpZ.toFixed(2)} F3000\n`);
+      sendGcode(`G1 X${cfx.toFixed(2)} Y${cfy.toFixed(2)} F${TRAVEL_FEED}\n`);
+      sendGcode(`G1 Z${penDownZ.toFixed(2)} F3000\n`);
+    }
+    sendGcode(`G1 X${ctx2.toFixed(2)} Y${cty.toFixed(2)} F${DRAW_FEED}\n`);
+  }
+
+  prevGx = gx; prevGy = gy;
 }
 
-// Reset stroke buffer when pen is lifted or drawing stops
-function resetStrokeBuffer() { strokeBuffer.length = 0; }
+function resetStrokeBuffer() { prevGx = null; prevGy = null; }
+
+// ══════════════════════════════════════════════════════
+// TEXT TO PLOT — compact single-stroke vector font
+// Each char is an array of strokes; each stroke is [[x,y]...]
+// Coordinates normalised: char cell is 0-6 wide, 0-8 tall, baseline at y=0
+// ══════════════════════════════════════════════════════
+const HFONT = {
+  ' ': [],
+  'A': [[[0,0],[3,8],[6,0]],[[1,3],[5,3]]],
+  'B': [[[0,0],[0,8],[4,8],[5,7],[5,5],[4,4],[0,4]],[[4,4],[5,3],[5,1],[4,0],[0,0]]],
+  'C': [[[5,7],[4,8],[2,8],[1,7],[0,5],[0,3],[1,1],[2,0],[4,0],[5,1]]],
+  'D': [[[0,0],[0,8],[3,8],[5,6],[5,2],[3,0],[0,0]]],
+  'E': [[[5,0],[0,0],[0,8],[5,8]],[[0,4],[4,4]]],
+  'F': [[[0,0],[0,8],[5,8]],[[0,4],[4,4]]],
+  'G': [[[5,7],[4,8],[2,8],[1,7],[0,5],[0,3],[1,1],[2,0],[4,0],[5,1],[5,4],[3,4]]],
+  'H': [[[0,0],[0,8]],[[6,0],[6,8]],[[0,4],[6,4]]],
+  'I': [[[1,0],[5,0]],[[3,0],[3,8]],[[1,8],[5,8]]],
+  'J': [[[1,1],[0,2],[0,4],[1,5]],[[4,8],[4,0],[3,0],[1,1]]],
+  'K': [[[0,0],[0,8]],[[5,8],[0,4],[5,0]]],
+  'L': [[[0,8],[0,0],[5,0]]],
+  'M': [[[0,0],[0,8],[3,4],[6,8],[6,0]]],
+  'N': [[[0,0],[0,8],[6,0],[6,8]]],
+  'O': [[[2,0],[1,1],[0,3],[0,5],[1,7],[2,8],[4,8],[5,7],[6,5],[6,3],[5,1],[4,0],[2,0]]],
+  'P': [[[0,0],[0,8],[4,8],[5,7],[5,5],[4,4],[0,4]]],
+  'Q': [[[2,0],[1,1],[0,3],[0,5],[1,7],[2,8],[4,8],[5,7],[6,5],[6,3],[5,1],[4,0],[2,0]],[[4,2],[6,0]]],
+  'R': [[[0,0],[0,8],[4,8],[5,7],[5,5],[4,4],[0,4]],[[3,4],[6,0]]],
+  'S': [[[5,7],[4,8],[2,8],[1,7],[1,5],[2,4],[4,4],[5,3],[5,1],[4,0],[2,0],[1,1]]],
+  'T': [[[0,8],[6,8]],[[3,8],[3,0]]],
+  'U': [[[0,8],[0,2],[1,0],[3,0],[5,0],[6,2],[6,8]]],
+  'V': [[[0,8],[3,0],[6,8]]],
+  'W': [[[0,8],[1,0],[3,4],[5,0],[6,8]]],
+  'X': [[[0,0],[6,8]],[[6,0],[0,8]]],
+  'Y': [[[0,8],[3,4],[6,8]],[[3,4],[3,0]]],
+  'Z': [[[0,8],[6,8],[0,0],[6,0]]],
+  '0': [[[2,0],[1,1],[0,3],[0,5],[1,7],[2,8],[4,8],[5,7],[6,5],[6,3],[5,1],[4,0],[2,0]],[[1,2],[5,6]]],
+  '1': [[[2,7],[3,8],[3,0]],[[1,0],[5,0]]],
+  '2': [[[0,6],[1,7],[2,8],[4,8],[5,7],[5,5],[0,0],[6,0]]],
+  '3': [[[0,7],[1,8],[4,8],[5,7],[5,5],[4,4],[2,4]],[[4,4],[5,3],[5,1],[4,0],[1,0],[0,1]]],
+  '4': [[[4,0],[4,8],[0,3],[6,3]]],
+  '5': [[[5,8],[0,8],[0,4],[4,4],[5,3],[5,1],[4,0],[1,0],[0,1]]],
+  '6': [[[4,8],[2,8],[1,7],[0,5],[0,2],[1,0],[3,0],[5,0],[5,2],[4,4],[0,4]]],
+  '7': [[[0,8],[6,8],[2,0]]],
+  '8': [[[2,4],[1,5],[0,6],[0,7],[1,8],[2,8],[4,8],[5,7],[6,6],[6,5],[5,4],[2,4],[1,3],[0,2],[0,1],[1,0],[2,0],[4,0],[5,1],[6,2],[6,3],[5,4]]],
+  '9': [[[5,4],[6,4],[6,7],[5,8],[3,8],[1,8],[1,6],[2,4],[6,4]],[[2,4],[1,2],[1,0]]],
+  '.': [[[3,0],[3,1]]],
+  ',': [[[3,1],[3,0],[2,-1]]],
+  '!': [[[3,8],[3,2]],[[3,0],[3,1]]],
+  '?': [[[0,7],[1,8],[3,8],[4,7],[4,5],[3,4],[3,2]],[[3,0],[3,1]]],
+  '-': [[[1,4],[5,4]]],
+  ':': [[[3,5],[3,6]],[[3,1],[3,2]]],
+};
+
+const CHAR_W = 7; // cell width (6 + 1 spacing)
+const CHAR_H = 8; // cell height
+
+// Convert text to G-code and send to printer
+async function plotTextToprinter(text, sizeMM) {
+  if (!serialWriter) return;
+  const scale = sizeMM / CHAR_H;
+  const spd = parseFloat(xySpeedEl.value) || 4500;
+  let cursorX = boundBL.x;
+  const baseY = boundTR.y - sizeMM; // start near top of boundary
+
+  await movePenZ(penUpZ);
+
+  for (const ch of text.toUpperCase()) {
+    if (ch === '\n') {
+      cursorX = boundBL.x;
+      continue;
+    }
+    const strokes = HFONT[ch] ?? HFONT['?'];
+    for (const stroke of strokes) {
+      let first = true;
+      for (const [sx, sy] of stroke) {
+        // Hershey y=0 is baseline at bottom; invert so y increases upward on bed
+        const gx = Math.max(0, Math.min(220, cursorX + sx * scale));
+        const gy = Math.max(0, Math.min(220, baseY  + (CHAR_H - sy) * scale));
+        if (first) {
+          await movePenZ(penUpZ);
+          await sendGcode(`G1 X${gx.toFixed(2)} Y${gy.toFixed(2)} F${TRAVEL_FEED}\n`);
+          await movePenZ(penDownZ);
+          first = false;
+        } else {
+          await sendGcode(`G1 X${gx.toFixed(2)} Y${gy.toFixed(2)} F${spd}\n`);
+          await new Promise(r => setTimeout(r, 5));
+        }
+      }
+    }
+    cursorX += CHAR_W * scale;
+    if (cursorX > boundTR.x) break; // ran off the right edge
+  }
+  await movePenZ(penUpZ);
+}
+
+// ── Text panel wiring ──
+const plotTextBtn  = document.getElementById("plotTextBtn");
+const clearTextBtn = document.getElementById("clearTextBtn");
+const plotTextEl   = document.getElementById("plotText");
+const textSizeEl   = document.getElementById("textSize");
+const textHintEl   = document.getElementById("textHint");
+const dictateBtn   = document.getElementById("dictateBtn");
+
+// Enable plot button when printer connected (handled in connect block)
+plotTextEl.addEventListener("input", () => {
+  if (serialWriter) plotTextBtn.disabled = !plotTextEl.value.trim();
+});
+
+plotTextBtn.addEventListener("click", async () => {
+  const txt = plotTextEl.value.trim();
+  if (!txt || !serialWriter) return;
+  plotTextBtn.disabled = true;
+  plotTextBtn.textContent = "Plotting…";
+  textHintEl.textContent = `Plotting: "${txt}"`;
+  await plotTextToprinter(txt, parseFloat(textSizeEl.value) || 15);
+  plotTextBtn.disabled = false;
+  plotTextBtn.textContent = "Plot Text";
+  textHintEl.textContent = "Done.";
+});
+
+clearTextBtn.addEventListener("click", () => {
+  plotTextEl.value = "";
+  plotTextBtn.disabled = true;
+  textHintEl.textContent = serialWriter ? "Type text and click Plot Text." : "Connect printer to plot text.";
+});
+
+// ── Speech recognition / dictation ──
+// Say anything to fill the text box; say "print" to trigger Plot Text.
+let recognition = null;
+dictateBtn.addEventListener("click", () => {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) { alert("Speech recognition isn't supported in this browser. Use Chrome."); return; }
+
+  if (recognition) {
+    recognition.stop(); recognition = null;
+    dictateBtn.classList.remove("listening");
+    dictateBtn.textContent = "🎤";
+    return;
+  }
+
+  recognition = new SpeechRecognition();
+  recognition.continuous = true;
+  recognition.interimResults = false;
+  recognition.lang = "en-US";
+
+  recognition.onresult = (e) => {
+    const transcript = Array.from(e.results)
+      .slice(e.resultIndex)
+      .map(r => r[0].transcript)
+      .join(" ")
+      .trim();
+
+    // "print" keyword triggers plot
+    if (/\bprint\b/i.test(transcript)) {
+      const cleaned = transcript.replace(/\bprint\b/gi, "").trim();
+      if (cleaned) plotTextEl.value = cleaned;
+      if (plotTextEl.value.trim() && serialWriter) plotTextBtn.click();
+      textHintEl.textContent = `Heard "print" — plotting!`;
+    } else {
+      // Append dictated text
+      plotTextEl.value = (plotTextEl.value + " " + transcript).trim();
+      if (serialWriter) plotTextBtn.disabled = !plotTextEl.value.trim();
+      textHintEl.textContent = `Heard: "${transcript}"`;
+    }
+  };
+
+  recognition.onerror = (e) => {
+    if (e.error !== "no-speech") textHintEl.textContent = `Mic error: ${e.error}`;
+  };
+  recognition.onend = () => {
+    // Restart if still in listening mode
+    if (recognition) recognition.start();
+  };
+
+  recognition.start();
+  dictateBtn.classList.add("listening");
+  dictateBtn.textContent = "🔴";
+  textHintEl.textContent = "Listening… say text then say \"print\" to plot.";
+});
 
 </script>
 </body>
