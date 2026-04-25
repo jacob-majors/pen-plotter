@@ -218,26 +218,119 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   line-height: 1.7; margin-bottom: 2.8rem;
 }
 
-/* === DEMO === */
-.demo-section {
-  border-top: 1px solid var(--border);
-  background: radial-gradient(ellipse 80% 50% at 50% 0%, rgba(13,53,117,.08), transparent);
+/* === APP SHELL === */
+#app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
 }
 
+.app-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: .55rem 1.25rem;
+  background: rgba(11,14,26,.95);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(12px);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  flex-shrink: 0;
+}
+
+.app-logo {
+  display: flex;
+  align-items: center;
+  gap: .55rem;
+  font-weight: 700;
+  font-size: .95rem;
+  color: #fff;
+}
+
+.app-bar-right {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+}
+
+.app-connect-btn {
+  width: auto !important;
+  padding: .45rem .9rem !important;
+  font-size: .8rem !important;
+}
+
+.app-body {
+  flex: 1;
+  padding: .75rem 1rem 1.25rem;
+  max-width: 1400px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* === DEMO === */
 .demo-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Manual move 2×3 button grid */
+.manual-grid {
   display: grid;
-  grid-template-columns: 1fr 260px;
-  gap: 1.25rem;
+  grid-template-columns: 1fr 1fr;
+  gap: .4rem;
+}
+
+.man-btn {
+  padding: .55rem .4rem;
+  border-radius: 8px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: rgba(255,255,255,.8);
+  font-size: .82rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background .15s, color .15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .25rem;
+}
+
+.man-btn:hover { background: rgba(255,255,255,.14); color: #fff; }
+.man-btn-y     { background: rgba(14,165,200,.15); border-color: rgba(14,165,200,.3); color: var(--teal); }
+.man-btn-y:hover { background: rgba(14,165,200,.28); color: #fff; }
+.man-btn-pen   { background: rgba(168,85,247,.12); border-color: rgba(168,85,247,.3); color: #c084fc; }
+.man-btn-pen:hover { background: rgba(168,85,247,.28); color: #fff; }
+
+/* Controls grid below the canvas */
+.sidebar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: .75rem;
   align-items: start;
+}
+
+/* Individual card inside the top grid row */
+.ctrl-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: .75rem;
+  display: flex;
+  flex-direction: column;
+  gap: .6rem;
 }
 
 /* Canvas area */
 .canvas-area {
   position: relative;
-  border-radius: 14px; overflow: hidden;
+  border-radius: 10px; overflow: hidden;
   border: 1px solid var(--border);
   background: #0b0e1a;
-  box-shadow: 0 20px 56px rgba(0,0,0,.55);
+  box-shadow: 0 8px 32px rgba(0,0,0,.5);
 }
 
 .canvas-area canvas#drawCanvas {
@@ -321,9 +414,13 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 }
 .tool-btn:hover { background: var(--surface2); color: #fff; }
 
-/* Sidebar */
-.sidebar {
-  display: flex; flex-direction: column; gap: .85rem;
+/* Printer panel spans all 4 columns when visible */
+#printerPanel {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: .75rem;
+  align-items: start;
 }
 
 .seg-ctrl {
@@ -396,7 +493,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 .gesture-desc { color: var(--muted); line-height: 1.4; }
 
 /* === PRINTER PANEL === */
-.printer-panel { display: flex; flex-direction: column; gap: .6rem; }
+.printer-panel { gap: .6rem; }
 .pp-section {
   background: var(--surface); border: 1px solid var(--border);
   border-radius: 10px; padding: .7rem .8rem;
@@ -684,15 +781,231 @@ footer { border-top: 1px solid var(--border); padding: 2.75rem 0 1.25rem; }
 .src-credit a { color: var(--blue-l); }
 .src-credit a:hover { text-decoration: underline; }
 
+/* === TAB BAR === */
+.tab-bar {
+  display: flex; gap: .2rem;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; padding: .2rem;
+}
+.tab-btn {
+  display: flex; align-items: center; gap: .35rem;
+  padding: .35rem .85rem; border-radius: 6px;
+  font-size: .8rem; font-weight: 600; font-family: inherit;
+  color: var(--muted); background: none; border: none; cursor: pointer;
+  transition: background .15s, color .15s;
+}
+.tab-btn:hover { color: #fff; background: var(--surface2); }
+.tab-btn.active { background: var(--surface2); color: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.3); }
+
+/* ═══ DESIGN TOOL ═══════════════════════════════════════════════════════ */
+#panelDesigns {
+  display: flex; flex-direction: column;
+  height: calc(100vh - 48px);
+  background: #1a1a1a;
+  padding: 0;
+}
+
+/* toolbar */
+.dt-toolbar {
+  display: flex; align-items: center; gap: 0;
+  height: 36px; flex-shrink: 0;
+  background: #2a2a2a;
+  border-bottom: 1px solid #3a3a3a;
+  padding: 0 8px;
+  overflow-x: auto; overflow-y: hidden;
+  user-select: none;
+}
+.dt-toolbar::-webkit-scrollbar { display: none; }
+.dt-group { display: flex; align-items: center; gap: 4px; padding: 0 6px; }
+.dt-sep { width: 1px; height: 18px; background: #3a3a3a; flex-shrink: 0; margin: 0 4px; }
+.dt-label { font-size: 10px; color: #666; letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; }
+.dt-select {
+  height: 24px; padding: 0 22px 0 7px; border-radius: 3px;
+  background: #1e1e1e url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23666'/%3E%3C/svg%3E") no-repeat right 6px center;
+  border: 1px solid #3c3c3c; color: #ccc; font-size: 11.5px; font-family: inherit;
+  appearance: none; -webkit-appearance: none; cursor: pointer;
+  transition: border-color .15s;
+}
+.dt-select:hover { border-color: #555; }
+.dt-select:focus { outline: none; border-color: #4a9eff; }
+.dt-num-input {
+  height: 24px; width: 60px; padding: 0 6px; border-radius: 3px;
+  background: #1e1e1e; border: 1px solid #3c3c3c; color: #ccc;
+  font-size: 11.5px; font-family: monospace; text-align: right;
+  transition: border-color .15s;
+}
+.dt-num-input:focus { outline: none; border-color: #4a9eff; }
+.dt-num-input.wide { width: 52px; }
+.dt-unit { font-size: 11px; color: #555; }
+.dt-x    { font-size: 11px; color: #444; }
+.dt-icon-btn {
+  width: 24px; height: 24px; border-radius: 3px; border: 1px solid transparent;
+  background: none; color: #888; font-size: 13px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .12s, color .12s, border-color .12s;
+}
+.dt-icon-btn:hover { background: #383838; color: #ccc; border-color: #444; }
+.dt-icon-btn.active { background: #3a4a6a; color: #4a9eff; border-color: #4a9eff55; }
+.dt-btn {
+  height: 24px; padding: 0 10px; border-radius: 3px;
+  background: #383838; border: 1px solid #4a4a4a; color: #ccc;
+  font-size: 11.5px; font-family: inherit; cursor: pointer; white-space: nowrap;
+  transition: background .12s, border-color .12s;
+}
+.dt-btn:hover { background: #444; border-color: #555; }
+.dt-btn:disabled { opacity: .4; cursor: not-allowed; }
+.dt-btn-primary {
+  background: #1a4a8a; border-color: #2d6abf; color: #7ab8ff;
+}
+.dt-btn-primary:hover:not(:disabled) { background: #1f5ca0; }
+.dt-btn-primary:disabled { opacity: .35; cursor: not-allowed; }
+.dt-zoom-label { font-size: 11px; font-family: monospace; color: #888; width: 36px; text-align: center; }
+
+/* 3-panel layout */
+.dt-body {
+  display: grid;
+  grid-template-columns: 176px 1fr 210px;
+  flex: 1; min-height: 0;
+}
+
+/* left: preset panel */
+.dt-presets {
+  background: #222; border-right: 1px solid #333;
+  display: flex; flex-direction: column; overflow: hidden;
+}
+.dt-presets-head {
+  padding: 6px 8px; border-bottom: 1px solid #2e2e2e;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.dt-search {
+  width: 100%; height: 24px; padding: 0 8px; border-radius: 3px;
+  background: #1a1a1a; border: 1px solid #333; color: #ccc;
+  font-size: 11.5px; font-family: inherit;
+}
+.dt-search:focus { outline: none; border-color: #4a9eff; }
+.dt-cats { display: flex; gap: 2px; flex-wrap: wrap; }
+.dt-cat {
+  padding: 2px 6px; border-radius: 2px; border: none;
+  background: none; color: #666; font-size: 10px; cursor: pointer;
+  font-family: inherit; transition: background .12s, color .12s;
+}
+.dt-cat:hover { color: #aaa; background: #2a2a2a; }
+.dt-cat.active { color: #4a9eff; background: #1a3050; }
+.dt-preset-scroll { flex: 1; overflow-y: auto; padding: 4px; }
+.dt-preset-scroll::-webkit-scrollbar { width: 5px; }
+.dt-preset-scroll::-webkit-scrollbar-track { background: transparent; }
+.dt-preset-scroll::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+.dt-preset-card {
+  display: flex; align-items: center; gap: 6px;
+  padding: 5px 6px; border-radius: 4px; cursor: pointer; margin-bottom: 2px;
+  border: 1px solid transparent;
+  transition: background .12s, border-color .12s;
+}
+.dt-preset-card:hover { background: #2a2a2a; }
+.dt-preset-card.active { background: #1a3050; border-color: #2d5a9e; }
+.dt-thumb {
+  width: 40px; height: 50px; border-radius: 3px; flex-shrink: 0;
+  background: #111; border: 1px solid #333; display: block;
+}
+.dt-preset-meta { flex: 1; min-width: 0; }
+.dt-preset-name { font-size: 11px; font-weight: 600; color: #bbb; line-height: 1.2; }
+.dt-preset-cat  { font-size: 10px; color: #555; margin-top: 1px; }
+
+/* center: canvas */
+.dt-canvas-wrap {
+  display: flex; flex-direction: column;
+  background: #242424; overflow: hidden; position: relative;
+}
+.dt-canvas-viewport {
+  flex: 1; overflow: auto; position: relative;
+  display: flex; align-items: center; justify-content: center;
+}
+.dt-canvas-viewport::-webkit-scrollbar { width: 8px; height: 8px; }
+.dt-canvas-viewport::-webkit-scrollbar-track { background: #1a1a1a; }
+.dt-canvas-viewport::-webkit-scrollbar-thumb { background: #3a3a3a; border-radius: 4px; }
+.dt-paper-wrap {
+  position: relative; display: inline-block;
+  box-shadow: 0 8px 40px rgba(0,0,0,.7), 0 0 0 1px rgba(255,255,255,.07);
+}
+#designCanvas { display: block; }
+.dt-statusbar {
+  height: 22px; flex-shrink: 0;
+  background: #222; border-top: 1px solid #2e2e2e;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 10px; font-size: 10.5px; color: #555; font-family: monospace;
+}
+.dt-statusbar span + span { color: #666; }
+
+/* right: properties */
+.dt-props {
+  background: #222; border-left: 1px solid #333;
+  display: flex; flex-direction: column; overflow: hidden;
+}
+.dt-props-title {
+  padding: 7px 10px; border-bottom: 1px solid #2e2e2e;
+  font-size: 10px; font-weight: 700; letter-spacing: .1em;
+  text-transform: uppercase; color: #555;
+}
+.dt-props-scroll { flex: 1; overflow-y: auto; padding: 6px 0; }
+.dt-props-scroll::-webkit-scrollbar { width: 5px; }
+.dt-props-scroll::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+.dt-section {
+  padding: 6px 0; border-bottom: 1px solid #2a2a2a; margin-bottom: 2px;
+}
+.dt-section-head {
+  padding: 2px 10px 4px; font-size: 10px; font-weight: 700;
+  letter-spacing: .08em; text-transform: uppercase; color: #555;
+}
+.dt-prop-row {
+  display: flex; align-items: center; gap: 6px;
+  padding: 2px 10px; min-height: 26px;
+}
+.dt-prop-label {
+  font-size: 11px; color: #777; flex: 1; white-space: nowrap; overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dt-prop-val {
+  font-size: 11px; font-family: monospace; color: #aaa;
+  background: #1a1a1a; border: 1px solid #333; border-radius: 3px;
+  padding: 2px 6px; width: 70px; text-align: right;
+}
+.dt-prop-val-ro {
+  font-size: 11px; font-family: monospace; color: #666;
+}
+.dt-prop-slider {
+  width: 100%; margin: 0 10px 4px;
+  -webkit-appearance: none; appearance: none;
+  height: 2px; border-radius: 1px;
+  background: #333; outline: none; cursor: pointer;
+}
+.dt-prop-slider::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 10px; height: 10px;
+  border-radius: 50%; background: #4a9eff; cursor: pointer;
+  border: none; box-shadow: 0 0 0 2px rgba(74,159,255,.25);
+}
+.dt-prop-slider::-webkit-slider-thumb:hover {
+  background: #6ab4ff;
+}
+
+/* legend */
+.dt-legend { padding: 4px 10px; }
+.dt-legend-row {
+  display: flex; align-items: center; gap: 6px;
+  padding: 2px 0; font-size: 10.5px; color: #666;
+}
+.dl-stroke { width: 20px; height: 2px; border-radius: 1px; flex-shrink: 0; }
+.dl-dot    { width: 7px;  height: 7px; border-radius: 50%; flex-shrink: 0; }
+
 /* === RESPONSIVE === */
 @media (max-width: 1024px) {
-  .demo-wrap  { grid-template-columns: 1fr; }
-  .sidebar    { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
-  .start-btn, .status-pill, .seg-ctrl, .divider { grid-column: span 2; }
   .feat-grid  { grid-template-columns: repeat(2,1fr); }
   .feat-card.span2 { grid-column: span 2; }
   .story-grid { grid-template-columns: 1fr; gap: 2.5rem; }
   .story-left { position: static; }
+}
+@media (max-width: 900px) {
+  .sidebar    { grid-template-columns: repeat(2, 1fr); }
+  #printerPanel { grid-template-columns: repeat(2, 1fr); }
 }
 @media (max-width: 768px) {
   .nav-links a:not(.nav-gh):not([href="#demo"]) { display: none; }
@@ -707,7 +1020,7 @@ footer { border-top: 1px solid var(--border); padding: 2.75rem 0 1.25rem; }
 @media (max-width: 520px) {
   .hero h1 { font-size: 2.4rem; }
   .sidebar  { grid-template-columns: 1fr; }
-  .start-btn, .status-pill, .seg-ctrl, .divider { grid-column: span 1; }
+  #printerPanel { grid-template-columns: 1fr; }
   .steps    { grid-template-columns: 1fr; }
   .pip { width: 130px; bottom: 60px; right: 8px; }
 }
@@ -716,28 +1029,39 @@ footer { border-top: 1px solid var(--border); padding: 2.75rem 0 1.25rem; }
 </head>
 <body>
 
-<!-- ████ NAV ████ -->
-<nav id="nav">
-  <div class="nav-inner">
-    <a href="#" class="logo">
-      <div class="logo-mark">P</div>
-      <span>Plotter</span>
-    </a>
-    <div class="nav-links">
-      <a href="#demo">Try It</a>
-      <a href="#features">Features</a>
-      <a href="#story">Story</a>
-      <a href="sources.html">Sources</a>
-      <a href="https://github.com/troypappas1/Plotter" target="_blank" class="nav-gh">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12c0 4.42 2.87 8.17 6.84 9.49.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.15-1.11-1.46-1.11-1.46-.91-.62.07-.61.07-.61 1 .07 1.53 1.03 1.53 1.03.89 1.52 2.34 1.08 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.56-1.11-4.56-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.65 0 0 .84-.27 2.75 1.02A9.56 9.56 0 0112 6.84c.85 0 1.7.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.38.2 2.4.1 2.65.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.85v2.74c0 .27.18.58.69.48A10 10 0 0022 12c0-5.52-4.48-10-10-10z"/></svg>
-        GitHub
-      </a>
-    </div>
-  </div>
-</nav>
+<!-- ████ APP ████ -->
+<div id="app">
 
-<!-- ████ HERO ████ -->
-<section class="hero">
+  <!-- ── Top bar ── -->
+  <header class="app-bar">
+    <div class="app-logo">
+      <div class="logo-mark">P</div>
+      <span>Pen Plotter</span>
+    </div>
+    <nav class="tab-bar">
+      <button class="tab-btn active" data-panel="draw">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5z"/></svg>
+        Draw
+      </button>
+      <button class="tab-btn" data-panel="designs">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Designs
+      </button>
+    </nav>
+    <div class="app-bar-right">
+      <div id="statusEl" class="status-pill status-idle">
+        <span class="status-dot-el"></span>
+        <span id="statusText">Ready</span>
+      </div>
+      <button id="printerBtn" class="printer-btn app-connect-btn" title="Connect via micro USB — Chrome or Edge only">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="2" width="12" height="8" rx="1"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg>
+        <span id="printerLabel">Connect Plotter</span>
+      </button>
+    </div>
+  </header>
+
+<!-- (hero removed) -->
+<section class="hero" style="display:none">
   <div class="hero-glow g1"></div>
   <div class="hero-glow g2"></div>
   <div class="hero-glow g3"></div>
@@ -786,13 +1110,8 @@ footer { border-top: 1px solid var(--border); padding: 2.75rem 0 1.25rem; }
   </div>
 </section>
 
-<!-- ████ DEMO ████ -->
-<section id="demo" class="section demo-section">
-  <div class="container">
-    <div class="section-tag">Live Demo</div>
-    <h2>Move anything. The printer draws everything.</h2>
-    <p class="section-sub">This canvas is a live preview of exactly what a connected repurposed 3D printer would draw on paper. Your camera never leaves your device — MediaPipe runs entirely in your browser via WebAssembly.</p>
-
+  <!-- ── Draw panel ── -->
+  <div id="panelDraw" class="app-body">
     <div class="demo-wrap">
 
       <!-- Canvas area -->
@@ -845,203 +1164,36 @@ footer { border-top: 1px solid var(--border); padding: 2.75rem 0 1.25rem; }
         </div>
       </div>
 
-      <!-- Controls sidebar -->
+      <!-- Controls grid (below canvas) -->
       <div class="sidebar">
 
-        <!-- Draw / Mouse toggle -->
-        <div class="seg-ctrl">
-          <button class="seg active" id="drawModeBtn" data-mode="draw">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5z"/></svg>
-            Draw
+        <!-- ── Card 1: Camera + Start ── -->
+        <div class="ctrl-card">
+          <div class="seg-ctrl">
+            <button class="seg active" id="drawModeBtn" data-mode="draw">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5z"/></svg>
+              Draw
+            </button>
+            <button class="seg" id="mouseModeBtn" data-mode="mouse">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="7" y="2" width="10" height="16" rx="5"/><line x1="12" y1="8" x2="12" y2="12"/></svg>
+              Mouse
+            </button>
+          </div>
+          <div class="cam-select-wrap">
+            <label class="ctrl-label" for="camSelect">Camera</label>
+            <select id="camSelect" class="cam-select">
+              <option value="">Default camera</option>
+            </select>
+          </div>
+          <button id="startBtn" class="start-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
+            <span id="startLabel">Start Camera</span>
           </button>
-          <button class="seg" id="mouseModeBtn" data-mode="mouse">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="7" y="2" width="10" height="16" rx="5"/><line x1="12" y1="8" x2="12" y2="12"/></svg>
-            Mouse
-          </button>
         </div>
 
-        <!-- Camera selector -->
-        <div class="cam-select-wrap">
-          <label class="ctrl-label" for="camSelect">Camera</label>
-          <select id="camSelect" class="cam-select">
-            <option value="">Default camera</option>
-          </select>
-        </div>
-
-        <!-- Start button -->
-        <button id="startBtn" class="start-btn">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
-          <span id="startLabel">Start Camera</span>
-        </button>
-
-        <!-- Gesture cheat-sheet -->
-        <div class="gesture-hints" id="gestureHints">
-          <div class="gesture-hints-title">Gesture controls</div>
-          <div class="gesture-list" id="gestureList">
-            <!-- filled by JS based on track mode -->
-          </div>
-        </div>
-
-        <!-- Printer connect button -->
-        <button id="printerBtn" class="printer-btn" title="Connect your repurposed 3D printer via USB">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="2" width="12" height="8" rx="1"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg>
-          <span id="printerLabel">Connect 3D Printer</span>
-        </button>
-
-        <div id="statusEl" class="status-pill status-idle">
-          <span class="status-dot-el"></span>
-          <span id="statusText">Ready</span>
-        </div>
-
-        <!-- ── PRINTER PANEL (shown when connected) ── -->
-        <div id="printerPanel" class="printer-panel" style="display:none">
-
-          <!-- Pen Heights -->
-          <div class="pp-section">
-            <div class="pp-title">Z Axis
-              <span class="pp-live" id="liveZLabel">Live Z —</span>
-            </div>
-            <!-- Live Z slider + step buttons -->
-            <div class="z-slider-wrap">
-              <button class="pp-btn pp-btn-sm z-step-btn" id="zStepUp" title="+0.5mm">+</button>
-              <div class="z-slider-inner">
-                <span class="z-tick z-tick-top">50</span>
-                <input type="range" id="zLiveSlider" class="z-slider" min="-50" max="50" step="0.5" value="8">
-                <span class="z-tick z-tick-bot">-50</span>
-              </div>
-              <button class="pp-btn pp-btn-sm z-step-btn" id="zStepDown" title="-0.5mm">−</button>
-            </div>
-            <!-- Preset rows -->
-            <div class="pp-row pp-scale-row">
-              <label class="pp-label">Pen Up</label>
-              <input type="number" id="penUpZ" class="pp-num" value="8" min="-50" max="50" step="0.5">
-              <button class="pp-btn pp-btn-sm" id="liftBtn">Set ↑</button>
-            </div>
-            <div class="pp-row pp-scale-row">
-              <label class="pp-label">Pen Down</label>
-              <input type="number" id="penDownZ" class="pp-num" value="2" min="-50" max="50" step="0.5">
-              <button class="pp-btn pp-btn-sm pp-btn-accent" id="dropBtn">Set ↓</button>
-            </div>
-          </div>
-
-          <!-- SVG Import -->
-          <div class="pp-section">
-            <div class="pp-title">SVG Import</div>
-            <label class="pp-file-label">
-              <input type="file" id="svgFile" accept=".svg" style="display:none">
-              <span class="pp-file-btn">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                SVG File
-              </span>
-              <span class="pp-file-name" id="svgFileName">No file chosen</span>
-            </label>
-            <div class="pp-row pp-scale-row">
-              <label class="pp-label">SVG Scale</label>
-              <input type="number" id="svgScale" class="pp-num" value="100" min="1" max="500" step="1">
-              <span class="pp-unit">%</span>
-            </div>
-            <div class="pp-row">
-              <button class="pp-btn pp-btn-accent" id="plotSvgBtn" disabled>Plot SVG</button>
-              <button class="pp-btn" id="clearSvgBtn">Clear SVG</button>
-            </div>
-            <div class="pp-hint" id="svgHint">No SVG loaded. SVGs auto-fit to the active boundary box.</div>
-          </div>
-
-          <!-- Text to Plot -->
-          <div class="pp-section">
-            <div class="pp-title">Text to Plot
-              <button class="pp-btn pp-btn-sm" id="dictateBtn" title="Dictate — say 'print' to plot">🎤</button>
-            </div>
-            <textarea id="plotText" class="pp-textarea" placeholder="Type text here…" rows="2"></textarea>
-            <div class="pp-row pp-scale-row">
-              <label class="pp-label">Size</label>
-              <input type="number" id="textSize" class="pp-num" value="15" min="3" max="80" step="1">
-              <span class="pp-unit">mm</span>
-            </div>
-            <div class="pp-row">
-              <button class="pp-btn" id="textAlignLeft" title="Left align">⬛◻◻</button>
-              <button class="pp-btn pp-btn-accent" id="textAlignCenter" title="Center">◻⬛◻</button>
-              <button class="pp-btn" id="textAlignRight" title="Right align">◻◻⬛</button>
-            </div>
-            <div class="pp-row">
-              <button class="pp-btn" id="previewTextBtn">Preview</button>
-              <button class="pp-btn pp-btn-accent" id="plotTextBtn" disabled>Plot Text</button>
-              <button class="pp-btn" id="clearTextBtn">Clear</button>
-            </div>
-            <div class="pp-hint" id="textHint">Connect printer to plot text.</div>
-          </div>
-
-          <!-- Motion -->
-          <div class="pp-section">
-            <div class="pp-title">Motion</div>
-            <div class="pp-row pp-scale-row">
-              <label class="pp-label">Line Passes</label>
-              <input type="number" id="linePasses" class="pp-num" value="2" min="1" max="8" step="1">
-              <span class="pp-unit">× thick</span>
-            </div>
-            <div class="pp-row pp-scale-row">
-              <label class="pp-label">XY Speed</label>
-              <input type="number" id="xySpeed" class="pp-num" value="12000" min="100" max="20000" step="100">
-              <span class="pp-unit">mm/min</span>
-            </div>
-            <div class="pp-row">
-              <button class="pp-btn pp-btn-turbo" id="turboBtn">Turbo</button>
-              <button class="pp-btn pp-btn-accent" id="applyMotionBtn">Apply</button>
-            </div>
-            <div class="pp-row pp-scale-row">
-              <label class="pp-label">Max Speed</label>
-              <input type="number" id="maxSpeed" class="pp-num" value="220" min="10" max="500" step="10">
-              <span class="pp-unit">mm/s</span>
-            </div>
-            <div class="pp-row pp-scale-row">
-              <label class="pp-label">Accel</label>
-              <input type="number" id="accelVal" class="pp-num" value="6000" min="100" max="20000" step="100">
-              <span class="pp-unit">mm/s²</span>
-            </div>
-            <div class="pp-row pp-scale-row">
-              <label class="pp-label">Travel Accel</label>
-              <input type="number" id="travelAccel" class="pp-num" value="8000" min="100" max="20000" step="100">
-              <span class="pp-unit">mm/s²</span>
-            </div>
-          </div>
-
-          <!-- Boundaries / Jog -->
-          <div class="pp-section">
-            <div class="pp-title">Boundaries</div>
-            <div class="pp-row pp-scale-row">
-              <label class="pp-label">Jog Step</label>
-              <input type="number" id="jogStep" class="pp-num" value="5" min="0.1" max="50" step="0.1">
-              <span class="pp-unit">mm</span>
-            </div>
-            <!-- Jog grid -->
-            <div class="jog-grid">
-              <div></div>
-              <button class="jog-btn" id="jogUp" title="Up (↑)">▲</button>
-              <div></div>
-              <button class="jog-btn" id="jogLeft" title="Left (←)">◀</button>
-              <button class="jog-btn jog-center" id="jogCenter" title="Center">⊕</button>
-              <button class="jog-btn" id="jogRight" title="Right (→)">▶</button>
-              <div></div>
-              <button class="jog-btn" id="jogDown" title="Down (↓)">▼</button>
-              <div></div>
-            </div>
-            <!-- Boundary corners -->
-            <div class="bound-grid">
-              <button class="pp-btn pp-btn-sm" id="setBL">Set BL</button>
-              <button class="pp-btn pp-btn-sm" id="setBR">Set BR</button>
-              <button class="pp-btn pp-btn-sm" id="setTL">Set TL</button>
-              <button class="pp-btn pp-btn-sm" id="setTR">Set TR</button>
-            </div>
-            <div class="pp-hint" id="boundsHint">Bounds: X 0–220, Y 0–220. Use arrow keys too.</div>
-          </div>
-
-        </div>
-
-        <hr class="divider">
-
-        <!-- Track mode -->
-        <div class="ctrl-section">
-          <div class="ctrl-label">Track</div>
+        <!-- ── Card 2: Track mode ── -->
+        <div class="ctrl-card">
+          <div class="ctrl-label">Track Mode</div>
           <div class="track-opts">
             <label class="track-opt">
               <input type="radio" name="trackMode" value="nose" checked>
@@ -1076,32 +1228,306 @@ footer { border-top: 1px solid var(--border); padding: 2.75rem 0 1.25rem; }
           </div>
         </div>
 
-        <hr class="divider">
-
-        <!-- Sliders -->
-        <div class="ctrl-section">
-          <div class="ctrl-row">
-            <div class="ctrl-label">Brush size</div>
-            <div class="ctrl-val" id="brushVal">8px</div>
+        <!-- ── Card 3: Drawing settings + Gestures ── -->
+        <div class="ctrl-card">
+          <div class="ctrl-section">
+            <div class="ctrl-row">
+              <div class="ctrl-label">Brush size</div>
+              <div class="ctrl-val" id="brushVal">8px</div>
+            </div>
+            <input type="range" id="brushSlider" min="2" max="40" value="8" class="range-input">
           </div>
-          <input type="range" id="brushSlider" min="2" max="40" value="8" class="range-input">
+          <div class="ctrl-section">
+            <div class="ctrl-row">
+              <div class="ctrl-label">Smoothing</div>
+              <div class="ctrl-val" id="smoothVal">6</div>
+            </div>
+            <input type="range" id="smoothSlider" min="1" max="20" value="6" class="range-input">
+          </div>
+          <div class="gesture-hints" id="gestureHints">
+            <div class="gesture-hints-title">Gesture controls</div>
+            <div class="gesture-list" id="gestureList">
+              <!-- filled by JS -->
+            </div>
+          </div>
         </div>
 
-        <div class="ctrl-section">
-          <div class="ctrl-row">
-            <div class="ctrl-label">Smoothing</div>
-            <div class="ctrl-val" id="smoothVal">6</div>
+        <!-- ── Card 4: Manual Move ── -->
+        <div class="ctrl-card">
+          <div class="ctrl-label">Manual Move</div>
+          <div class="pp-row pp-scale-row">
+            <label class="pp-label">Step</label>
+            <input type="number" id="jogStep" class="pp-num" value="5" min="0.1" max="50" step="0.1">
+            <span class="pp-unit">mm</span>
           </div>
-          <input type="range" id="smoothSlider" min="1" max="20" value="6" class="range-input">
+          <div class="manual-grid">
+            <button class="man-btn" id="jogLeft">◀ X−</button>
+            <button class="man-btn" id="jogRight">X+ ▶</button>
+            <button class="man-btn man-btn-y" id="jogUp">Y− ▲</button>
+            <button class="man-btn man-btn-y" id="jogDown">▼ Y+</button>
+            <button class="man-btn man-btn-pen" id="liftBtn">↑ Pen Up</button>
+            <button class="man-btn man-btn-pen" id="dropBtn">↓ Pen Down</button>
+          </div>
+          <div class="pp-hint">Connect plotter to enable. Arrow keys also work.</div>
+        </div>
+
+        <!-- ── PRINTER PANEL — spans all 4 columns, shown when connected ── -->
+        <!-- CSS grid set to 3 cols via override below -->
+        <div id="printerPanel" class="printer-panel" style="display:none;grid-template-columns:repeat(3,1fr)">
+
+          <!-- Col 1: Pen Heights + Bounds -->
+          <div class="pp-section">
+            <div class="pp-title">Pen Heights
+              <span class="pp-live" id="liveZLabel">Live Z —</span>
+            </div>
+            <div class="z-slider-wrap">
+              <button class="pp-btn pp-btn-sm z-step-btn" id="zStepUp" title="+0.5mm">+</button>
+              <div class="z-slider-inner">
+                <span class="z-tick z-tick-top">50</span>
+                <input type="range" id="zLiveSlider" class="z-slider" min="-50" max="50" step="0.5" value="8">
+                <span class="z-tick z-tick-bot">-50</span>
+              </div>
+              <button class="pp-btn pp-btn-sm z-step-btn" id="zStepDown" title="-0.5mm">−</button>
+            </div>
+            <div class="pp-row pp-scale-row">
+              <label class="pp-label">Pen Up Z</label>
+              <input type="number" id="penUpZ" class="pp-num" value="8" min="-50" max="50" step="0.5">
+            </div>
+            <div class="pp-row pp-scale-row">
+              <label class="pp-label">Pen Down Z</label>
+              <input type="number" id="penDownZ" class="pp-num" value="2" min="-50" max="50" step="0.5">
+            </div>
+            <div class="pp-title" style="margin-top:.5rem">Bounds &amp; Center</div>
+            <div class="bound-grid">
+              <button class="pp-btn pp-btn-sm" id="setBL">Set BL</button>
+              <button class="pp-btn pp-btn-sm" id="setBR">Set BR</button>
+              <button class="pp-btn pp-btn-sm" id="setTL">Set TL</button>
+              <button class="pp-btn pp-btn-sm" id="setTR">Set TR</button>
+            </div>
+            <div class="pp-row" style="margin-top:.3rem">
+              <button class="pp-btn pp-btn-accent" id="jogCenter">⊕ Go to Center</button>
+            </div>
+            <div class="pp-hint" id="boundsHint">X 0–220 · Y 0–220</div>
+          </div>
+
+          <!-- Col 2: SVG Import -->
+          <div class="pp-section">
+            <div class="pp-title">SVG Import</div>
+            <label class="pp-file-label">
+              <input type="file" id="svgFile" accept=".svg" style="display:none">
+              <span class="pp-file-btn">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                SVG File
+              </span>
+              <span class="pp-file-name" id="svgFileName">No file chosen</span>
+            </label>
+            <div class="pp-row pp-scale-row">
+              <label class="pp-label">Scale</label>
+              <input type="number" id="svgScale" class="pp-num" value="100" min="1" max="500" step="1">
+              <span class="pp-unit">%</span>
+            </div>
+            <div class="pp-row">
+              <button class="pp-btn pp-btn-accent" id="plotSvgBtn" disabled>Plot SVG</button>
+              <button class="pp-btn" id="clearSvgBtn">Clear</button>
+            </div>
+            <div class="pp-hint" id="svgHint">SVGs auto-fit to the active boundary box.</div>
+          </div>
+
+          <!-- Col 4: Text to Plot + Motion -->
+          <div class="pp-section">
+            <div class="pp-title">Text to Plot
+              <button class="pp-btn pp-btn-sm" id="dictateBtn" title="Dictate — say 'print' to plot">🎤</button>
+            </div>
+            <textarea id="plotText" class="pp-textarea" placeholder="Type text here…" rows="2"></textarea>
+            <div class="pp-row pp-scale-row">
+              <label class="pp-label">Size</label>
+              <input type="number" id="textSize" class="pp-num" value="15" min="3" max="80" step="1">
+              <span class="pp-unit">mm</span>
+            </div>
+            <div class="pp-row">
+              <button class="pp-btn" id="textAlignLeft" title="Left align">⬛◻◻</button>
+              <button class="pp-btn pp-btn-accent" id="textAlignCenter" title="Center">◻⬛◻</button>
+              <button class="pp-btn" id="textAlignRight" title="Right align">◻◻⬛</button>
+            </div>
+            <div class="pp-row">
+              <button class="pp-btn" id="previewTextBtn">Preview</button>
+              <button class="pp-btn pp-btn-accent" id="plotTextBtn" disabled>Plot Text</button>
+              <button class="pp-btn" id="clearTextBtn">Clear</button>
+            </div>
+            <div class="pp-hint" id="textHint">Connect plotter to plot text.</div>
+
+            <div class="pp-title" style="margin-top:.5rem">Motion</div>
+            <div class="pp-row pp-scale-row">
+              <label class="pp-label">XY Speed</label>
+              <input type="number" id="xySpeed" class="pp-num" value="12000" min="100" max="20000" step="100">
+              <span class="pp-unit">mm/min</span>
+            </div>
+            <div class="pp-row pp-scale-row">
+              <label class="pp-label">Line Passes</label>
+              <input type="number" id="linePasses" class="pp-num" value="2" min="1" max="8" step="1">
+              <span class="pp-unit">× thick</span>
+            </div>
+            <div class="pp-row">
+              <button class="pp-btn pp-btn-turbo" id="turboBtn">Turbo</button>
+              <button class="pp-btn pp-btn-accent" id="applyMotionBtn">Apply</button>
+            </div>
+            <div class="pp-row pp-scale-row">
+              <label class="pp-label">Max Speed</label>
+              <input type="number" id="maxSpeed" class="pp-num" value="220" min="10" max="500" step="10">
+              <span class="pp-unit">mm/s</span>
+            </div>
+            <div class="pp-row pp-scale-row">
+              <label class="pp-label">Accel</label>
+              <input type="number" id="accelVal" class="pp-num" value="6000" min="100" max="20000" step="100">
+              <span class="pp-unit">mm/s²</span>
+            </div>
+            <div class="pp-row pp-scale-row">
+              <label class="pp-label">Travel Accel</label>
+              <input type="number" id="travelAccel" class="pp-num" value="8000" min="100" max="20000" step="100">
+              <span class="pp-unit">mm/s²</span>
+            </div>
+          </div>
+
         </div>
 
       </div>
     </div>
-  </div>
-</section>
+  </div><!-- end panelDraw -->
 
-<!-- ████ FEATURES ████ -->
-<section id="features" class="section">
+  <!-- ── Designs panel ── -->
+  <div id="panelDesigns" style="display:none; flex-direction:column; height:calc(100vh - 48px); background:#1a1a1a;">
+
+    <!-- Toolbar -->
+    <div class="dt-toolbar">
+      <!-- Design selector -->
+      <div class="dt-group">
+        <span class="dt-label">Design</span>
+        <select class="dt-select" id="dtDesignSelect" style="min-width:150px">
+          <option value="">— choose preset —</option>
+        </select>
+      </div>
+      <div class="dt-sep"></div>
+      <!-- Canvas size -->
+      <div class="dt-group">
+        <span class="dt-label">Canvas</span>
+        <select class="dt-select" id="dtCanvasPreset">
+          <option value="9x11">9 × 11 in</option>
+          <option value="letter">Letter 8.5×11</option>
+          <option value="a4">A4</option>
+          <option value="a3">A3</option>
+          <option value="5x7">5 × 7 in</option>
+          <option value="square">Square 8×8 in</option>
+          <option value="custom">Custom…</option>
+        </select>
+        <input type="number" class="dt-num-input" id="dtW" value="228.6" step="0.1" min="10">
+        <span class="dt-x">×</span>
+        <input type="number" class="dt-num-input" id="dtH" value="279.4" step="0.1" min="10">
+        <span class="dt-unit">mm</span>
+        <button class="dt-icon-btn" id="dtOrient" title="Swap width/height">⇅</button>
+      </div>
+      <div class="dt-sep"></div>
+      <!-- Margin -->
+      <div class="dt-group">
+        <span class="dt-label">Margin</span>
+        <input type="number" class="dt-num-input" id="dtMargin" value="12" step="1" min="0" max="60" style="width:46px">
+        <span class="dt-unit">mm</span>
+      </div>
+      <div class="dt-sep"></div>
+      <!-- View -->
+      <div class="dt-group">
+        <button class="dt-icon-btn" id="dtZoomOut" title="Zoom out">−</button>
+        <span class="dt-zoom-label" id="dtZoomLabel">100%</span>
+        <button class="dt-icon-btn" id="dtZoomIn"  title="Zoom in">+</button>
+        <button class="dt-btn" id="dtZoomFit" style="padding:0 7px;font-size:10.5px">Fit</button>
+      </div>
+      <div class="dt-sep"></div>
+      <!-- Show travel -->
+      <div class="dt-group">
+        <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#777;cursor:pointer;white-space:nowrap">
+          <input type="checkbox" id="dtShowTravel" checked style="accent-color:#4a9eff"> Travel
+        </label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#777;cursor:pointer;white-space:nowrap">
+          <input type="checkbox" id="dtShowDots" checked style="accent-color:#4a9eff"> Dots
+        </label>
+      </div>
+      <!-- Spacer -->
+      <div style="flex:1"></div>
+      <!-- Actions -->
+      <div class="dt-group">
+        <button class="dt-btn" id="exportSvgBtn" disabled>Export SVG</button>
+        <button class="dt-btn dt-btn-primary" id="plotDesignBtn" disabled>▶ Plot</button>
+      </div>
+    </div>
+
+    <!-- Body -->
+    <div class="dt-body" style="flex:1;min-height:0">
+
+      <!-- Left: presets -->
+      <div class="dt-presets">
+        <div class="dt-presets-head">
+          <input type="search" class="dt-search" id="dtSearch" placeholder="Search designs…">
+          <div class="dt-cats">
+            <button class="dt-cat active" data-cat="all">All</button>
+            <button class="dt-cat" data-cat="hatch">Hatch</button>
+            <button class="dt-cat" data-cat="geo">Geo</button>
+            <button class="dt-cat" data-cat="math">Math</button>
+            <button class="dt-cat" data-cat="gen">Flow</button>
+          </div>
+        </div>
+        <div class="dt-preset-scroll" id="presetList"></div>
+      </div>
+
+      <!-- Center: canvas -->
+      <div class="dt-canvas-wrap">
+        <div class="dt-canvas-viewport" id="dtViewport">
+          <div class="dt-paper-wrap" id="dtPaperWrap">
+            <canvas id="designCanvas"></canvas>
+          </div>
+        </div>
+        <div class="dt-statusbar">
+          <span id="dtStats">Select a design to begin</span>
+          <span id="dtCoords"></span>
+        </div>
+      </div>
+
+      <!-- Right: properties -->
+      <div class="dt-props">
+        <div class="dt-props-title">Properties</div>
+        <div class="dt-props-scroll">
+          <div class="dt-section" id="dtParamSection" style="display:none">
+            <div class="dt-section-head" id="dtParamTitle">Parameters</div>
+            <div id="designParams"></div>
+          </div>
+          <div class="dt-section">
+            <div class="dt-section-head">Canvas</div>
+            <div class="dt-prop-row"><span class="dt-prop-label">Width</span><span class="dt-prop-val-ro" id="dtPropW">—</span></div>
+            <div class="dt-prop-row"><span class="dt-prop-label">Height</span><span class="dt-prop-val-ro" id="dtPropH">—</span></div>
+            <div class="dt-prop-row"><span class="dt-prop-label">Margin</span><span class="dt-prop-val-ro" id="dtPropMargin">—</span></div>
+          </div>
+          <div class="dt-section" id="dtStatsSection" style="display:none">
+            <div class="dt-section-head">Output</div>
+            <div class="dt-prop-row"><span class="dt-prop-label">Strokes</span><span class="dt-prop-val-ro" id="dtStatStrokes">—</span></div>
+            <div class="dt-prop-row"><span class="dt-prop-label">Draw dist</span><span class="dt-prop-val-ro" id="dtStatDist">—</span></div>
+            <div class="dt-prop-row"><span class="dt-prop-label">Lifts</span><span class="dt-prop-val-ro" id="dtStatLifts">—</span></div>
+          </div>
+          <div class="dt-section">
+            <div class="dt-section-head">Legend</div>
+            <div class="dt-legend">
+              <div class="dt-legend-row"><span class="dl-stroke" style="background:#3a72cc"></span>Draw stroke</div>
+              <div class="dt-legend-row"><span class="dl-stroke" style="background:#333;border-top:1px dashed #555;height:0"></span>Travel (pen up)</div>
+              <div class="dt-legend-row"><span class="dl-dot" style="background:#22c55e"></span>Pen down</div>
+              <div class="dt-legend-row"><span class="dl-dot" style="background:#f43f5e"></span>Pen lift</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- end app -->
+
+<!-- (sections below removed — app is now single-page) -->
+<section id="features" class="section" style="display:none">
   <div class="container">
     <div class="section-tag">Capabilities</div>
     <h2>Any limb. Any movement. Any art.</h2>
@@ -1147,8 +1573,7 @@ footer { border-top: 1px solid var(--border); padding: 2.75rem 0 1.25rem; }
   </div>
 </section>
 
-<!-- ████ HOW IT WORKS ████ -->
-<section class="section how-section">
+<section class="section how-section" style="display:none">
   <div class="container">
     <div class="section-tag">Process</div>
     <h2>From discarded printer to art machine in minutes.</h2>
@@ -1177,8 +1602,7 @@ footer { border-top: 1px solid var(--border); padding: 2.75rem 0 1.25rem; }
   </div>
 </section>
 
-<!-- ████ STORY ████ -->
-<section id="story" class="section story-section">
+<section id="story" class="section story-section" style="display:none">
   <div class="container">
     <div class="story-grid">
       <div class="story-left">
@@ -1213,8 +1637,7 @@ footer { border-top: 1px solid var(--border); padding: 2.75rem 0 1.25rem; }
   </div>
 </section>
 
-<!-- ████ CTA ████ -->
-<section class="section cta-section">
+<section class="section cta-section" style="display:none">
   <div class="container cta-inner">
     <div class="cta-glow"></div>
     <h2>Ready to create?</h2>
@@ -1226,8 +1649,7 @@ footer { border-top: 1px solid var(--border); padding: 2.75rem 0 1.25rem; }
   </div>
 </section>
 
-<!-- ████ FOOTER ████ -->
-<footer>
+<footer style="display:none">
   <div class="container footer-inner">
     <div class="footer-brand">
       <div class="logo-mark">P</div>
@@ -1309,9 +1731,10 @@ footer { border-top: 1px solid var(--border); padding: 2.75rem 0 1.25rem; }
   draw();
 })();
 
-// Nav scroll
+// Nav scroll (no-op — nav replaced by sticky app-bar)
 window.addEventListener("scroll", () => {
-  document.getElementById("nav").classList.toggle("scrolled", window.scrollY > 10);
+  const nav = document.getElementById("nav");
+  if (nav) nav.classList.toggle("scrolled", window.scrollY > 10);
 });
 </script>
 
@@ -2400,7 +2823,7 @@ printerBtn.addEventListener("click", async () => {
     printerBtn.classList.add("connected");
     printerLabel.textContent = "Disconnect Printer";
     setStatus("Printer connected", "on");
-    printerPanel.style.display = "flex";
+    printerPanel.style.display = "grid";
     jogPos = { x: BED_MIN_MM, y: BED_MIN_MM };
     await movePenZ(penUpZ);
     updateBoundsHint();
@@ -2820,6 +3243,822 @@ dictateBtn.addEventListener("click", () => {
   dictateBtn.textContent = "🔴";
   textHintEl.textContent = "Listening… say text then say \"print\" to plot.";
 });
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  DESIGN TOOL
+// ═══════════════════════════════════════════════════════════════════════════
+
+// ── Tab switching ─────────────────────────────────────────────────────────
+document.querySelectorAll(".tab-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    const panel = btn.dataset.panel;
+    document.getElementById("panelDraw").style.display    = panel === "draw"    ? "" : "none";
+    const dp = document.getElementById("panelDesigns");
+    dp.style.display = panel === "designs" ? "flex" : "none";
+    if (panel === "designs") { updateCanvasInfo(); dtFitZoom(); renderDesign(); }
+  });
+});
+
+// ── Canvas dimensions (mm) ────────────────────────────────────────────────
+let PW = 228.6, PH = 279.4;   // default 9×11
+
+const CANVAS_PRESETS = {
+  '9x11':   [228.6,  279.4],
+  'letter': [215.9,  279.4],
+  'a4':     [210,    297  ],
+  'a3':     [297,    420  ],
+  '5x7':    [127,    177.8],
+  'square': [203.2,  203.2],
+};
+
+document.getElementById("dtCanvasPreset").addEventListener("change", e => {
+  const v = e.target.value;
+  if (v === "custom") return;
+  if (CANVAS_PRESETS[v]) {
+    [PW, PH] = CANVAS_PRESETS[v];
+    document.getElementById("dtW").value = PW.toFixed(1);
+    document.getElementById("dtH").value = PH.toFixed(1);
+    updateCanvasInfo(); dtFitZoom(); renderDesign();
+  }
+});
+document.getElementById("dtW").addEventListener("change", e => {
+  PW = parseFloat(e.target.value) || PW;
+  document.getElementById("dtCanvasPreset").value = "custom";
+  updateCanvasInfo(); dtFitZoom(); renderDesign();
+});
+document.getElementById("dtH").addEventListener("change", e => {
+  PH = parseFloat(e.target.value) || PH;
+  document.getElementById("dtCanvasPreset").value = "custom";
+  updateCanvasInfo(); dtFitZoom(); renderDesign();
+});
+document.getElementById("dtOrient").addEventListener("click", () => {
+  [PW, PH] = [PH, PW];
+  document.getElementById("dtW").value = PW.toFixed(1);
+  document.getElementById("dtH").value = PH.toFixed(1);
+  updateCanvasInfo(); dtFitZoom(); renderDesign();
+});
+document.getElementById("dtMargin").addEventListener("input", () => {
+  updateCanvasInfo(); renderDesign();
+});
+document.getElementById("dtShowTravel").addEventListener("change", () => renderDesign());
+document.getElementById("dtShowDots"  ).addEventListener("change", () => renderDesign());
+
+function getMargin() { return parseFloat(document.getElementById("dtMargin").value) || 12; }
+function updateCanvasInfo() {
+  const m = getMargin();
+  document.getElementById("dtPropW").textContent      = PW.toFixed(1) + " mm";
+  document.getElementById("dtPropH").textContent      = PH.toFixed(1) + " mm";
+  document.getElementById("dtPropMargin").textContent = m + " mm";
+}
+
+// ── Zoom ──────────────────────────────────────────────────────────────────
+let dtZoom = 1;
+function dtFitZoom() {
+  const vp = document.getElementById("dtViewport");
+  if (!vp) return;
+  const vw = vp.clientWidth  - 40;
+  const vh = vp.clientHeight - 40;
+  const scale = 3.7795; // mm → px at 96dpi
+  dtZoom = Math.min(vw / (PW * scale), vh / (PH * scale), 1);
+  dtZoom = Math.max(dtZoom, 0.1);
+  document.getElementById("dtZoomLabel").textContent = Math.round(dtZoom * 100) + "%";
+}
+document.getElementById("dtZoomIn" ).addEventListener("click", () => { dtZoom = Math.min(dtZoom * 1.2, 4); document.getElementById("dtZoomLabel").textContent = Math.round(dtZoom*100)+"%"; renderDesign(); });
+document.getElementById("dtZoomOut").addEventListener("click", () => { dtZoom = Math.max(dtZoom / 1.2, .05); document.getElementById("dtZoomLabel").textContent = Math.round(dtZoom*100)+"%"; renderDesign(); });
+document.getElementById("dtZoomFit").addEventListener("click", () => { dtFitZoom(); renderDesign(); });
+window.addEventListener("resize", () => { if (document.getElementById("panelDesigns").style.display !== "none") { dtFitZoom(); renderDesign(); } });
+
+// ── Line clipping (Liang-Barsky) ──────────────────────────────────────────
+function clipLine(x0,y0,x1,y1, xn,yn,xx,yx) {
+  const dx=x1-x0, dy=y1-y0;
+  let t0=0, t1=1;
+  const p=[-dx,dx,-dy,dy], q=[x0-xn,xx-x0,y0-yn,yx-y0];
+  for(let i=0;i<4;i++){
+    if(p[i]===0){if(q[i]<0)return null;}
+    else{const t=q[i]/p[i]; if(p[i]<0) t0=Math.max(t0,t); else t1=Math.min(t1,t);}
+  }
+  if(t0>t1)return null;
+  return [x0+t0*dx, y0+t0*dy, x0+t1*dx, y0+t1*dy];
+}
+
+// ── Design generators ─────────────────────────────────────────────────────
+// All return: [ [{x,y},…], … ]  (array of polylines in mm on PW×PH canvas)
+
+function hatch(angleDeg, spacingMm, margin) {
+  const xn=margin,yn=margin,xx=PW-margin,yx=PH-margin;
+  const diag=Math.sqrt(PW*PW+PH*PH);
+  const th=angleDeg*Math.PI/180, ct=Math.cos(th), st=Math.sin(th);
+  const lines=[];
+  for(let d=-diag/2; d<=diag/2; d+=spacingMm){
+    const px=PW/2-d*st, py=PH/2+d*ct;
+    const c=clipLine(px-diag*ct,py-diag*st,px+diag*ct,py+diag*st,xn,yn,xx,yx);
+    if(c) lines.push([{x:c[0],y:c[1]},{x:c[2],y:c[3]}]);
+  }
+  return lines;
+}
+
+function concentricRects(spacing, margin) {
+  const lines=[];
+  for(let m=margin; m<Math.min(PW,PH)/2; m+=spacing){
+    const x=m,y=m,w=PW-2*m,h=PH-2*m;
+    if(w>0&&h>0) lines.push([{x,y},{x:x+w,y},{x:x+w,y:y+h},{x,y:y+h},{x,y}]);
+  }
+  return lines;
+}
+
+function concentricCircles(spacing, margin) {
+  const cx=PW/2, cy=PH/2;
+  const maxR=Math.min(PW,PH)/2-margin;
+  const lines=[];
+  for(let r=spacing; r<=maxR; r+=spacing){
+    const pts=[];
+    const steps=Math.max(64, Math.round(2*Math.PI*r/2));
+    for(let i=0;i<=steps;i++){
+      const a=2*Math.PI*i/steps;
+      pts.push({x:cx+r*Math.cos(a), y:cy+r*Math.sin(a)});
+    }
+    lines.push(pts);
+  }
+  return lines;
+}
+
+function spiral(spacing, margin) {
+  const cx=PW/2, cy=PH/2, maxR=Math.min(PW,PH)/2-margin;
+  const pts=[{x:cx,y:cy}];
+  const dTheta=0.06;
+  for(let theta=0;;theta+=dTheta){
+    const r=spacing*theta/(2*Math.PI);
+    if(r>maxR) break;
+    pts.push({x:cx+r*Math.cos(theta), y:cy+r*Math.sin(theta)});
+  }
+  return [pts];
+}
+
+function sineWaves(amplitude, wavelength, spacing, margin) {
+  const lines=[];
+  const xn=margin, xx=PW-margin;
+  for(let y=margin; y<=PH-margin; y+=spacing){
+    const pts=[];
+    for(let x=xn; x<=xx; x+=1.5){
+      pts.push({x, y:y+amplitude*Math.sin(2*Math.PI*x/wavelength)});
+    }
+    lines.push(pts);
+  }
+  return lines;
+}
+
+function hexGrid(size, margin) {
+  const lines=[];
+  const h3=Math.sqrt(3);
+  const W=size*2, H=size*h3;
+  const rows=Math.ceil((PH-2*margin)/H)+2;
+  const cols=Math.ceil((PW-2*margin)/(W*0.75))+2;
+  for(let row=-1;row<rows;row++){
+    for(let col=-1;col<cols;col++){
+      const cx=margin+col*W*0.75, cy=margin+row*H+(col%2===0?0:H/2);
+      const pts=[];
+      for(let i=0;i<=6;i++){
+        const a=Math.PI/180*60*i+Math.PI/6;
+        pts.push({x:cx+size*Math.cos(a), y:cy+size*Math.sin(a)});
+      }
+      // only add if at least one vertex is inside the page
+      if(pts.some(p=>p.x>margin&&p.x<PW-margin&&p.y>margin&&p.y<PH-margin))
+        lines.push(pts);
+    }
+  }
+  return lines;
+}
+
+function radialBurst(count, margin) {
+  const cx=PW/2, cy=PH/2;
+  const lines=[];
+  for(let i=0;i<count;i++){
+    const a=2*Math.PI*i/count;
+    // extend far, clip to margin box
+    const c=clipLine(cx,cy, cx+Math.cos(a)*300, cy+Math.sin(a)*300,
+                    margin,margin,PW-margin,PH-margin);
+    if(c) lines.push([{x:c[0],y:c[1]},{x:c[2],y:c[3]}]);
+  }
+  return lines;
+}
+
+function concentricTriangles(spacing, margin) {
+  const cx=PW/2, cy=PH/2;
+  const maxR=Math.min(PW,PH)/2-margin;
+  const lines=[];
+  for(let r=spacing;r<=maxR;r+=spacing){
+    const pts=[];
+    for(let i=0;i<=3;i++){
+      const a=2*Math.PI*i/3-Math.PI/2;
+      pts.push({x:cx+r*Math.cos(a), y:cy+r*Math.sin(a)});
+    }
+    lines.push(pts);
+  }
+  return lines;
+}
+
+function waveHatch(angleDeg, spacingMm, amplitude, wavelength, margin) {
+  // Hatching but with wavy lines instead of straight
+  const xn=margin,yn=margin,xx=PW-margin,yx=PH-margin;
+  const diag=Math.sqrt(PW*PW+PH*PH);
+  const th=angleDeg*Math.PI/180, ct=Math.cos(th), st=Math.sin(th);
+  const lines=[];
+  for(let d=-diag/2; d<=diag/2; d+=spacingMm){
+    const px=PW/2-d*st, py=PH/2+d*ct;
+    const pts=[];
+    for(let t=-diag;t<=diag;t+=2){
+      const wx=px+t*ct, wy=py+t*st;
+      const wave=amplitude*Math.sin(2*Math.PI*t/wavelength);
+      const fpx=wx-wave*st, fpy=wy+wave*ct;
+      if(fpx>=xn&&fpx<=xx&&fpy>=yn&&fpy<=yx) pts.push({x:fpx,y:fpy});
+      else if(pts.length>1) { lines.push([...pts]); pts.length=0; }
+      else pts.length=0;
+    }
+    if(pts.length>1) lines.push(pts);
+  }
+  return lines;
+}
+
+function diamondGrid(spacing, margin) {
+  return [...hatch(45,spacing,margin), ...hatch(135,spacing,margin)];
+}
+
+function meander(cellSize, margin) {
+  const lines=[], dirs=[[1,0],[0,1],[-1,0],[0,-1]];
+  let pts=[], x=margin, y=margin, dir=0, step=1, stepCount=0, turns=0;
+  pts.push({x,y});
+  for(let i=0;i<5000;i++){
+    const [dx,dy]=dirs[dir%4];
+    x+=dx*cellSize; y+=dy*cellSize;
+    if(x<margin-1||x>PW-margin+1||y<margin-1||y>PH-margin+1) break;
+    pts.push({x,y});
+    if(++stepCount===step){ stepCount=0; dir++; if(++turns%2===0) step++; }
+  }
+  if(pts.length>1) lines.push(pts);
+  return lines;
+}
+
+// ── NEW COOL GENERATORS ───────────────────────────────────────────────────
+
+// Spirograph / Hypotrochoid: inner circle r rolls inside outer R, pen at d
+function spirograph(R, r, d, margin) {
+  const cx=PW/2, cy=PH/2;
+  // LCM for full period
+  const gcdF=(a,b)=>b<0.001?a:gcdF(b,a%b);
+  const ri=Math.round(r), Ri=Math.round(R);
+  const g=gcdF(Ri,ri), revs=ri/g;
+  const steps=Math.round(revs*300);
+  const pts=[];
+  for(let i=0;i<=steps;i++){
+    const t=2*Math.PI*i/steps*revs;
+    const x=cx+(R-r)*Math.cos(t)+d*Math.cos((R-r)/r*t);
+    const y=cy+(R-r)*Math.sin(t)-d*Math.sin((R-r)/r*t);
+    pts.push({x,y});
+  }
+  return [pts];
+}
+
+// Epitrochoid: inner circle r rolls outside R
+function epitrochoid(R, r, d, margin) {
+  const cx=PW/2, cy=PH/2;
+  const gcdF=(a,b)=>b<0.001?a:gcdF(b,a%b);
+  const ri=Math.round(r), Ri=Math.round(R);
+  const g=gcdF(Ri,ri), revs=ri/g;
+  const steps=Math.round(revs*300);
+  const pts=[];
+  for(let i=0;i<=steps;i++){
+    const t=2*Math.PI*i/steps*revs;
+    const x=cx+(R+r)*Math.cos(t)-d*Math.cos((R+r)/r*t);
+    const y=cy+(R+r)*Math.sin(t)-d*Math.sin((R+r)/r*t);
+    pts.push({x,y});
+  }
+  return [pts];
+}
+
+// Rose / Rhodonea curve: r = cos(k·θ)
+function roseCurve(k, scale, passes, margin) {
+  const cx=PW/2, cy=PH/2;
+  const periods=(k%2===0)?4:2;
+  const steps=1200*passes;
+  const lines=[];
+  for(let p=0;p<passes;p++){
+    const pts=[];
+    const rotOffset=Math.PI*p/(passes*k+1);
+    for(let i=0;i<=steps/passes;i++){
+      const t=Math.PI*periods*i/(steps/passes)+rotOffset;
+      const r=scale*Math.abs(Math.cos(k*t));
+      pts.push({x:cx+r*Math.cos(t), y:cy+r*Math.sin(t)});
+    }
+    lines.push(pts);
+  }
+  return lines;
+}
+
+// Lissajous figure
+function lissajous(a, b, delta, scale, margin) {
+  const cx=PW/2, cy=PH/2;
+  const steps=2000;
+  const pts=[];
+  for(let i=0;i<=steps;i++){
+    const t=2*Math.PI*i/steps;
+    pts.push({x:cx+scale*Math.sin(a*t+delta*Math.PI/180), y:cy+scale*Math.sin(b*t)});
+  }
+  return [pts];
+}
+
+// Flow field: vector field from layered sine/cosine
+function flowField(spacing, steps, stepLen, margin) {
+  const lines=[];
+  const seed=Math.PI*0.618;
+  for(let y=margin;y<PH-margin;y+=spacing){
+    for(let x=margin;x<PW-margin;x+=spacing){
+      const pts=[{x,y}];
+      let cx=x, cy=y;
+      for(let i=0;i<steps;i++){
+        const nx=cx/PW, ny=cy/PH;
+        const angle=Math.sin(nx*Math.PI*3+seed)*Math.cos(ny*Math.PI*2)
+                  + Math.sin(nx*2.3+ny*3.7)*0.7
+                  + Math.cos(nx*5.1-ny*4.3)*0.3;
+        cx+=Math.cos(angle*Math.PI*2)*stepLen;
+        cy+=Math.sin(angle*Math.PI*2)*stepLen;
+        if(cx<margin||cx>PW-margin||cy<margin||cy>PH-margin) break;
+        pts.push({x:cx,y:cy});
+      }
+      if(pts.length>3) lines.push(pts);
+    }
+  }
+  return lines;
+}
+
+// Phyllotaxis (sunflower seed arrangement)
+function phyllotaxis(count, spread, dotR, margin) {
+  const golden=Math.PI*(3-Math.sqrt(5));
+  const cx=PW/2, cy=PH/2;
+  const lines=[];
+  for(let i=0;i<count;i++){
+    const r=spread*Math.sqrt(i);
+    const a=i*golden;
+    const px=cx+r*Math.cos(a), py=cy+r*Math.sin(a);
+    if(px<margin||px>PW-margin||py<margin||py>PH-margin) continue;
+    const pts=[];
+    for(let j=0;j<=12;j++){
+      const ba=2*Math.PI*j/12;
+      pts.push({x:px+dotR*Math.cos(ba), y:py+dotR*Math.sin(ba)});
+    }
+    lines.push(pts);
+  }
+  return lines;
+}
+
+// String art: lines between evenly spaced points on circle
+function stringArt(n, skip, margin) {
+  const cx=PW/2, cy=PH/2;
+  const r=Math.min(PW,PH)/2-margin;
+  const lines=[];
+  const seen=new Set();
+  for(let i=0;i<n;i++){
+    const j=(i*skip)%n;
+    const key=Math.min(i,j)+","+Math.max(i,j);
+    if(seen.has(key)) continue; seen.add(key);
+    const a1=2*Math.PI*i/n-Math.PI/2;
+    const a2=2*Math.PI*j/n-Math.PI/2;
+    lines.push([{x:cx+r*Math.cos(a1),y:cy+r*Math.sin(a1)},
+                {x:cx+r*Math.cos(a2),y:cy+r*Math.sin(a2)}]);
+  }
+  return lines;
+}
+
+// Truchet tiles (arc-based quarter-circles)
+function truchet(tileSize, margin) {
+  const lines=[];
+  const cols=Math.floor((PW-2*margin)/tileSize);
+  const rows=Math.floor((PH-2*margin)/tileSize);
+  const ox=margin+(PW-2*margin-cols*tileSize)/2;
+  const oy=margin+(PH-2*margin-rows*tileSize)/2;
+  const h=tileSize/2, segs=16;
+  for(let r=0;r<rows;r++){
+    for(let c=0;c<cols;c++){
+      const tx=ox+c*tileSize, ty=oy+r*tileSize;
+      const flip=(c+r+((c*7+r*13)%3))%2===0;
+      for(let arc=0;arc<2;arc++){
+        const pts=[];
+        const cx2=flip?(arc===0?tx:tx+tileSize):(arc===0?tx+tileSize:tx);
+        const cy2=flip?(arc===0?ty+tileSize:ty):(arc===0?ty:ty+tileSize);
+        const startA=flip?(arc===0?0:Math.PI):(arc===0?Math.PI/2:Math.PI*3/2);
+        for(let i=0;i<=segs;i++){
+          const a=startA+Math.PI/2*i/segs;
+          pts.push({x:cx2+h*Math.cos(a), y:cy2+h*Math.sin(a)});
+        }
+        lines.push(pts);
+      }
+    }
+  }
+  return lines;
+}
+
+// Isometric grid
+function isoGrid(spacing, margin) {
+  const lines=[];
+  const h=spacing*Math.sqrt(3)/2;
+  // horizontal
+  for(let y=margin;y<=PH-margin;y+=h)
+    lines.push(...[{x:margin,y},{x:PW-margin,y}].reduce((a,p,i)=>i===0?[[p]]:((a[a.length-1].push(p)),a),[[]]));
+  // 60° lines
+  const diag=Math.sqrt(PW*PW+PH*PH);
+  for(let d=-diag;d<=diag;d+=spacing){
+    const c=clipLine(PW/2-d*0.5-diag*0.866,PH/2+d*0.866-diag*0.5,
+                     PW/2-d*0.5+diag*0.866,PH/2+d*0.866+diag*0.5,
+                     margin,margin,PW-margin,PH-margin);
+    if(c) lines.push([{x:c[0],y:c[1]},{x:c[2],y:c[3]}]);
+  }
+  for(let d=-diag;d<=diag;d+=spacing){
+    const c=clipLine(PW/2+d*0.5-diag*0.866,PH/2+d*0.866-diag*0.5,
+                     PW/2+d*0.5+diag*0.866,PH/2+d*0.866+diag*0.5,
+                     margin,margin,PW-margin,PH-margin);
+    if(c) lines.push([{x:c[0],y:c[1]},{x:c[2],y:c[3]}]);
+  }
+  return lines;
+}
+
+// Cross-hatched gradient (denser in center)
+function gradientHatch(angleDeg, maxSpacing, minSpacing, margin) {
+  const xn=margin,yn=margin,xx=PW-margin,yx=PH-margin;
+  const cx=PW/2, cy=PH/2;
+  const diag=Math.sqrt(PW*PW+PH*PH);
+  const th=angleDeg*Math.PI/180, ct=Math.cos(th), st=Math.sin(th);
+  const lines=[];
+  for(let d=-diag/2;d<=diag/2;){
+    const px=cx-d*st, py=cy+d*ct;
+    const c=clipLine(px-diag*ct,py-diag*st,px+diag*ct,py+diag*st,xn,yn,xx,yx);
+    if(c) lines.push([{x:c[0],y:c[1]},{x:c[2],y:c[3]}]);
+    const dist=Math.sqrt((cx-(px))**2+(cy-(py))**2);
+    const maxD=Math.sqrt(PW*PW+PH*PH)/2;
+    const t=dist/maxD;
+    const sp=minSpacing+t*(maxSpacing-minSpacing);
+    d+=sp;
+  }
+  return lines;
+}
+
+// ── Preset catalogue ──────────────────────────────────────────────────────
+// cat: hatch | geo | math | gen
+const PRESETS = [
+  // HATCH
+  { id:"finehatch", name:"Linear Hatch", cat:"hatch", tag:"Single-direction hatching",
+    params:[{k:"spacing",label:"Spacing",min:2,max:15,step:.5,def:4},
+            {k:"angle",  label:"Angle",  min:0,max:175,step:5,def:45}],
+    gen: p => hatch(p.angle, p.spacing, getMargin()) },
+
+  { id:"crosshatch", name:"Cross Hatch", cat:"hatch", tag:"Two-direction diamond grid",
+    params:[{k:"spacing",label:"Spacing",min:3,max:20,step:.5,def:6}],
+    gen: p => diamondGrid(p.spacing, getMargin()) },
+
+  { id:"trihatch", name:"Triple Hatch", cat:"hatch", tag:"60° / 120° / 0° weave",
+    params:[{k:"spacing",label:"Spacing",min:4,max:25,step:1,def:9}],
+    gen: p => [...hatch(0,p.spacing,getMargin()),...hatch(60,p.spacing,getMargin()),...hatch(120,p.spacing,getMargin())] },
+
+  { id:"wavehatch", name:"Wave Hatch", cat:"hatch", tag:"Organic wavy parallel lines",
+    params:[{k:"spacing",   label:"Row gap",   min:4,max:25,step:1,def:8},
+            {k:"amplitude", label:"Amplitude", min:1,max:20,step:.5,def:5},
+            {k:"wavelength",label:"Wavelength",min:10,max:100,step:2,def:35}],
+    gen: p => waveHatch(45,p.spacing,p.amplitude,p.wavelength,getMargin()) },
+
+  { id:"gradient", name:"Gradient Hatch", cat:"hatch", tag:"Dense center, sparse edges",
+    params:[{k:"minSpacing",label:"Min spacing",min:1,max:8,step:.5,def:2},
+            {k:"maxSpacing",label:"Max spacing",min:8,max:40,step:1,def:20},
+            {k:"angle",     label:"Angle",      min:0,max:175,step:5,def:45}],
+    gen: p => gradientHatch(p.angle,p.maxSpacing,p.minSpacing,getMargin()) },
+
+  { id:"sinewaves", name:"Sine Waves", cat:"hatch", tag:"Flowing horizontal sine rows",
+    params:[{k:"spacing",   label:"Row gap",   min:3,max:25,step:1,def:8},
+            {k:"amplitude", label:"Amplitude", min:1,max:25,step:.5,def:6},
+            {k:"wavelength",label:"Wavelength",min:10,max:120,step:5,def:45}],
+    gen: p => sineWaves(p.amplitude,p.wavelength,p.spacing,getMargin()) },
+
+  // GEOMETRIC
+  { id:"concrects", name:"Contour Squares", cat:"geo", tag:"Nested inward rectangles",
+    params:[{k:"spacing",label:"Spacing",min:3,max:20,step:1,def:6}],
+    gen: p => concentricRects(p.spacing, getMargin()) },
+
+  { id:"conccircles", name:"Contour Circles", cat:"geo", tag:"Concentric rings",
+    params:[{k:"spacing",label:"Spacing",min:3,max:20,step:1,def:6}],
+    gen: p => concentricCircles(p.spacing, getMargin()) },
+
+  { id:"hexgrid", name:"Hexagon Grid", cat:"geo", tag:"Honeycomb tessellation",
+    params:[{k:"size",label:"Cell size",min:5,max:35,step:1,def:13}],
+    gen: p => hexGrid(p.size, getMargin()) },
+
+  { id:"tritri", name:"Nested Triangles", cat:"geo", tag:"Concentric equilateral triangles",
+    params:[{k:"spacing",label:"Spacing",min:4,max:20,step:1,def:8}],
+    gen: p => concentricTriangles(p.spacing, getMargin()) },
+
+  { id:"truchet", name:"Truchet Tiles", cat:"geo", tag:"Quarter-circle arc tiling",
+    params:[{k:"tileSize",label:"Tile size",min:6,max:30,step:1,def:14}],
+    gen: p => truchet(p.tileSize, getMargin()) },
+
+  { id:"isogrid", name:"Isometric Grid", cat:"geo", tag:"60° triangular mesh",
+    params:[{k:"spacing",label:"Spacing",min:4,max:25,step:1,def:10}],
+    gen: p => isoGrid(p.spacing, getMargin()) },
+
+  { id:"radial", name:"Radial Burst", cat:"geo", tag:"Lines radiating from center",
+    params:[{k:"count",label:"Lines",min:12,max:360,step:4,def:90}],
+    gen: p => radialBurst(p.count, getMargin()) },
+
+  { id:"stringart", name:"String Art", cat:"geo", tag:"Straight lines on circle forming curves",
+    params:[{k:"n",   label:"Points", min:20,max:200,step:4,def:80},
+            {k:"skip",label:"Skip",   min:2, max:99, step:1,def:37}],
+    gen: p => stringArt(p.n, p.skip, getMargin()) },
+
+  // MATHEMATICAL
+  { id:"spiral", name:"Archimedean Spiral", cat:"math", tag:"Single continuous stroke",
+    params:[{k:"spacing",label:"Spacing",min:2,max:18,step:.5,def:5}],
+    gen: p => spiral(p.spacing, getMargin()) },
+
+  { id:"spirograph1", name:"Spirograph A", cat:"math", tag:"Hypotrochoid — classic gear pattern",
+    params:[{k:"R",label:"Outer R",min:20,max:100,step:1,def:70},
+            {k:"r",label:"Inner r",min:5, max:60, step:1,def:25},
+            {k:"d",label:"Pen arm",min:5, max:80, step:1,def:45}],
+    gen: p => spirograph(p.R, p.r, p.d, getMargin()) },
+
+  { id:"spirograph2", name:"Spirograph B", cat:"math", tag:"Epitrochoid — outer rolling circle",
+    params:[{k:"R",label:"Base R", min:20,max:80,step:1,def:45},
+            {k:"r",label:"Roll r", min:5, max:50,step:1,def:18},
+            {k:"d",label:"Pen arm",min:5, max:80,step:1,def:38}],
+    gen: p => epitrochoid(p.R, p.r, p.d, getMargin()) },
+
+  { id:"rose", name:"Rose Curve", cat:"math", tag:"Rhodonea k-petal mathematical flower",
+    params:[{k:"k",     label:"Petals k",min:2,max:9,step:1,def:5},
+            {k:"scale", label:"Scale",   min:30,max:110,step:2,def:80},
+            {k:"passes",label:"Layers",  min:1,max:5,step:1,def:3}],
+    gen: p => roseCurve(p.k, p.scale, p.passes, getMargin()) },
+
+  { id:"lissajous", name:"Lissajous", cat:"math", tag:"Frequency-ratio interference curves",
+    params:[{k:"a",    label:"Freq A",min:1,max:8,step:1,def:3},
+            {k:"b",    label:"Freq B",min:1,max:8,step:1,def:4},
+            {k:"delta",label:"Phase°",min:0,max:180,step:5,def:45},
+            {k:"scale",label:"Scale", min:30,max:120,step:2,def:90}],
+    gen: p => lissajous(p.a, p.b, p.delta, p.scale, getMargin()) },
+
+  // GENERATIVE
+  { id:"flowfield", name:"Flow Field", cat:"gen", tag:"Organic curved lines in vector field",
+    params:[{k:"spacing",label:"Grid gap",  min:6,max:25,step:1,def:12},
+            {k:"steps",  label:"Steps",    min:5,max:30,step:1,def:16},
+            {k:"stepLen",label:"Step size",min:1,max:6,step:.5,def:2.5}],
+    gen: p => flowField(p.spacing,p.steps,p.stepLen,getMargin()) },
+
+  { id:"phyllotaxis", name:"Phyllotaxis", cat:"gen", tag:"Golden angle sunflower arrangement",
+    params:[{k:"count",label:"Count",  min:100,max:2000,step:50,def:600},
+            {k:"spread",label:"Spread",min:.5, max:4,   step:.1,def:1.8},
+            {k:"dotR",  label:"Dot R", min:.5, max:5,   step:.2,def:1.5}],
+    gen: p => phyllotaxis(p.count,p.spread,p.dotR,getMargin()) },
+
+  { id:"meander", name:"Spiral Meander", cat:"gen", tag:"Single outward-spiraling path",
+    params:[{k:"cellSize",label:"Step size",min:4,max:25,step:1,def:10}],
+    gen: p => meander(p.cellSize, getMargin()) },
+];
+
+// ── State ─────────────────────────────────────────────────────────────────
+let activePreset = null;
+let activePolylines = [];
+let paramValues = {};
+let activeCat = "all";
+
+// ── Build preset list ─────────────────────────────────────────────────────
+const dtDesignSelect = document.getElementById("dtDesignSelect");
+PRESETS.forEach((p, i) => {
+  const o = document.createElement("option");
+  o.value = i; o.textContent = p.name;
+  dtDesignSelect.appendChild(o);
+});
+dtDesignSelect.addEventListener("change", e => {
+  if (e.target.value !== "") selectPreset(+e.target.value);
+});
+
+function buildPresetList(filter="", cat="all") {
+  const list = document.getElementById("presetList");
+  list.innerHTML = "";
+  PRESETS.forEach((preset, idx) => {
+    if (cat !== "all" && preset.cat !== cat) return;
+    if (filter && !preset.name.toLowerCase().includes(filter.toLowerCase())) return;
+    const card = document.createElement("div");
+    card.className = "dt-preset-card" + (activePreset === preset ? " active" : "");
+    card.innerHTML = `<canvas class="dt-thumb" width="40" height="50" data-idx="${idx}"></canvas>
+      <div class="dt-preset-meta">
+        <div class="dt-preset-name">${preset.name}</div>
+        <div class="dt-preset-cat">${preset.tag}</div>
+      </div>`;
+    card.addEventListener("click", () => selectPreset(idx));
+    list.appendChild(card);
+    // async thumbnail render
+    requestAnimationFrame(() => {
+      const thumb = card.querySelector(".dt-thumb");
+      if (thumb) {
+        const defs = {}; preset.params.forEach(p => defs[p.k] = p.def);
+        drawToCanvas(thumb, preset.gen(defs), 40, 50, true);
+      }
+    });
+  });
+}
+
+document.getElementById("dtSearch").addEventListener("input", e =>
+  buildPresetList(e.target.value, activeCat));
+
+document.querySelectorAll(".dt-cat").forEach(btn =>
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".dt-cat").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    activeCat = btn.dataset.cat;
+    buildPresetList(document.getElementById("dtSearch").value, activeCat);
+  }));
+
+// ── Select preset ─────────────────────────────────────────────────────────
+function selectPreset(idx) {
+  activePreset = PRESETS[idx];
+  paramValues = {};
+  activePreset.params.forEach(p => paramValues[p.k] = p.def);
+  dtDesignSelect.value = idx;
+  buildPresetList(document.getElementById("dtSearch").value, activeCat);
+  document.getElementById("exportSvgBtn").disabled = false;
+  document.getElementById("plotDesignBtn").disabled = !serialWriter;
+  buildParamControls();
+  regenerate();
+}
+
+function buildParamControls() {
+  const el = document.getElementById("designParams"); el.innerHTML = "";
+  const sec = document.getElementById("dtParamSection");
+  const title = document.getElementById("dtParamTitle");
+  if (!activePreset || !activePreset.params.length) { sec.style.display = "none"; return; }
+  sec.style.display = ""; title.textContent = activePreset.name;
+  activePreset.params.forEach(p => {
+    const row = document.createElement("div");
+    row.className = "dt-prop-row";
+    row.style.flexWrap = "wrap";
+    const numId = `dnum-${p.k}`;
+    row.innerHTML = `<span class="dt-prop-label">${p.label}</span>
+      <input type="number" class="dt-prop-val" id="${numId}" value="${p.def}" min="${p.min}" max="${p.max}" step="${p.step}" style="width:60px">`;
+    const slider = document.createElement("input");
+    slider.type = "range"; slider.className = "dt-prop-slider";
+    slider.min = p.min; slider.max = p.max; slider.step = p.step; slider.value = p.def;
+    const numEl = () => document.getElementById(numId);
+    slider.addEventListener("input", () => {
+      paramValues[p.k] = parseFloat(slider.value);
+      const n = numEl(); if(n) n.value = slider.value;
+      regenerate();
+    });
+    row.addEventListener("change", e => {
+      if (e.target.id === numId) {
+        const v = parseFloat(e.target.value);
+        paramValues[p.k] = v; slider.value = v;
+        regenerate();
+      }
+    });
+    el.appendChild(row);
+    el.appendChild(slider);
+  });
+}
+
+function regenerate() {
+  if (!activePreset) return;
+  try { activePolylines = activePreset.gen(paramValues); } catch(e) { activePolylines=[]; }
+  renderDesign();
+  updateStats();
+}
+
+function updateStats() {
+  if (!activePolylines.length) return;
+  let pts=0, dist=0;
+  activePolylines.forEach(pl => {
+    pts+=pl.length;
+    for(let i=1;i<pl.length;i++){
+      const dx=pl[i].x-pl[i-1].x, dy=pl[i].y-pl[i-1].y;
+      dist+=Math.sqrt(dx*dx+dy*dy);
+    }
+  });
+  document.getElementById("dtStats").textContent =
+    `${activePreset.name}  ·  ${activePolylines.length} strokes  ·  ${pts.toLocaleString()} pts  ·  ${(dist/1000).toFixed(2)} m draw`;
+  document.getElementById("dtStatsSection").style.display = "";
+  document.getElementById("dtStatStrokes").textContent = activePolylines.length;
+  document.getElementById("dtStatDist").textContent    = (dist/1000).toFixed(2) + " m";
+  document.getElementById("dtStatLifts").textContent   = activePolylines.length - 1;
+}
+
+// ── Drawing ───────────────────────────────────────────────────────────────
+function drawToCanvas(canvas, polylines, canvasW, canvasH, isThumbnail=false) {
+  const ctx = canvas.getContext("2d");
+  canvas.width = canvasW; canvas.height = canvasH;
+  const scale = Math.min(canvasW/PW, canvasH/PH);
+  const offX = (canvasW-PW*scale)/2, offY = (canvasH-PH*scale)/2;
+  const toX = mm => offX+mm*scale, toY = mm => offY+mm*scale;
+
+  // Paper
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(offX, offY, PW*scale, PH*scale);
+
+  if (!polylines.length) return;
+
+  const showTravel = !isThumbnail && document.getElementById("dtShowTravel")?.checked;
+  const showDots   = !isThumbnail && document.getElementById("dtShowDots"  )?.checked;
+
+  // Travel lines (pen up)
+  if (showTravel) {
+    ctx.save(); ctx.setLineDash([2,4]);
+    ctx.strokeStyle = "rgba(120,140,180,.35)"; ctx.lineWidth = 0.7;
+    for (let i=1;i<polylines.length;i++) {
+      const prev=polylines[i-1], next=polylines[i];
+      const ex=prev[prev.length-1], sx=next[0];
+      ctx.beginPath(); ctx.moveTo(toX(ex.x),toY(ex.y)); ctx.lineTo(toX(sx.x),toY(sx.y)); ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  // Draw strokes
+  ctx.strokeStyle = isThumbnail ? "#2260a8" : "#1d4e9a";
+  ctx.lineWidth   = isThumbnail ? 0.5 : Math.max(0.5, scale*0.35);
+  ctx.lineCap="round"; ctx.lineJoin="round";
+  polylines.forEach(pl => {
+    if(pl.length<2) return;
+    ctx.beginPath(); ctx.moveTo(toX(pl[0].x),toY(pl[0].y));
+    for(let i=1;i<pl.length;i++) ctx.lineTo(toX(pl[i].x),toY(pl[i].y));
+    ctx.stroke();
+  });
+
+  // Pen-down (green) and pen-up (red) dots
+  if (showDots) {
+    const r = Math.max(1.5, scale*0.7);
+    polylines.forEach(pl => {
+      ctx.fillStyle="rgba(34,197,94,.9)";
+      ctx.beginPath(); ctx.arc(toX(pl[0].x),toY(pl[0].y),r,0,Math.PI*2); ctx.fill();
+    });
+    polylines.slice(0,-1).forEach(pl => {
+      const last=pl[pl.length-1];
+      ctx.fillStyle="rgba(239,68,68,.9)";
+      ctx.beginPath(); ctx.arc(toX(last.x),toY(last.y),r,0,Math.PI*2); ctx.fill();
+    });
+  }
+}
+
+function renderDesign() {
+  const canvas = document.getElementById("designCanvas");
+  if (!canvas) return;
+  const pxPerMm = 3.7795 * dtZoom;
+  const w = Math.round(PW * pxPerMm);
+  const h = Math.round(PH * pxPerMm);
+  drawToCanvas(canvas, activePolylines, w, h, false);
+}
+
+// ── Export SVG ────────────────────────────────────────────────────────────
+document.getElementById("exportSvgBtn").addEventListener("click", () => {
+  if (!activePolylines.length) return;
+  const S = 3.7795; // mm → px at 96dpi
+  const W=(PW*S).toFixed(1), H=(PH*S).toFixed(1);
+  let svg=`<?xml version="1.0"?>\n<svg xmlns="http://www.w3.org/2000/svg" width="${PW}mm" height="${PH}mm" viewBox="0 0 ${W} ${H}">\n`;
+  svg+=`<rect width="${W}" height="${H}" fill="white"/>\n`;
+  activePolylines.forEach(pl=>{
+    const d=pl.map((p,i)=>`${i===0?"M":"L"}${(p.x*S).toFixed(2)},${(p.y*S).toFixed(2)}`).join(" ");
+    svg+=`<path d="${d}" fill="none" stroke="#000" stroke-width="0.5mm"/>\n`;
+  });
+  svg+=`</svg>`;
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([svg],{type:"image/svg+xml"}));
+  a.download=`${activePreset?.id||"design"}.svg`; a.click();
+});
+
+// ── Plot design to printer ────────────────────────────────────────────────
+document.getElementById("plotDesignBtn").addEventListener("click", async () => {
+  if (!serialWriter || !activePolylines.length) return;
+  const btn = document.getElementById("plotDesignBtn");
+  btn.disabled=true; btn.textContent="Plotting…";
+  const scX=(bedX1-bedX0)/PW, scY=(bedY1-bedY0)/PH, sc=Math.min(scX,scY);
+  const oX=bedX0+((bedX1-bedX0)-PW*sc)/2, oY=bedY0+((bedY1-bedY0)-PH*sc)/2;
+  const toGX=mm=>oX+mm*sc, toGY=mm=>oY+mm*sc;
+  const pUp=parseFloat(document.getElementById("penUpZ")?.value)||8;
+  const pDn=parseFloat(document.getElementById("penDownZ")?.value)||2;
+  const feed=parseFloat(document.getElementById("xySpeed")?.value)||12000;
+  try {
+    await sendGcode(`G1 Z${pUp.toFixed(2)} F3000\n`);
+    for (const pl of activePolylines) {
+      await sendGcode(`G1 X${toGX(pl[0].x).toFixed(2)} Y${toGY(pl[0].y).toFixed(2)} F${feed}\n`);
+      await sendGcode(`G1 Z${pDn.toFixed(2)} F3000\n`);
+      for(let i=1;i<pl.length;i++)
+        await sendGcode(`G1 X${toGX(pl[i].x).toFixed(2)} Y${toGY(pl[i].y).toFixed(2)} F${feed}\n`);
+      await sendGcode(`G1 Z${pUp.toFixed(2)} F3000\n`);
+    }
+  } finally { btn.disabled=false; btn.textContent="▶ Plot"; }
+});
+
+// ── Init ──────────────────────────────────────────────────────────────────
+updateCanvasInfo();
+buildPresetList();
+
+// Keep Plot button state synced with serial connection
+setInterval(() => {
+  const b = document.getElementById("plotDesignBtn");
+  if (b && !b.textContent.includes("Plotting"))
+    b.disabled = !serialWriter || !activePolylines.length;
+}, 800);
 
 </script>
 </body>
