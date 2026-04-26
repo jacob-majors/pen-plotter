@@ -218,55 +218,210 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   line-height: 1.7; margin-bottom: 2.8rem;
 }
 
-/* === APP SHELL === */
+/* ═══ APP SHELL ══════════════════════════════════════════════════════════ */
+* { box-sizing: border-box; }
+
 #app {
   display: flex;
-  flex-direction: column;
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
+  background: #1a1a1a;
 }
 
-.app-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: .55rem 1.25rem;
-  background: rgba(11,14,26,.95);
-  border-bottom: 1px solid var(--border);
-  backdrop-filter: blur(12px);
-  position: sticky;
-  top: 0;
-  z-index: 50;
+/* Left icon nav (VS Code style) */
+.app-nav {
+  width: 44px; flex-shrink: 0;
+  background: #1e1e1e;
+  border-right: 1px solid #2a2a2a;
+  display: flex; flex-direction: column; align-items: center;
+  padding: 8px 0; gap: 2px; z-index: 20;
+}
+.nav-brand {
+  width: 28px; height: 28px; border-radius: 5px; flex-shrink: 0;
+  background: linear-gradient(135deg, #1a4a8a 0%, #0d2d5c 100%);
+  border: 1px solid #2d5aa0;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 900; font-size: 13px; color: #7ab8ff;
+  margin-bottom: 6px; user-select: none;
+}
+.nav-items { display: flex; flex-direction: column; gap: 1px; }
+.nav-foot  { margin-top: auto; display: flex; flex-direction: column; gap: 1px; }
+.nav-item {
+  width: 36px; height: 36px; border-radius: 5px;
+  background: none; border: 1px solid transparent;
+  color: #4a4a4a; cursor: pointer; position: relative;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .1s, color .1s, border-color .1s;
   flex-shrink: 0;
 }
+.nav-item svg { pointer-events: none; }
+.nav-item:hover { background: #2a2a2a; color: #999; border-color: #333; }
+.nav-item.active { background: #1a3050; color: #4a9eff; border-color: #1d4a84; }
+.nav-item:hover .nav-tip {
+  opacity: 1; pointer-events: none;
+  transform: translateX(0);
+}
+.nav-tip {
+  position: absolute; left: calc(100% + 8px); top: 50%;
+  transform: translateY(-50%) translateX(-4px);
+  padding: 3px 8px; border-radius: 4px;
+  background: #2d2d2d; border: 1px solid #3a3a3a;
+  color: #ccc; font-size: 11px; white-space: nowrap; font-family: inherit;
+  opacity: 0; transition: opacity .12s, transform .12s;
+  pointer-events: none; z-index: 200;
+}
+.nav-dot {
+  position: absolute; bottom: 5px; right: 5px;
+  width: 6px; height: 6px; border-radius: 50%;
+  background: #333; border: 1.5px solid #1e1e1e;
+  transition: background .2s;
+}
+.nav-dot.ok       { background: #22c55e; }
+.nav-dot.plotting { background: #f59e0b; }
+.nav-dot.error    { background: #ef4444; }
 
-.app-logo {
-  display: flex;
-  align-items: center;
-  gap: .55rem;
-  font-weight: 700;
-  font-size: .95rem;
-  color: #fff;
+/* Panels */
+.panel {
+  flex: 1; min-width: 0; display: flex; flex-direction: column;
+  height: 100vh; overflow: hidden;
+  background: #1a1a1a;
 }
 
-.app-bar-right {
-  display: flex;
-  align-items: center;
-  gap: .75rem;
+/* Ensure app fills viewport edge to edge */
+#app { position: fixed; inset: 0; }
+
+/* ── DRAW PANEL ───────────────────────────────────────────────────────── */
+#panelDraw .draw-body {
+  display: grid;
+  grid-template-columns: 180px 1fr 200px;
+  flex: 1; min-height: 0;
 }
 
-.app-connect-btn {
-  width: auto !important;
-  padding: .45rem .9rem !important;
-  font-size: .8rem !important;
+/* reuse dt-* classes for draw panel left/right panels */
+#panelDraw .dt-presets { border-right: 1px solid #2e2e2e; }
+#panelDraw .dt-props   { border-left:  1px solid #2e2e2e; }
+
+.draw-canvas-wrap {
+  display: flex; flex-direction: column;
+  background: #242424; position: relative; overflow: hidden;
+}
+.draw-canvas-inner {
+  flex: 1; position: relative; overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+  background: #1e1e1e;
+}
+/* Keep existing canvas styles working inside new layout */
+#panelDraw .canvas-area {
+  border-radius: 0; border: none; box-shadow: none;
+  position: relative; width: 100%; height: 100%;
+}
+#panelDraw .canvas-area canvas#drawCanvas {
+  width: 100%; height: 100%; display: block;
 }
 
-.app-body {
-  flex: 1;
-  padding: .75rem 1rem 1.25rem;
-  max-width: 1400px;
-  width: 100%;
-  margin: 0 auto;
+.draw-section-head {
+  padding: 6px 10px 3px;
+  font-size: 10px; font-weight: 700; letter-spacing: .09em;
+  text-transform: uppercase; color: #484848;
 }
+
+/* draw mode toggle */
+.draw-mode-toggle {
+  display: flex; margin: 4px 8px; gap: 2px;
+  background: #1a1a1a; border-radius: 4px;
+  border: 1px solid #303030; padding: 2px;
+}
+.dmt-btn {
+  flex: 1; height: 26px; border-radius: 3px;
+  border: none; background: none; color: #555;
+  font-size: 11px; font-family: inherit; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 4px;
+  transition: background .12s, color .12s;
+}
+.dmt-btn:hover  { color: #999; background: #2a2a2a; }
+.dmt-btn.active { background: #1a3050; color: #4a9eff; }
+
+/* draw start button */
+.draw-start-btn {
+  margin: 4px 8px; height: 30px; border-radius: 4px;
+  background: #1a4a8a; border: 1px solid #2d6abf;
+  color: #7ab8ff; font-size: 12px; font-family: inherit;
+  cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;
+  transition: background .12s;
+}
+.draw-start-btn:hover:not(:disabled) { background: #1f5ca0; }
+.draw-start-btn:disabled { opacity: .4; cursor: not-allowed; }
+.draw-start-btn.stop {
+  background: rgba(239,68,68,.12); border-color: rgba(239,68,68,.3);
+  color: #fca5a5;
+}
+
+/* ── PLOT PANEL ───────────────────────────────────────────────────────── */
+#panelPlot .plot-body {
+  display: grid;
+  grid-template-columns: 220px 1fr 200px;
+  flex: 1; min-height: 0;
+}
+.plot-bed-wrap {
+  background: #202020; display: flex; align-items: center; justify-content: center;
+  overflow: hidden; position: relative;
+}
+#plotBedCanvas { display: block; }
+.plot-controls { background: #222; border-right: 1px solid #2e2e2e; display: flex; flex-direction: column; overflow: hidden; }
+.plot-status   { background: #222; border-left:  1px solid #2e2e2e; display: flex; flex-direction: column; overflow: hidden; }
+.plot-scroll   { flex: 1; overflow-y: auto; padding: 4px 0; }
+.plot-scroll::-webkit-scrollbar { width: 5px; }
+.plot-scroll::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+
+/* Plot toolbar controls */
+.plot-tbar-progress {
+  flex: 1; max-width: 220px; height: 3px; border-radius: 2px;
+  background: #333; position: relative; overflow: hidden;
+}
+.plot-tbar-fill {
+  height: 100%; border-radius: 2px;
+  background: linear-gradient(90deg, #1a5abf, #4a9eff);
+  transition: width .3s;
+}
+.plot-play-btn {
+  height: 28px; padding: 0 14px; border-radius: 4px;
+  font-size: 12px; font-family: inherit; cursor: pointer;
+  border: 1px solid #3a3a3a; background: #2a2a2a; color: #ccc;
+  display: flex; align-items: center; gap: 6px;
+  transition: background .12s, color .12s;
+}
+.plot-play-btn:hover:not(:disabled) { background: #333; color: #fff; }
+.plot-play-btn.go   { background: #1a4a8a; border-color: #2d6abf; color: #7ab8ff; }
+.plot-play-btn.go:hover { background: #1f5ca0; }
+.plot-play-btn.stop { background: rgba(239,68,68,.12); border-color: rgba(239,68,68,.28); color: #fca5a5; }
+.plot-play-btn:disabled { opacity: .35; cursor: not-allowed; }
+
+/* big stat in plot status panel */
+.plot-stat-big {
+  font-size: 22px; font-family: monospace; font-weight: 700;
+  color: #ccc; text-align: center; padding: 8px 10px 0; letter-spacing: .02em;
+}
+.plot-stat-label { font-size: 10px; color: #555; text-align: center; text-transform: uppercase; letter-spacing: .08em; }
+.plot-progress-bar {
+  margin: 6px 10px; height: 4px; border-radius: 2px;
+  background: #2a2a2a; overflow: hidden;
+}
+.plot-progress-fill {
+  height: 100%; background: linear-gradient(90deg,#1a5abf,#4a9eff);
+  border-radius: 2px; transition: width .4s;
+}
+
+/* coord display */
+.plot-coords {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 4px; padding: 6px 10px;
+}
+.plot-coord {
+  background: #1a1a1a; border: 1px solid #2e2e2e; border-radius: 4px;
+  padding: 4px 8px; text-align: center;
+}
+.plot-coord-axis { font-size: 9px; color: #555; letter-spacing: .1em; text-transform: uppercase; }
+.plot-coord-val  { font-size: 14px; font-family: monospace; color: #aaa; margin-top: 1px; }
 
 /* === DEMO === */
 .demo-wrap {
@@ -800,10 +955,13 @@ footer { border-top: 1px solid var(--border); padding: 2.75rem 0 1.25rem; }
 /* ═══ DESIGN TOOL ═══════════════════════════════════════════════════════ */
 #panelDesigns {
   display: flex; flex-direction: column;
-  height: calc(100vh - 48px);
+  height: 100vh;
   background: #1a1a1a;
   padding: 0;
 }
+
+/* nav connected state */
+.nav-item.connected { color: #22c55e !important; }
 
 /* toolbar */
 .dt-toolbar {
@@ -1032,370 +1190,349 @@ footer { border-top: 1px solid var(--border); padding: 2.75rem 0 1.25rem; }
 <!-- ████ APP ████ -->
 <div id="app">
 
-  <!-- ── Top bar ── -->
-  <header class="app-bar">
-    <div class="app-logo">
-      <div class="logo-mark">P</div>
-      <span>Pen Plotter</span>
-    </div>
-    <nav class="tab-bar">
-      <button class="tab-btn active" data-panel="draw">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5z"/></svg>
-        Draw
+  <!-- ── Left nav sidebar ── -->
+  <nav class="app-nav">
+    <div class="nav-brand">P</div>
+    <div class="nav-items">
+      <button class="nav-item active" data-panel="designs" title="Design">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        <span class="nav-tip">Design</span>
       </button>
-      <button class="tab-btn" data-panel="designs">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-        Designs
+      <button class="nav-item" data-panel="draw" title="Track">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="4"/><path d="M6 20v-2a6 6 0 0 1 12 0v2"/></svg>
+        <span class="nav-tip">Track</span>
       </button>
-    </nav>
-    <div class="app-bar-right">
-      <div id="statusEl" class="status-pill status-idle">
-        <span class="status-dot-el"></span>
-        <span id="statusText">Ready</span>
-      </div>
-      <button id="printerBtn" class="printer-btn app-connect-btn" title="Connect via micro USB — Chrome or Edge only">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="2" width="12" height="8" rx="1"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg>
-        <span id="printerLabel">Connect Plotter</span>
+      <button class="nav-item" data-panel="plot" title="Plot">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="10"/><polygon points="10,8 16,12 10,16" fill="currentColor"/></svg>
+        <span class="nav-tip">Plot</span>
       </button>
     </div>
-  </header>
-
-<!-- (hero removed) -->
-<section class="hero" style="display:none">
-  <div class="hero-glow g1"></div>
-  <div class="hero-glow g2"></div>
-  <div class="hero-glow g3"></div>
-  <div class="hero-grid-bg"></div>
-
-  <div class="hero-body">
-    <div class="eyebrow-tag">
-      <span class="live-dot"></span>
-      Repurposing discarded 3D printers · Accessible art for everyone · Open source
+    <div class="nav-foot">
+      <button class="nav-item" id="printerBtn" title="Connect Plotter">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="6" y="2" width="12" height="8" rx="1"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg>
+        <span class="nav-dot" id="connDot"></span>
+        <span class="nav-tip" id="printerLabel">Connect Plotter</span>
+      </button>
     </div>
+  </nav>
 
-    <h1>
-      Your old 3D printer<br>
-      <span class="grad">becomes your paintbrush.</span>
-    </h1>
-
-    <p class="hero-p">
-      Plotter gives <strong>discarded 3D printers</strong> a second life as accessible art machines.
-      Move any limb in front of a webcam and the repurposed printer — pen strapped where the extruder was —
-      draws it on real paper in real time.
-      <strong>Art is for everyone.</strong>
-    </p>
-
-    <div class="hero-btns">
-      <a href="#demo" class="btn-brand">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
-        Try in your browser
-      </a>
-      <a href="https://github.com/troypappas1/Plotter" target="_blank" class="btn-outline">
-        View on GitHub →
-      </a>
-    </div>
-
-    <p class="fine-print">Chrome &amp; Firefox · Camera stays on your device · Nothing uploaded</p>
-
-    <!-- Browser chrome mockup -->
-    <div class="mockup">
-      <div class="mockup-chrome">
-        <div class="chrome-dots"><span></span><span></span><span></span></div>
-        <div class="chrome-addr">plotter.app</div>
-      </div>
-      <div class="mockup-body">
-        <canvas id="heroCanvas" width="800" height="200"></canvas>
-      </div>
-    </div>
+  <!-- Hidden legacy elements JS needs -->
+  <div id="statusEl" class="status-pill status-idle" style="display:none">
+    <span class="status-dot-el"></span><span id="statusText">Ready</span>
   </div>
-</section>
 
-  <!-- ── Draw panel ── -->
-  <div id="panelDraw" class="app-body">
-    <div class="demo-wrap">
+  <!-- (hero section — hidden, kept for heroCanvas JS) -->
+  <section class="hero" style="display:none">
+    <div class="mockup-body"><canvas id="heroCanvas" width="800" height="200"></canvas></div>
+  </section>
 
-      <!-- Canvas area -->
-      <div class="canvas-area">
-        <!-- The drawing canvas -->
-        <canvas id="drawCanvas" width="800" height="480"></canvas>
+  <!-- intentionally empty header placeholder (nav scroll JS guard) -->
+  <header id="nav" style="display:none"></header>
 
-        <!-- Overlay canvas (tracking dots) sits on top -->
-        <canvas id="overlayCanvas" width="800" height="480"></canvas>
-
-        <!-- PIP camera preview -->
-        <div class="pip" id="pip">
-          <div class="pip-top">
-            <span class="pip-indicator" id="pipIndicator">
-              <span class="pip-dot-inner"></span> LIVE
-            </span>
-            <span class="pip-label" id="pipLabel">nose</span>
-          </div>
-          <div class="pip-body">
-            <video id="video" autoplay playsinline muted></video>
-            <div class="pip-off" id="pipOff">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="2" y1="2" x2="22" y2="22"/><path d="M10.66 6H14a2 2 0 012 2v2.34"/><path d="M6.07 6.07A1.96 1.96 0 006 8v8a2 2 0 002 2h8c.01 0 .02 0 .03-.01"/><path d="M10.73 15.27A2 2 0 0012 16a2 2 0 002-2c0-.48-.17-.91-.46-1.24"/></svg>
-              Camera off
-            </div>
-          </div>
-        </div>
-
-        <!-- Mouse mode info strip -->
-        <div class="mouse-info" id="mouseInfo">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="7" y="2" width="10" height="16" rx="5"/><line x1="12" y1="8" x2="12" y2="12"/></svg>
-          Mouse mode — body movement steers the real OS cursor across your entire screen (uses Pointer Lock)
-        </div>
-
-        <!-- Toolbar -->
-        <div class="toolbar" id="toolbar">
-          <div class="colors">
-            <button class="color-btn active" data-color="#2d7ae0" style="background:#2d7ae0"></button>
-            <button class="color-btn" data-color="#0ea5c8" style="background:#0ea5c8"></button>
-            <button class="color-btn" data-color="#a855f7" style="background:#a855f7"></button>
-            <button class="color-btn" data-color="#f43f5e" style="background:#f43f5e"></button>
-            <button class="color-btn" data-color="#f97316" style="background:#f97316"></button>
-            <button class="color-btn" data-color="#22c55e" style="background:#22c55e"></button>
-            <button class="color-btn" data-color="#facc15" style="background:#facc15"></button>
-            <button class="color-btn" data-color="#ffffff" style="background:#ffffff"></button>
-          </div>
-          <div class="toolbar-right">
-            <button id="clearBtn" class="tool-btn">Clear</button>
-            <button id="saveBtn" class="tool-btn">Save PNG</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Controls grid (below canvas) -->
-      <div class="sidebar">
-
-        <!-- ── Card 1: Camera + Start ── -->
-        <div class="ctrl-card">
-          <div class="seg-ctrl">
-            <button class="seg active" id="drawModeBtn" data-mode="draw">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5z"/></svg>
-              Draw
-            </button>
-            <button class="seg" id="mouseModeBtn" data-mode="mouse">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="7" y="2" width="10" height="16" rx="5"/><line x1="12" y1="8" x2="12" y2="12"/></svg>
-              Mouse
-            </button>
-          </div>
-          <div class="cam-select-wrap">
-            <label class="ctrl-label" for="camSelect">Camera</label>
-            <select id="camSelect" class="cam-select">
-              <option value="">Default camera</option>
-            </select>
-          </div>
-          <button id="startBtn" class="start-btn">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
-            <span id="startLabel">Start Camera</span>
+  <!-- ── Track panel (was Draw) ── -->
+  <div id="panelDraw" class="panel" style="display:none">
+    <!-- Toolbar -->
+    <div class="dt-toolbar">
+      <div class="dt-group">
+        <div class="draw-mode-toggle">
+          <button class="dmt-btn active" id="drawModeBtn" data-mode="draw">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5z"/></svg> Draw
+          </button>
+          <button class="dmt-btn" id="mouseModeBtn" data-mode="mouse">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="7" y="2" width="10" height="16" rx="5"/><line x1="12" y1="8" x2="12" y2="12"/></svg> Mouse
           </button>
         </div>
+      </div>
+      <div class="dt-sep"></div>
+      <div class="dt-group">
+        <span class="dt-label">Camera</span>
+        <select id="camSelect" class="dt-select" style="min-width:120px"><option value="">Default</option></select>
+      </div>
+      <div class="dt-sep"></div>
+      <div class="dt-group">
+        <span class="dt-label">Brush</span>
+        <input type="range" id="brushSlider" min="2" max="40" value="8" style="width:70px;height:3px;accent-color:#4a9eff">
+        <span class="dt-zoom-label" id="brushVal">8</span>
+      </div>
+      <div class="dt-group">
+        <span class="dt-label">Smooth</span>
+        <input type="range" id="smoothSlider" min="1" max="20" value="6" style="width:60px;height:3px;accent-color:#4a9eff">
+        <span class="dt-zoom-label" id="smoothVal">6</span>
+      </div>
+      <div style="flex:1"></div>
+      <div class="dt-group">
+        <button id="clearBtn" class="dt-btn">Clear</button>
+        <button id="saveBtn" class="dt-btn">Save PNG</button>
+        <button id="startBtn" class="dt-btn dt-btn-primary">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
+          <span id="startLabel">Start Camera</span>
+        </button>
+      </div>
+    </div>
 
-        <!-- ── Card 2: Track mode ── -->
-        <div class="ctrl-card">
-          <div class="ctrl-label">Track Mode</div>
-          <div class="track-opts">
+    <!-- 3-column body -->
+    <div class="draw-body">
+      <!-- Left: track + gestures -->
+      <div class="dt-presets">
+        <div class="dt-presets-head" style="padding-bottom:6px">
+          <div class="dt-section-head" style="padding:0 0 4px">Track Mode</div>
+          <div class="track-opts" style="gap:3px">
             <label class="track-opt">
               <input type="radio" name="trackMode" value="nose" checked>
-              <div class="track-card">
-                <span class="track-icon">😶</span>
-                <div>
-                  <div class="track-name">Nose</div>
-                  <div class="track-hint">Head movement</div>
-                </div>
+              <div class="track-card" style="padding:5px 7px;border-radius:4px;background:#1e1e1e;border:1px solid #333;display:flex;align-items:center;gap:6px;cursor:pointer">
+                <span class="track-icon" style="font-size:.9rem">😶</span>
+                <div><div class="track-name" style="font-size:11px;font-weight:600;color:#bbb">Nose</div><div class="track-hint" style="font-size:10px;color:#555">Head move</div></div>
               </div>
             </label>
             <label class="track-opt">
               <input type="radio" name="trackMode" value="hand">
-              <div class="track-card">
-                <span class="track-icon">✋</span>
-                <div>
-                  <div class="track-name">Hand</div>
-                  <div class="track-hint">Wrist / palm</div>
-                </div>
+              <div class="track-card" style="padding:5px 7px;border-radius:4px;background:#1e1e1e;border:1px solid #333;display:flex;align-items:center;gap:6px;cursor:pointer">
+                <span class="track-icon" style="font-size:.9rem">✋</span>
+                <div><div class="track-name" style="font-size:11px;font-weight:600;color:#bbb">Hand</div><div class="track-hint" style="font-size:10px;color:#555">Wrist/palm</div></div>
               </div>
             </label>
             <label class="track-opt">
               <input type="radio" name="trackMode" value="any">
-              <div class="track-card">
-                <span class="track-icon">✦</span>
-                <div>
-                  <div class="track-name">Any object</div>
-                  <div class="track-hint">Bright point</div>
-                </div>
+              <div class="track-card" style="padding:5px 7px;border-radius:4px;background:#1e1e1e;border:1px solid #333;display:flex;align-items:center;gap:6px;cursor:pointer">
+                <span class="track-icon" style="font-size:.9rem">✦</span>
+                <div><div class="track-name" style="font-size:11px;font-weight:600;color:#bbb">Any</div><div class="track-hint" style="font-size:10px;color:#555">Bright point</div></div>
               </div>
             </label>
           </div>
         </div>
-
-        <!-- ── Card 3: Drawing settings + Gestures ── -->
-        <div class="ctrl-card">
-          <div class="ctrl-section">
-            <div class="ctrl-row">
-              <div class="ctrl-label">Brush size</div>
-              <div class="ctrl-val" id="brushVal">8px</div>
-            </div>
-            <input type="range" id="brushSlider" min="2" max="40" value="8" class="range-input">
-          </div>
-          <div class="ctrl-section">
-            <div class="ctrl-row">
-              <div class="ctrl-label">Smoothing</div>
-              <div class="ctrl-val" id="smoothVal">6</div>
-            </div>
-            <input type="range" id="smoothSlider" min="1" max="20" value="6" class="range-input">
-          </div>
-          <div class="gesture-hints" id="gestureHints">
-            <div class="gesture-hints-title">Gesture controls</div>
-            <div class="gesture-list" id="gestureList">
-              <!-- filled by JS -->
-            </div>
+        <div class="dt-preset-scroll">
+          <div class="dt-section-head">Gesture Controls</div>
+          <div class="gesture-hints" id="gestureHints" style="padding:0 8px">
+            <div class="gesture-list" id="gestureList"></div>
           </div>
         </div>
+      </div>
 
-        <!-- ── Card 4: Manual Move ── -->
-        <div class="ctrl-card">
-          <div class="ctrl-label">Manual Move</div>
-          <div class="pp-row pp-scale-row">
-            <label class="pp-label">Step</label>
-            <input type="number" id="jogStep" class="pp-num" value="5" min="0.1" max="50" step="0.1">
-            <span class="pp-unit">mm</span>
-          </div>
-          <div class="manual-grid">
-            <button class="man-btn" id="jogLeft">◀ X−</button>
-            <button class="man-btn" id="jogRight">X+ ▶</button>
-            <button class="man-btn man-btn-y" id="jogUp">Y− ▲</button>
-            <button class="man-btn man-btn-y" id="jogDown">▼ Y+</button>
-            <button class="man-btn man-btn-pen" id="liftBtn">↑ Pen Up</button>
-            <button class="man-btn man-btn-pen" id="dropBtn">↓ Pen Down</button>
-          </div>
-          <div class="pp-hint">Connect plotter to enable. Arrow keys also work.</div>
-        </div>
-
-        <!-- ── PRINTER PANEL — spans all 4 columns, shown when connected ── -->
-        <!-- CSS grid set to 3 cols via override below -->
-        <div id="printerPanel" class="printer-panel" style="display:none;grid-template-columns:repeat(3,1fr)">
-
-          <!-- Col 1: Pen Heights + Bounds -->
-          <div class="pp-section">
-            <div class="pp-title">Pen Heights
-              <span class="pp-live" id="liveZLabel">Live Z —</span>
+      <!-- Center: canvas -->
+      <div class="draw-canvas-wrap">
+        <div class="canvas-area" style="position:relative;flex:1;background:#111">
+          <canvas id="drawCanvas" width="800" height="480" style="display:block;width:100%;height:100%"></canvas>
+          <canvas id="overlayCanvas" width="800" height="480" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none"></canvas>
+          <div class="pip" id="pip">
+            <div class="pip-top">
+              <span class="pip-indicator" id="pipIndicator"><span class="pip-dot-inner"></span> LIVE</span>
+              <span class="pip-label" id="pipLabel">nose</span>
             </div>
-            <div class="z-slider-wrap">
-              <button class="pp-btn pp-btn-sm z-step-btn" id="zStepUp" title="+0.5mm">+</button>
+            <div class="pip-body">
+              <video id="video" autoplay playsinline muted></video>
+              <div class="pip-off" id="pipOff">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="2" y1="2" x2="22" y2="22"/><path d="M10.66 6H14a2 2 0 012 2v2.34"/><path d="M6.07 6.07A1.96 1.96 0 006 8v8a2 2 0 002 2h8"/><path d="M10.73 15.27A2 2 0 0012 16a2 2 0 002-2"/></svg>
+                Off
+              </div>
+            </div>
+          </div>
+          <div class="mouse-info" id="mouseInfo">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="7" y="2" width="10" height="16" rx="5"/><line x1="12" y1="8" x2="12" y2="12"/></svg>
+            Mouse mode — body movement steers cursor (Pointer Lock)
+          </div>
+          <div class="toolbar" id="toolbar">
+            <div class="colors">
+              <button class="color-btn active" data-color="#2d7ae0" style="background:#2d7ae0"></button>
+              <button class="color-btn" data-color="#0ea5c8" style="background:#0ea5c8"></button>
+              <button class="color-btn" data-color="#a855f7" style="background:#a855f7"></button>
+              <button class="color-btn" data-color="#f43f5e" style="background:#f43f5e"></button>
+              <button class="color-btn" data-color="#f97316" style="background:#f97316"></button>
+              <button class="color-btn" data-color="#22c55e" style="background:#22c55e"></button>
+              <button class="color-btn" data-color="#facc15" style="background:#facc15"></button>
+              <button class="color-btn" data-color="#ffffff" style="background:#ffffff"></button>
+            </div>
+            <div class="toolbar-right"></div>
+          </div>
+        </div>
+        <div class="dt-statusbar"><span id="drawStatus">Camera off</span><span></span></div>
+      </div>
+
+      <!-- Right: manual move -->
+      <div class="dt-props">
+        <div class="dt-props-title">Manual Move</div>
+        <div class="dt-props-scroll">
+          <div class="dt-section">
+            <div class="dt-prop-row">
+              <span class="dt-prop-label">Step size</span>
+              <input type="number" class="dt-prop-val" id="jogStep" value="5" min="0.1" max="50" step="0.1" style="width:60px">
+              <span class="dt-unit">mm</span>
+            </div>
+            <div class="manual-grid" style="margin:4px 10px">
+              <button class="man-btn" id="jogLeft">◀ X−</button>
+              <button class="man-btn" id="jogRight">X+ ▶</button>
+              <button class="man-btn man-btn-y" id="jogUp">Y− ▲</button>
+              <button class="man-btn man-btn-y" id="jogDown">▼ Y+</button>
+              <button class="man-btn man-btn-pen" id="liftBtn">↑ Pen Up</button>
+              <button class="man-btn man-btn-pen" id="dropBtn">↓ Pen Down</button>
+            </div>
+          </div>
+          <div class="dt-section" id="printerPanel" style="display:none">
+            <div class="dt-section-head">Pen Heights <span class="dt-prop-val-ro" id="liveZLabel" style="font-family:monospace;float:right"></span></div>
+            <div class="z-slider-wrap" style="margin:4px 10px">
+              <button class="pp-btn pp-btn-sm z-step-btn" id="zStepUp">+</button>
               <div class="z-slider-inner">
                 <span class="z-tick z-tick-top">50</span>
                 <input type="range" id="zLiveSlider" class="z-slider" min="-50" max="50" step="0.5" value="8">
                 <span class="z-tick z-tick-bot">-50</span>
               </div>
-              <button class="pp-btn pp-btn-sm z-step-btn" id="zStepDown" title="-0.5mm">−</button>
+              <button class="pp-btn pp-btn-sm z-step-btn" id="zStepDown">−</button>
             </div>
-            <div class="pp-row pp-scale-row">
-              <label class="pp-label">Pen Up Z</label>
-              <input type="number" id="penUpZ" class="pp-num" value="8" min="-50" max="50" step="0.5">
-            </div>
-            <div class="pp-row pp-scale-row">
-              <label class="pp-label">Pen Down Z</label>
-              <input type="number" id="penDownZ" class="pp-num" value="2" min="-50" max="50" step="0.5">
-            </div>
-            <div class="pp-title" style="margin-top:.5rem">Bounds &amp; Center</div>
-            <div class="bound-grid">
-              <button class="pp-btn pp-btn-sm" id="setBL">Set BL</button>
-              <button class="pp-btn pp-btn-sm" id="setBR">Set BR</button>
-              <button class="pp-btn pp-btn-sm" id="setTL">Set TL</button>
-              <button class="pp-btn pp-btn-sm" id="setTR">Set TR</button>
-            </div>
-            <div class="pp-row" style="margin-top:.3rem">
-              <button class="pp-btn pp-btn-accent" id="jogCenter">⊕ Go to Center</button>
-            </div>
-            <div class="pp-hint" id="boundsHint">X 0–220 · Y 0–220</div>
-          </div>
-
-          <!-- Col 2: SVG Import -->
-          <div class="pp-section">
-            <div class="pp-title">SVG Import</div>
-            <label class="pp-file-label">
+            <div class="dt-prop-row"><span class="dt-prop-label">Pen Up Z</span><input type="number" class="dt-prop-val" id="penUpZ" value="8" style="width:60px"></div>
+            <div class="dt-prop-row"><span class="dt-prop-label">Pen Down Z</span><input type="number" class="dt-prop-val" id="penDownZ" value="2" style="width:60px"></div>
+            <div class="dt-section-head" style="margin-top:8px">Bounds</div>
+            <div class="bound-grid" style="margin:4px 10px"><button class="pp-btn pp-btn-sm" id="setBL">BL</button><button class="pp-btn pp-btn-sm" id="setBR">BR</button><button class="pp-btn pp-btn-sm" id="setTL">TL</button><button class="pp-btn pp-btn-sm" id="setTR">TR</button></div>
+            <div class="dt-prop-row" style="margin-top:4px"><button class="pp-btn pp-btn-accent" style="width:100%;margin:0 10px" id="jogCenter">⊕ Center</button></div>
+            <div class="pp-hint" id="boundsHint" style="padding:4px 10px">X 0–220 · Y 0–220</div>
+            <div class="dt-section-head" style="margin-top:8px">SVG Import</div>
+            <label class="pp-file-label" style="margin:4px 10px">
               <input type="file" id="svgFile" accept=".svg" style="display:none">
-              <span class="pp-file-btn">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                SVG File
-              </span>
-              <span class="pp-file-name" id="svgFileName">No file chosen</span>
+              <span class="pp-file-btn"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> SVG</span>
+              <span class="pp-file-name" id="svgFileName" style="font-size:10px;color:#555;overflow:hidden;text-overflow:ellipsis;max-width:80px">No file</span>
             </label>
-            <div class="pp-row pp-scale-row">
-              <label class="pp-label">Scale</label>
-              <input type="number" id="svgScale" class="pp-num" value="100" min="1" max="500" step="1">
-              <span class="pp-unit">%</span>
-            </div>
-            <div class="pp-row">
-              <button class="pp-btn pp-btn-accent" id="plotSvgBtn" disabled>Plot SVG</button>
-              <button class="pp-btn" id="clearSvgBtn">Clear</button>
-            </div>
-            <div class="pp-hint" id="svgHint">SVGs auto-fit to the active boundary box.</div>
+            <div class="dt-prop-row"><span class="dt-prop-label">Scale</span><input type="number" class="dt-prop-val" id="svgScale" value="100" style="width:60px"><span class="dt-unit">%</span></div>
+            <div class="dt-prop-row"><button class="pp-btn pp-btn-accent" id="plotSvgBtn" disabled style="flex:1">Plot SVG</button><button class="pp-btn" id="clearSvgBtn">Clear</button></div>
+            <div class="pp-hint" id="svgHint" style="padding:4px 10px">No SVG loaded.</div>
+            <div class="dt-section-head" style="margin-top:8px">Text to Plot <button class="pp-btn pp-btn-sm" id="dictateBtn" style="margin-left:auto;float:right">🎤</button></div>
+            <textarea id="plotText" class="pp-textarea" placeholder="Type text…" rows="2" style="margin:4px 10px;width:calc(100% - 20px)"></textarea>
+            <div class="dt-prop-row"><span class="dt-prop-label">Size</span><input type="number" class="dt-prop-val" id="textSize" value="15" style="width:55px"><span class="dt-unit">mm</span></div>
+            <div class="dt-prop-row" style="gap:3px"><button class="pp-btn" id="textAlignLeft">⬛◻◻</button><button class="pp-btn pp-btn-accent" id="textAlignCenter">◻⬛◻</button><button class="pp-btn" id="textAlignRight">◻◻⬛</button></div>
+            <div class="dt-prop-row"><button class="pp-btn" id="previewTextBtn">Preview</button><button class="pp-btn pp-btn-accent" id="plotTextBtn" disabled>Plot</button><button class="pp-btn" id="clearTextBtn">Clear</button></div>
+            <div class="pp-hint" id="textHint" style="padding:4px 10px">Connect plotter.</div>
+            <div class="dt-section-head" style="margin-top:8px">Motion</div>
+            <div class="dt-prop-row"><span class="dt-prop-label">XY Speed</span><input type="number" class="dt-prop-val" id="xySpeed" value="12000" style="width:65px"><span class="dt-unit">mm/m</span></div>
+            <div class="dt-prop-row"><span class="dt-prop-label">Line passes</span><input type="number" class="dt-prop-val" id="linePasses" value="2" style="width:55px"></div>
+            <div class="dt-prop-row"><button class="pp-btn pp-btn-turbo" id="turboBtn">Turbo</button><button class="pp-btn pp-btn-accent" id="applyMotionBtn">Apply</button></div>
+            <div class="dt-prop-row"><span class="dt-prop-label">Max speed</span><input type="number" class="dt-prop-val" id="maxSpeed" value="220" style="width:55px"><span class="dt-unit">mm/s</span></div>
+            <div class="dt-prop-row"><span class="dt-prop-label">Accel</span><input type="number" class="dt-prop-val" id="accelVal" value="6000" style="width:65px"></div>
+            <div class="dt-prop-row"><span class="dt-prop-label">Travel accel</span><input type="number" class="dt-prop-val" id="travelAccel" value="8000" style="width:65px"></div>
           </div>
-
-          <!-- Col 4: Text to Plot + Motion -->
-          <div class="pp-section">
-            <div class="pp-title">Text to Plot
-              <button class="pp-btn pp-btn-sm" id="dictateBtn" title="Dictate — say 'print' to plot">🎤</button>
-            </div>
-            <textarea id="plotText" class="pp-textarea" placeholder="Type text here…" rows="2"></textarea>
-            <div class="pp-row pp-scale-row">
-              <label class="pp-label">Size</label>
-              <input type="number" id="textSize" class="pp-num" value="15" min="3" max="80" step="1">
-              <span class="pp-unit">mm</span>
-            </div>
-            <div class="pp-row">
-              <button class="pp-btn" id="textAlignLeft" title="Left align">⬛◻◻</button>
-              <button class="pp-btn pp-btn-accent" id="textAlignCenter" title="Center">◻⬛◻</button>
-              <button class="pp-btn" id="textAlignRight" title="Right align">◻◻⬛</button>
-            </div>
-            <div class="pp-row">
-              <button class="pp-btn" id="previewTextBtn">Preview</button>
-              <button class="pp-btn pp-btn-accent" id="plotTextBtn" disabled>Plot Text</button>
-              <button class="pp-btn" id="clearTextBtn">Clear</button>
-            </div>
-            <div class="pp-hint" id="textHint">Connect plotter to plot text.</div>
-
-            <div class="pp-title" style="margin-top:.5rem">Motion</div>
-            <div class="pp-row pp-scale-row">
-              <label class="pp-label">XY Speed</label>
-              <input type="number" id="xySpeed" class="pp-num" value="12000" min="100" max="20000" step="100">
-              <span class="pp-unit">mm/min</span>
-            </div>
-            <div class="pp-row pp-scale-row">
-              <label class="pp-label">Line Passes</label>
-              <input type="number" id="linePasses" class="pp-num" value="2" min="1" max="8" step="1">
-              <span class="pp-unit">× thick</span>
-            </div>
-            <div class="pp-row">
-              <button class="pp-btn pp-btn-turbo" id="turboBtn">Turbo</button>
-              <button class="pp-btn pp-btn-accent" id="applyMotionBtn">Apply</button>
-            </div>
-            <div class="pp-row pp-scale-row">
-              <label class="pp-label">Max Speed</label>
-              <input type="number" id="maxSpeed" class="pp-num" value="220" min="10" max="500" step="10">
-              <span class="pp-unit">mm/s</span>
-            </div>
-            <div class="pp-row pp-scale-row">
-              <label class="pp-label">Accel</label>
-              <input type="number" id="accelVal" class="pp-num" value="6000" min="100" max="20000" step="100">
-              <span class="pp-unit">mm/s²</span>
-            </div>
-            <div class="pp-row pp-scale-row">
-              <label class="pp-label">Travel Accel</label>
-              <input type="number" id="travelAccel" class="pp-num" value="8000" min="100" max="20000" step="100">
-              <span class="pp-unit">mm/s²</span>
-            </div>
-          </div>
-
         </div>
-
       </div>
     </div>
-  </div><!-- end panelDraw -->
+  </div>
+
+  <!-- ── Plot panel ── -->
+  <div id="panelPlot" class="panel" style="display:none">
+    <div class="dt-toolbar">
+      <div class="dt-group">
+        <span class="dt-label" id="plotDesignName" style="color:#ccc;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">No design loaded</span>
+      </div>
+      <div class="dt-sep"></div>
+      <div class="dt-group">
+        <button class="plot-play-btn go" id="plotStartBtn" disabled>▶ Start</button>
+        <button class="plot-play-btn" id="plotPauseBtn" disabled style="display:none">⏸ Pause</button>
+        <button class="plot-play-btn stop" id="plotStopBtn" disabled style="display:none">⏹ Stop</button>
+      </div>
+      <div class="dt-sep"></div>
+      <div class="dt-group" style="gap:8px;flex:1;max-width:300px">
+        <div class="plot-tbar-progress"><div class="plot-tbar-fill" id="plotTbarFill" style="width:0%"></div></div>
+        <span class="dt-zoom-label" id="plotTbarPct">—</span>
+      </div>
+      <div style="flex:1"></div>
+      <div class="dt-group">
+        <span style="font-size:11px;font-family:monospace;color:#555" id="plotPosLabel">X — · Y —</span>
+      </div>
+    </div>
+
+    <div class="plot-body">
+      <!-- Left: settings -->
+      <div class="plot-controls">
+        <div class="dt-props-title">Settings</div>
+        <div class="plot-scroll">
+          <div class="dt-section">
+            <div class="dt-section-head">Speed</div>
+            <div class="dt-prop-row"><span class="dt-prop-label">XY Feed</span><input type="number" class="dt-prop-val" id="xySpeed2" value="12000" style="width:65px"><span class="dt-unit">mm/m</span></div>
+            <input type="range" class="dt-prop-slider" id="xySpeedSlider" min="1000" max="20000" step="500" value="12000">
+            <div class="dt-prop-row"><span class="dt-prop-label">Max speed</span><input type="number" class="dt-prop-val" id="maxSpeed2" value="220" style="width:65px"><span class="dt-unit">mm/s</span></div>
+            <div class="dt-prop-row"><span class="dt-prop-label">Acceleration</span><input type="number" class="dt-prop-val" id="accelVal2" value="6000" style="width:65px"></div>
+          </div>
+          <div class="dt-section">
+            <div class="dt-section-head">Pen Height</div>
+            <div class="dt-prop-row"><span class="dt-prop-label">Up Z</span><input type="number" class="dt-prop-val" id="penUpZ2" value="8" style="width:60px"></div>
+            <div class="dt-prop-row"><span class="dt-prop-label">Down Z</span><input type="number" class="dt-prop-val" id="penDownZ2" value="2" style="width:60px"></div>
+            <div class="dt-prop-row"><span class="dt-prop-label">Passes</span><input type="number" class="dt-prop-val" id="linePasses2" value="1" min="1" max="8" style="width:55px"></div>
+          </div>
+          <div class="dt-section">
+            <div class="dt-section-head">Auto Bed Leveling</div>
+            <div class="dt-prop-row" style="flex-wrap:wrap;gap:4px">
+              <button class="plot-play-btn" id="ablProbeBtn" style="flex:1;font-size:11px" title="Probe Z at current position (G30)">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                Probe Here
+              </button>
+              <button class="plot-play-btn" id="ablMeshBtn" style="flex:1;font-size:11px" title="Full mesh bed level (G29)">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h18v18H3z"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg>
+                Run G29
+              </button>
+            </div>
+            <div class="dt-prop-row"><span class="dt-prop-label">Probe Z</span><span class="dt-prop-val-ro" id="ablProbeZ">—</span></div>
+            <div class="dt-prop-row"><span class="dt-prop-label">Probe speed</span><input type="number" class="dt-prop-val" id="ablProbeSpeed" value="300" style="width:60px"><span class="dt-unit">mm/m</span></div>
+            <div class="dt-prop-row">
+              <label style="display:flex;align-items:center;gap:5px;font-size:11px;color:#777;cursor:pointer">
+                <input type="checkbox" id="ablEnabled" style="accent-color:#4a9eff"> Use ABL offset
+              </label>
+            </div>
+            <div class="dt-prop-row"><span class="dt-prop-label">Z offset</span><input type="number" class="dt-prop-val" id="ablZOffset" value="0" step="0.01" style="width:60px"><span class="dt-unit">mm</span></div>
+            <div class="dt-prop-row"><button class="plot-play-btn" id="ablSetOffsetBtn" style="width:100%;font-size:11px">Set Z Offset from Probe</button></div>
+            <div class="pp-hint" id="ablHint" style="padding:4px 10px">Probe paper surface then set offset.</div>
+          </div>
+          <div class="dt-section">
+            <div class="dt-section-head">Manual Jog</div>
+            <div class="dt-prop-row"><span class="dt-prop-label">Step</span><input type="number" class="dt-prop-val" id="jogStep2" value="5" style="width:60px"><span class="dt-unit">mm</span></div>
+            <div class="manual-grid" style="margin:4px 10px">
+              <button class="man-btn" id="jogLeft2">◀ X−</button>
+              <button class="man-btn" id="jogRight2">X+ ▶</button>
+              <button class="man-btn man-btn-y" id="jogUp2">Y− ▲</button>
+              <button class="man-btn man-btn-y" id="jogDown2">▼ Y+</button>
+              <button class="man-btn man-btn-pen" id="liftBtn2">↑ Up</button>
+              <button class="man-btn man-btn-pen" id="dropBtn2">↓ Down</button>
+            </div>
+            <div style="display:flex;gap:3px;padding:0 10px;margin-top:4px">
+              <button class="pp-btn pp-btn-sm" id="setBL2">BL</button><button class="pp-btn pp-btn-sm" id="setBR2">BR</button>
+              <button class="pp-btn pp-btn-sm" id="setTL2">TL</button><button class="pp-btn pp-btn-sm" id="setTR2">TR</button>
+              <button class="pp-btn pp-btn-accent pp-btn-sm" id="jogCenter2">⊕</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Center: bed visualization -->
+      <div class="plot-bed-wrap" id="plotBedWrap">
+        <canvas id="plotBedCanvas"></canvas>
+        <div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);font-size:10px;color:#444;font-family:monospace;white-space:nowrap" id="plotBedInfo">—</div>
+      </div>
+
+      <!-- Right: status -->
+      <div class="plot-status">
+        <div class="dt-props-title">Live Status</div>
+        <div class="plot-scroll">
+          <div class="dt-section">
+            <div class="dt-section-head">Position</div>
+            <div class="plot-coords">
+              <div class="plot-coord"><div class="plot-coord-axis">X</div><div class="plot-coord-val" id="plotXVal">—</div></div>
+              <div class="plot-coord"><div class="plot-coord-axis">Y</div><div class="plot-coord-val" id="plotYVal">—</div></div>
+            </div>
+            <div class="dt-prop-row" style="margin-top:4px"><span class="dt-prop-label">Pen</span><span class="dt-prop-val-ro" id="plotPenState">—</span></div>
+          </div>
+          <div class="dt-section">
+            <div class="dt-section-head">Progress</div>
+            <div class="plot-stat-big" id="plotPctBig">—</div>
+            <div class="plot-stat-label">complete</div>
+            <div class="plot-progress-bar"><div class="plot-progress-fill" id="plotProgFill" style="width:0%"></div></div>
+            <div class="dt-prop-row"><span class="dt-prop-label">Stroke</span><span class="dt-prop-val-ro" id="plotStrokeInfo">— / —</span></div>
+            <div class="dt-prop-row"><span class="dt-prop-label">Distance</span><span class="dt-prop-val-ro" id="plotDistInfo">—</span></div>
+            <div class="dt-prop-row"><span class="dt-prop-label">Remaining</span><span class="dt-prop-val-ro" id="plotDistLeft">—</span></div>
+          </div>
+          <div class="dt-section">
+            <div class="dt-section-head">Connection</div>
+            <div class="dt-prop-row"><span class="dt-prop-label">Status</span><span class="dt-prop-val-ro" id="plotConnStatus">Disconnected</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- ── Designs panel ── -->
-  <div id="panelDesigns" style="display:none; flex-direction:column; height:calc(100vh - 48px); background:#1a1a1a;">
+  <div id="panelDesigns" style="display:none; flex-direction:column; height:100vh; background:#1a1a1a; flex:1; min-width:0;">
 
     <!-- Toolbar -->
     <div class="dt-toolbar">
@@ -1472,6 +1609,7 @@ footer { border-top: 1px solid var(--border); padding: 2.75rem 0 1.25rem; }
             <button class="dt-cat" data-cat="geo">Geo</button>
             <button class="dt-cat" data-cat="math">Math</button>
             <button class="dt-cat" data-cat="gen">Flow</button>
+            <button class="dt-cat" data-cat="pencil">Pencil</button>
           </div>
         </div>
         <div class="dt-preset-scroll" id="presetList"></div>
@@ -3248,18 +3386,30 @@ dictateBtn.addEventListener("click", () => {
 //  DESIGN TOOL
 // ═══════════════════════════════════════════════════════════════════════════
 
-// ── Tab switching ─────────────────────────────────────────────────────────
-document.querySelectorAll(".tab-btn").forEach(btn => {
-  btn.addEventListener("click", () => {
-    document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
-    btn.classList.add("active");
-    const panel = btn.dataset.panel;
-    document.getElementById("panelDraw").style.display    = panel === "draw"    ? "" : "none";
-    const dp = document.getElementById("panelDesigns");
-    dp.style.display = panel === "designs" ? "flex" : "none";
-    if (panel === "designs") { updateCanvasInfo(); dtFitZoom(); renderDesign(); }
+// ── Nav panel switching ────────────────────────────────────────────────────
+const PANELS = {
+  designs: document.getElementById("panelDesigns"),
+  draw:    document.getElementById("panelDraw"),
+  plot:    document.getElementById("panelPlot"),
+};
+
+function showPanel(name) {
+  document.querySelectorAll(".nav-item[data-panel]").forEach(b =>
+    b.classList.toggle("active", b.dataset.panel === name));
+  Object.entries(PANELS).forEach(([k, el]) => {
+    if (!el) return;
+    el.style.display = k === name ? "flex" : "none";
   });
+  if (name === "designs") { updateCanvasInfo(); dtFitZoom(); renderDesign(); }
+  if (name === "plot") { updatePlotBed(); }
+}
+
+document.querySelectorAll(".nav-item[data-panel]").forEach(btn => {
+  btn.addEventListener("click", () => showPanel(btn.dataset.panel));
 });
+
+// Start on designs panel
+showPanel("designs");
 
 // ── Canvas dimensions (mm) ────────────────────────────────────────────────
 let PW = 228.6, PH = 279.4;   // default 9×11
@@ -3838,6 +3988,7 @@ dtDesignSelect.addEventListener("change", e => {
 
 function buildPresetList(filter="", cat="all") {
   const list = document.getElementById("presetList");
+  if (!list) return;
   list.innerHTML = "";
   PRESETS.forEach((preset, idx) => {
     if (cat !== "all" && preset.cat !== cat) return;
@@ -3851,13 +4002,14 @@ function buildPresetList(filter="", cat="all") {
       </div>`;
     card.addEventListener("click", () => selectPreset(idx));
     list.appendChild(card);
-    // async thumbnail render
+    // Render thumbnail — wrapped in try so one bad gen doesn't break the list
     requestAnimationFrame(() => {
-      const thumb = card.querySelector(".dt-thumb");
-      if (thumb) {
+      try {
+        const thumb = card.querySelector(".dt-thumb");
+        if (!thumb) return;
         const defs = {}; preset.params.forEach(p => defs[p.k] = p.def);
         drawToCanvas(thumb, preset.gen(defs), 40, 50, true);
-      }
+      } catch(e) { /* leave blank thumbnail */ }
     });
   });
 }
@@ -3887,7 +4039,7 @@ function selectPreset(idx) {
 }
 
 function buildParamControls() {
-  const el = document.getElementById("designParams"); el.innerHTML = "";
+  const el = document.getElementById("designParams"); if (!el) return; el.innerHTML = "";
   const sec = document.getElementById("dtParamSection");
   const title = document.getElementById("dtParamTitle");
   if (!activePreset || !activePreset.params.length) { sec.style.display = "none"; return; }
@@ -4049,9 +4201,621 @@ document.getElementById("plotDesignBtn").addEventListener("click", async () => {
   } finally { btn.disabled=false; btn.textContent="▶ Plot"; }
 });
 
+// ══════════════════════════════════════════════════════════════════════════
+//  PENCIL ART DESIGNS  (hatching-based photo-realistic presets)
+// ══════════════════════════════════════════════════════════════════════════
+
+function pencilEye(detail) {
+  const lines = [], cx = PW/2, cy = PH/2 + 5;
+  const s = Math.min(PW, PH) / 220;
+  const EW = 92*s, PA = 0.68;
+
+  const ul = xn => -30*s * Math.pow(Math.max(0,1-xn*xn), 0.55) * (1+0.22*Math.sin(Math.PI*(xn+1)/2));
+  const ll = xn =>  20*s * Math.pow(Math.max(0,1-xn*xn), 0.65);
+  const inEye = (x,y) => { const xn=(x-cx)/EW; if(Math.abs(xn)>=1)return false; const d=y-cy; return d>ul(xn)&&d<ll(xn); };
+
+  // Almond outline (double stroke for weight)
+  for (let pass=0; pass<2; pass++) {
+    const pts=[];
+    for (let xn=-1;xn<=1;xn+=0.008) pts.push({x:cx+xn*EW, y:cy+ul(xn)+pass*0.4});
+    lines.push(pts);
+  }
+  { const pts=[]; for(let xn=-1;xn<=1;xn+=0.008) pts.push({x:cx+xn*EW,y:cy+ll(xn)}); lines.push(pts); }
+
+  // Eyelid crease
+  { const pts=[]; for(let xn=-0.88;xn<=0.88;xn+=0.01) pts.push({x:cx+xn*EW,y:cy+ul(xn)-9*s-5*s*Math.pow(Math.sin(Math.PI*(xn+1)/2),2)}); lines.push(pts); }
+
+  // Pupil — dense concentric ellipses
+  const PR=13*s;
+  for(let r=0.6;r<=PR;r+=0.7) {
+    const pts=[]; for(let a=0;a<=Math.PI*2+0.01;a+=0.07) pts.push({x:cx+r*Math.cos(a),y:cy+r*PA*Math.sin(a)});
+    lines.push(pts);
+  }
+
+  // Iris ring + radial lines
+  const IR=26*s;
+  for(const r of [IR-1.5*s, IR]) { const pts=[]; for(let a=0;a<=Math.PI*2;a+=0.055){const x=cx+r*Math.cos(a),y=cy+r*PA*Math.sin(a);if(inEye(x,y)){pts.push({x,y});}else if(pts.length>1){lines.push([...pts]);pts.length=0;}else pts.length=0;} if(pts.length>1)lines.push(pts); }
+  const NR=Math.round(56*detail);
+  for(let i=0;i<NR;i++){const a=2*Math.PI*i/NR,r1=PR+0.8,r2=IR-1.2;const x1=cx+r1*Math.cos(a),y1=cy+r1*PA*Math.sin(a);const x2=cx+r2*Math.cos(a),y2=cy+r2*PA*Math.sin(a);if(inEye(x1,y1)&&inEye(x2,y2))lines.push([{x:x1,y:y1},{x:x2,y:y2}]);}
+
+  // Upper shadow hatching — following lid contour, denser near lid
+  const layers=Math.round(22*detail);
+  for(let i=0;i<layers;i++){
+    const off=(i+0.5)*1.6, dens=Math.exp(-i*0.13)*detail;
+    if(dens<0.08)break;
+    const pts=[];
+    for(let xn=-0.96;xn<=0.96;xn+=0.025){const x=cx+xn*EW;const y=cy+ul(xn)-off;if(y>10)pts.push({x,y});}
+    if(pts.length>2)lines.push(pts);
+  }
+  // Cross-hatch shadow (diagonal strokes)
+  for(let i=0;i<Math.round(12*detail);i++){
+    const off=i*2.8+3*s;
+    for(let xn=-0.9;xn<=0.9;xn+=0.12){
+      const x=cx+xn*EW, y=cy+ul(xn)-off;
+      if(y>10) lines.push([{x,y},{x:x+5*s,y:y-3*s}]);
+    }
+  }
+
+  // Eyelashes (upper)
+  const NL=Math.round(32*detail);
+  for(let i=0;i<NL;i++){
+    const xn=-0.85+i/NL*1.7, x=cx+xn*EW, baseY=cy+ul(xn);
+    const len=(5+4*Math.sin(Math.PI*(xn+1)/2))*s;
+    const ang=-Math.PI/2-xn*0.35;
+    lines.push([{x,y:baseY},{x:x+len*Math.cos(ang),y:baseY+len*Math.sin(ang)}]);
+    if(i%3===0) lines.push([{x:x+0.5*s,y:baseY},{x:x+0.5*s+(len*0.7)*Math.cos(ang-0.15),y:baseY+(len*0.7)*Math.sin(ang-0.15)}]);
+  }
+
+  // Lower lid lashes
+  for(let i=0;i<8;i++){const xn=0.2+i/7*0.65,x=cx+xn*EW,by=cy+ll(xn);lines.push([{x,y:by},{x:x+1.5*s,y:by+3*s}]);}
+
+  // Lower lid shadow (subtle)
+  for(let i=0;i<5;i++){const pts=[];for(let xn=-0.6;xn<=0.8;xn+=0.04){const x=cx+xn*EW,y=cy+ll(xn)+i*1.4;if(y<cy+EW*0.4)pts.push({x,y});}if(pts.length>2)lines.push(pts);}
+
+  return lines;
+}
+
+function pencilSphere(rings, detail) {
+  const cx=PW/2, cy=PH/2;
+  const R=Math.min(PW,PH)*0.38;
+  const lines=[];
+
+  // Outline
+  {const pts=[];for(let a=0;a<=Math.PI*2;a+=0.04)pts.push({x:cx+R*Math.cos(a),y:cy+R*Math.sin(a)});lines.push(pts);}
+
+  // Contour shading — horizontal ellipses, denser on shadow side
+  const LIGHT_ANG = Math.PI*0.3; // light from upper-left
+  const lx=Math.cos(LIGHT_ANG), ly=Math.sin(LIGHT_ANG);
+  for(let yi=-R+1;yi<R;yi+=R/Math.max(1,rings)) {
+    const hw=Math.sqrt(Math.max(0,R*R-yi*yi));
+    if(hw<1)continue;
+    // clip horizontal line to sphere
+    for(let pass=0;pass<detail*2;pass++){
+      const yOff=yi+pass*(1.2/Math.max(1,detail*2));
+      const hw2=Math.sqrt(Math.max(0,R*R-yOff*yOff));
+      if(hw2<1)continue;
+      const pts=[];
+      for(let xi=-hw2;xi<=hw2;xi+=1.5){
+        // surface normal at this point
+        const nx=xi/R, ny=yOff/R, nz=Math.sqrt(Math.max(0,1-nx*nx-ny*ny));
+        const diffuse=Math.max(0, -nx*lx + -ny*ly + nz*0.3);
+        const shadow=1-diffuse;
+        if(shadow>0.18&&Math.random()<shadow*detail) pts.push({x:cx+xi,y:cy+yOff});
+        else if(pts.length>1){lines.push([...pts]);pts.length=0;}
+        else pts.length=0;
+      }
+      if(pts.length>1)lines.push(pts);
+    }
+  }
+
+  // Cast shadow (ellipse on ground)
+  const sx=cx+R*0.3, sy=cy+R*1.05;
+  for(let r=5;r<R*0.9;r+=4){
+    const dens=1-r/(R*0.9);
+    if(dens<0.1)break;
+    const pts=[];
+    for(let a=0;a<=Math.PI*2;a+=0.05){
+      const x=sx+r*1.3*Math.cos(a), y=sy+r*0.35*Math.sin(a);
+      if(Math.random()<dens*detail) pts.push({x,y});
+      else if(pts.length>1){lines.push([...pts]);pts.length=0;}
+      else pts.length=0;
+    }
+    if(pts.length>1)lines.push(pts);
+  }
+
+  return lines;
+}
+
+function pencilRose(petals, detail) {
+  const cx=PW/2, cy=PH/2+10;
+  const s=Math.min(PW,PH)/220;
+  const lines=[];
+
+  // Helper: draw a petal
+  function petal(angle, r, arcW) {
+    const ca=Math.cos(angle), sa=Math.sin(angle);
+    // Petal outline
+    for(let side=-1;side<=1;side+=2){
+      const pts=[];
+      for(let t=0;t<=1;t+=0.015){
+        const pr=r*t*(1-t*0.3)*4;
+        const pa=angle+side*arcW*Math.sin(Math.PI*t)*0.5;
+        pts.push({x:cx+pr*Math.cos(pa),y:cy+pr*Math.sin(pa)});
+      }
+      lines.push(pts);
+    }
+    // Contour hatching inside petal
+    const HLINES=Math.round(8*detail);
+    for(let h=0;h<HLINES;h++){
+      const t0=h/HLINES, t1=(h+0.8)/HLINES;
+      const pts=[];
+      for(let t=t0;t<=t1;t+=0.02){
+        const pr=r*t*(1-t*0.3)*4+h*0.3*s;
+        const pa=angle;
+        pts.push({x:cx+pr*Math.cos(pa),y:cy+pr*Math.sin(pa)});
+      }
+      lines.push(pts);
+    }
+  }
+
+  for(let p=0;p<petals;p++){
+    const ang=2*Math.PI*p/petals;
+    const r=35*s*(0.8+0.4*Math.sin(p*1.3));
+    petal(ang, r, 0.45+0.1*(p%3));
+  }
+
+  // Center spiral
+  for(let r=1;r<12*s;r+=1.5){const pts=[];for(let a=0;a<=Math.PI*2;a+=0.08)pts.push({x:cx+r*Math.cos(a),y:cy+r*Math.sin(a)*0.85});lines.push(pts);}
+
+  // Stem
+  lines.push([{x:cx,y:cy+12*s},{x:cx-4*s,y:cy+60*s}]);
+  lines.push([{x:cx+1*s,y:cy+12*s},{x:cx-3*s,y:cy+60*s}]);
+  // Leaf
+  {const pts=[];for(let t=0;t<=1;t+=0.04){const r=20*s*Math.sin(Math.PI*t);pts.push({x:cx-4*s+t*15*s+r*0.4,y:cy+35*s+t*5*s-r});}lines.push(pts);}
+
+  return lines;
+}
+
+function pencilHand(detail) {
+  const lines=[], cx=PW/2, cy=PH/2;
+  const s=Math.min(PW,PH)/220;
+
+  // Finger helper: draw finger as two curved outlines + cross-hatch knuckles
+  function finger(bx,by,dx,dy,len,w,knuckles){
+    const nx=-dy, ny=dx; // normal
+    const L=Math.sqrt(dx*dx+dy*dy);
+    const udx=dx/L, udy=dy/L, unx=nx/L, uny=ny/L;
+    // Two sides
+    for(let side=-1;side<=1;side+=2){
+      const pts=[];
+      for(let t=0;t<=len;t+=1.5){
+        const taper=1-(t/len)*0.35;
+        pts.push({x:bx+udx*t+side*unx*w*taper*s,y:by+udy*t+side*uny*w*taper*s});
+      }
+      lines.push(pts);
+    }
+    // Fingertip arc
+    {const tx=bx+udx*len, ty=by+udy*len, tw=w*0.65*s;
+     const pts=[];for(let a=-Math.PI/2;a<=Math.PI/2;a+=0.12)pts.push({x:tx+unx*tw*Math.cos(a)+udx*tw*Math.sin(a),y:ty+uny*tw*Math.cos(a)+udy*tw*Math.sin(a)});lines.push(pts);}
+    // Knuckle lines
+    knuckles.forEach(kt=>{
+      for(let k=-1;k<=1;k+=0.5){
+        const kx=bx+udx*kt*len+k*unx*s;
+        const ky=by+udy*kt*len+k*uny*s;
+        lines.push([{x:kx-unx*w*0.7*s,y:ky-uny*w*0.7*s},{x:kx+unx*w*0.7*s,y:ky+uny*w*0.7*s}]);
+      }
+    });
+    // Hatching on shadow side of finger
+    for(let h=0;h<Math.round(5*detail);h++){
+      const pts=[];
+      for(let t=5;t<len-5;t+=3){
+        const taper=1-(t/len)*0.35;
+        pts.push({x:bx+udx*t+unx*(w*taper*s-h*1.5*s),y:by+udy*t+uny*(w*taper*s-h*1.5*s)});
+      }
+      if(pts.length>2)lines.push(pts);
+    }
+  }
+
+  // Palm outline (rough)
+  {const pts=[];const palmPts=[[-25*s,30*s],[-30*s,-5*s],[-20*s,-25*s],[0,-30*s],[20*s,-25*s],[28*s,0],[25*s,28*s],[0,35*s]];
+  palmPts.forEach(([dx,dy])=>pts.push({x:cx+dx,y:cy+dy}));pts.push(pts[0]);lines.push(pts);}
+
+  // Fingers
+  finger(cx-22*s,cy-25*s, -8*s,-1, 50, 6, [0.3,0.6]);  // pinky (slightly rotated)
+  finger(cx-10*s,cy-29*s, -3*s,-1, 62, 7, [0.3,0.6]);  // ring
+  finger(cx+4*s, cy-30*s,  1*s,-1, 68, 8, [0.3,0.6]);  // middle
+  finger(cx+18*s,cy-27*s,  7*s,-1, 60, 7, [0.3,0.6]);  // index
+  // Thumb
+  finger(cx-26*s,cy+5*s,  -1,-0.6, 38, 8, [0.4]);
+
+  // Palm hatching (shadow areas)
+  for(let h=0;h<Math.round(8*detail);h++){
+    const pts=[];
+    for(let x=cx-24*s;x<cx+22*s;x+=2){
+      const y=cy+(h-4)*3*s+Math.sin(x*0.04)*3*s;
+      if(y>cy-22*s&&y<cy+30*s)pts.push({x,y});
+    }
+    if(pts.length>3)lines.push(pts);
+  }
+
+  return lines;
+}
+
+function pencilPortrait(detail) {
+  const lines=[], cx=PW/2, cy=PH/2-10;
+  const s=Math.min(PW,PH)/200;
+
+  // Head oval
+  {const pts=[];for(let a=0;a<=Math.PI*2;a+=0.04)pts.push({x:cx+55*s*Math.cos(a),y:cy+72*s*Math.sin(a)});lines.push(pts);}
+
+  // Neck
+  lines.push([{x:cx-14*s,y:cy+70*s},{x:cx-14*s,y:cy+110*s}]);
+  lines.push([{x:cx+14*s,y:cy+70*s},{x:cx+14*s,y:cy+110*s}]);
+
+  // Shadow hatching (right side of face)
+  for(let h=0;h<Math.round(15*detail);h++){
+    const pts=[];
+    for(let yi=-65*s;yi<65*s;yi+=2){
+      const xMax=55*s*Math.sqrt(Math.max(0,1-(yi/(72*s))**2));
+      const x=cx+xMax-(h*3*s);
+      if(x>cx+5*s&&x<cx+xMax) pts.push({x,y:cy+yi});
+    }
+    if(pts.length>2)lines.push(pts);
+  }
+
+  // Eye sockets (dark areas)
+  for(const [ex,ey] of [[cx-22*s,cy-15*s],[cx+22*s,cy-15*s]]){
+    for(let r=2;r<14*s;r+=1.8){
+      const pts=[];
+      for(let a=0;a<Math.PI*2;a+=0.1){
+        const xp=ex+r*Math.cos(a)*1.5, yp=ey+r*Math.sin(a)*0.7;
+        if(a>Math.PI*0.15&&a<Math.PI*0.85)continue; // leave bottom open (pupil)
+        pts.push({x:xp,y:yp});
+      }
+      if(pts.length>2)lines.push(pts);
+    }
+  }
+
+  // Eyebrows
+  for(const [ex,side] of [[cx-22*s,-1],[cx+22*s,1]]){
+    for(let bw=0;bw<3;bw++){
+      const pts=[];
+      for(let t=-1;t<=1;t+=0.04){
+        pts.push({x:ex+t*18*s*side,y:cy-28*s-bw*0.9*s+Math.abs(t)*3*s});
+      }
+      lines.push(pts);
+    }
+  }
+
+  // Nose bridge + tip
+  lines.push([{x:cx,y:cy-18*s},{x:cx-4*s,y:cy+8*s},{x:cx-8*s,y:cy+12*s}]);
+  lines.push([{x:cx,y:cy-18*s},{x:cx+4*s,y:cy+8*s},{x:cx+8*s,y:cy+12*s}]);
+  {const pts=[];for(let a=Math.PI;a<=Math.PI*2;a+=0.08)pts.push({x:cx+9*s*Math.cos(a),y:cy+12*s+4*s*Math.sin(a)});lines.push(pts);}
+
+  // Lips
+  {const pts=[];for(let t=-1;t<=1;t+=0.04)pts.push({x:cx+t*18*s,y:cy+32*s+Math.sin(Math.PI*(t+1)/2)*4*s-Math.abs(t)*2*s});lines.push(pts);}
+  {const pts=[];for(let t=-1;t<=1;t+=0.04)pts.push({x:cx+t*18*s,y:cy+38*s+Math.sin(Math.PI*(t+1)/2)*8*s});lines.push(pts);}
+
+  // Hair hatching (top)
+  for(let h=0;h<Math.round(20*detail);h++){
+    const pts=[];
+    for(let yi=-75*s;yi<-50*s;yi+=1.5){
+      const xMax=55*s*Math.sqrt(Math.max(0,1-(yi/(72*s))**2));
+      const x=cx-xMax+h*(xMax*2/(20*detail));
+      pts.push({x,y:cy+yi});
+    }
+    if(pts.length>2)lines.push(pts);
+  }
+
+  // Chin shadow
+  for(let h=0;h<6;h++){
+    const pts=[];
+    for(let t=-0.8;t<=0.8;t+=0.06){
+      const x=cx+t*45*s,y=cy+68*s+h*1.5*s;
+      const inside=Math.abs(x-cx)<55*s*Math.sqrt(Math.max(0,1-((y-cy)/(72*s))**2));
+      if(inside)pts.push({x,y});
+    }
+    if(pts.length>2)lines.push(pts);
+  }
+
+  return lines;
+}
+
+// Add pencil art presets (insert into the PRESETS array is done at end of module)
+PRESETS.push(
+  { id:"pencilEye", name:"Pencil Eye", cat:"pencil", tag:"Hyper-realistic eye study",
+    params:[{k:"detail",label:"Detail",min:.3,max:1.5,step:.1,def:1}],
+    gen: p => pencilEye(p.detail) },
+
+  { id:"pencilSphere", name:"Pencil Sphere", cat:"pencil", tag:"Classical shaded sphere",
+    params:[{k:"rings",  label:"Rings",  min:20,max:80,step:2,def:40},
+            {k:"detail", label:"Detail", min:.3,max:1.5,step:.1,def:1}],
+    gen: p => pencilSphere(p.rings, p.detail) },
+
+  { id:"pencilRose", name:"Pencil Rose", cat:"pencil", tag:"Botanical rose study",
+    params:[{k:"petals",label:"Petals",min:5,max:12,step:1,def:8},
+            {k:"detail",label:"Detail",min:.3,max:1.5,step:.1,def:1}],
+    gen: p => pencilRose(p.petals, p.detail) },
+
+  { id:"pencilHand", name:"Pencil Hand", cat:"pencil", tag:"Anatomical hand study",
+    params:[{k:"detail",label:"Detail",min:.3,max:1.5,step:.1,def:1}],
+    gen: p => pencilHand(p.detail) },
+
+  { id:"pencilPortrait", name:"Portrait Sketch", cat:"pencil", tag:"Front-view portrait with shading",
+    params:[{k:"detail",label:"Detail",min:.3,max:1.5,step:.1,def:1}],
+    gen: p => pencilPortrait(p.detail) }
+);
+
+
+// ══════════════════════════════════════════════════════════════════════════
+//  PLOT PANEL
+// ══════════════════════════════════════════════════════════════════════════
+
+let plotRunning=false, plotPaused=false, plotCancelFlag=false;
+let plotCurrentX=0, plotCurrentY=0, plotPenDown=false;
+let plotStrokeDone=0, plotStrokeTotal=0, plotDistDone=0, plotDistTotal=0;
+
+// Wire jog buttons in plot panel (duplicate IDs get -2 suffix)
+["Left","Right","Up","Down"].forEach(dir => {
+  const btn = document.getElementById("jog"+dir+"2");
+  if (btn) btn.addEventListener("click", () => {
+    const step = parseFloat(document.getElementById("jogStep2")?.value||"5");
+    const moves = {Left:[-step,0],Right:[step,0],Up:[0,-step],Down:[0,step]};
+    const [dx,dy]=moves[dir];
+    jogPos.x+=dx; jogPos.y+=dy;
+    sendGcode(`G1 X${jogPos.x.toFixed(2)} Y${jogPos.y.toFixed(2)} F${parseFloat(document.getElementById("xySpeed")?.value||12000)}\n`);
+  });
+});
+document.getElementById("liftBtn2")?.addEventListener("click",()=>sendGcode(`G1 Z${parseFloat(document.getElementById("penUpZ")?.value||8).toFixed(2)} F3000\n`));
+document.getElementById("dropBtn2")?.addEventListener("click",()=>sendGcode(`G1 Z${parseFloat(document.getElementById("penDownZ")?.value||2).toFixed(2)} F3000\n`));
+document.getElementById("jogCenter2")?.addEventListener("click",()=>{jogPos.x=(bedX0+bedX1)/2;jogPos.y=(bedY0+bedY1)/2;sendGcode(`G1 X${jogPos.x.toFixed(2)} Y${jogPos.y.toFixed(2)} F${parseFloat(document.getElementById("xySpeed")?.value||12000)}\n`);});
+
+// Sync xySpeed2 with main xySpeed
+document.getElementById("xySpeedSlider")?.addEventListener("input",e=>{if(document.getElementById("xySpeed2"))document.getElementById("xySpeed2").value=e.target.value;});
+document.getElementById("xySpeed2")?.addEventListener("input",e=>{if(document.getElementById("xySpeedSlider"))document.getElementById("xySpeedSlider").value=e.target.value;});
+
+function updatePlotCoords(x, y, penIsDown) {
+  plotCurrentX=x; plotCurrentY=y; plotPenDown=penIsDown;
+  const xEl=document.getElementById("plotXVal"), yEl=document.getElementById("plotYVal");
+  const lbl=document.getElementById("plotPosLabel"), pen=document.getElementById("plotPenState");
+  if(xEl) xEl.textContent=x.toFixed(1)+" mm";
+  if(yEl) yEl.textContent=y.toFixed(1)+" mm";
+  if(lbl) lbl.textContent=`X ${x.toFixed(1)} · Y ${y.toFixed(1)}`;
+  if(pen) pen.textContent=penIsDown?"Down (drawing)":"Up (travel)";
+  renderPlotBed();
+}
+
+function updatePlotProgress(done, total, distDone, distTotal) {
+  plotStrokeDone=done; plotStrokeTotal=total;
+  plotDistDone=distDone; plotDistTotal=distTotal;
+  const pct=total>0?Math.round(done/total*100):0;
+  ["plotTbarFill","plotProgFill"].forEach(id=>{const el=document.getElementById(id);if(el)el.style.width=pct+"%";});
+  ["plotTbarPct"].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=pct+"%";});
+  const big=document.getElementById("plotPctBig");if(big)big.textContent=pct+"%";
+  const si=document.getElementById("plotStrokeInfo");if(si)si.textContent=`${done} / ${total}`;
+  const di=document.getElementById("plotDistInfo");if(di)di.textContent=`${distDone.toFixed(1)} m`;
+  const dl=document.getElementById("plotDistLeft");if(dl)dl.textContent=`${(distTotal-distDone).toFixed(1)} m`;
+}
+
+function updatePlotBed() {
+  const canvas=document.getElementById("plotBedCanvas");
+  const wrap=document.getElementById("plotBedWrap");
+  if(!canvas||!wrap) return;
+  const W=wrap.clientWidth||500, H=wrap.clientHeight||400;
+  canvas.width=W; canvas.height=H;
+  renderPlotBed();
+  document.getElementById("plotBedInfo").textContent=`${PW.toFixed(0)} × ${PH.toFixed(0)} mm paper`;
+}
+
+function renderPlotBed() {
+  const canvas=document.getElementById("plotBedCanvas");
+  if(!canvas||!activePolylines) return;
+  const W=canvas.width||500, H=canvas.height||400;
+  const ctx=canvas.getContext("2d");
+  ctx.fillStyle="#1c1c1c"; ctx.fillRect(0,0,W,H);
+
+  // Paper
+  const sc=Math.min((W-40)/PW,(H-40)/PH);
+  const ox=(W-PW*sc)/2, oy=(H-PH*sc)/2;
+  ctx.fillStyle="#fff"; ctx.fillRect(ox,oy,PW*sc,PH*sc);
+  ctx.strokeStyle="#333"; ctx.lineWidth=1; ctx.strokeRect(ox,oy,PW*sc,PH*sc);
+
+  const toX=mm=>ox+mm*sc, toY=mm=>oy+mm*sc;
+
+  // Completed strokes (light gray)
+  ctx.strokeStyle="#aaa"; ctx.lineWidth=0.6; ctx.lineCap="round";
+  for(let i=0;i<plotStrokeDone&&i<activePolylines.length;i++){
+    const pl=activePolylines[i];
+    if(pl.length<2)continue;
+    ctx.beginPath(); ctx.moveTo(toX(pl[0].x),toY(pl[0].y));
+    for(let j=1;j<pl.length;j++)ctx.lineTo(toX(pl[j].x),toY(pl[j].y));
+    ctx.stroke();
+  }
+
+  // Current stroke (blue)
+  if(plotStrokeDone<activePolylines.length){
+    const pl=activePolylines[plotStrokeDone];
+    if(pl&&pl.length>=2){
+      ctx.strokeStyle="#4a9eff"; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(toX(pl[0].x),toY(pl[0].y));
+      for(let j=1;j<pl.length;j++)ctx.lineTo(toX(pl[j].x),toY(pl[j].y));
+      ctx.stroke();
+    }
+  }
+
+  // Remaining strokes (very faint)
+  ctx.strokeStyle="rgba(74,158,255,.12)"; ctx.lineWidth=0.4;
+  for(let i=plotStrokeDone+1;i<activePolylines.length;i++){
+    const pl=activePolylines[i];
+    if(pl.length<2)continue;
+    ctx.beginPath(); ctx.moveTo(toX(pl[0].x),toY(pl[0].y));
+    for(let j=1;j<pl.length;j++)ctx.lineTo(toX(pl[j].x),toY(pl[j].y));
+    ctx.stroke();
+  }
+
+  // Print head crosshair
+  if(plotCurrentX||plotCurrentY){
+    const hx=toX(plotCurrentX), hy=toY(plotCurrentY);
+    const col=plotPenDown?"#ef4444":"#22c55e";
+    ctx.strokeStyle=col; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(hx-8,hy); ctx.lineTo(hx+8,hy); ctx.moveTo(hx,hy-8); ctx.lineTo(hx,hy+8); ctx.stroke();
+    ctx.fillStyle=col+"66"; ctx.beginPath(); ctx.arc(hx,hy,4,0,Math.PI*2); ctx.fill();
+  }
+}
+
+// Plot start button (in plot panel toolbar)
+document.getElementById("plotStartBtn")?.addEventListener("click", async () => {
+  if(!serialWriter||!activePolylines.length) return;
+  showPanel("plot");
+  document.getElementById("plotDesignName").textContent = activePreset?.name || "Design";
+  const startBtn=document.getElementById("plotStartBtn");
+  const stopBtn=document.getElementById("plotStopBtn");
+  const pauseBtn=document.getElementById("plotPauseBtn");
+  if(startBtn){startBtn.style.display="none";}
+  if(stopBtn){stopBtn.style.display=""; stopBtn.disabled=false;}
+  if(pauseBtn){pauseBtn.style.display=""; pauseBtn.disabled=false;}
+
+  plotCancelFlag=false; plotRunning=true; plotPaused=false;
+
+  // Calc total distance
+  plotDistTotal=0;
+  activePolylines.forEach(pl=>{for(let i=1;i<pl.length;i++){const dx=pl[i].x-pl[i-1].x,dy=pl[i].y-pl[i-1].y;plotDistTotal+=Math.sqrt(dx*dx+dy*dy)/1000;}});
+  plotDistDone=0;
+
+  const pUp=parseFloat(document.getElementById("penUpZ2")?.value||document.getElementById("penUpZ")?.value||8);
+  const pDn=parseFloat(document.getElementById("penDownZ2")?.value||document.getElementById("penDownZ")?.value||2);
+  const feed=parseFloat(document.getElementById("xySpeed2")?.value||document.getElementById("xySpeed")?.value||12000);
+  const scX=(bedX1-bedX0)/PW, scY=(bedY1-bedY0)/PH, sc=Math.min(scX,scY);
+  const oX=bedX0+((bedX1-bedX0)-PW*sc)/2, oY=bedY0+((bedY1-bedY0)-PH*sc)/2;
+  const toGX=mm=>oX+mm*sc, toGY=mm=>oY+mm*sc;
+
+  try {
+    await sendGcode(`G1 Z${pUp.toFixed(2)} F3000\n`);
+    updatePlotCoords(0,0,false);
+    for(let si=0;si<activePolylines.length;si++){
+      if(plotCancelFlag) break;
+      while(plotPaused&&!plotCancelFlag) await new Promise(r=>setTimeout(r,200));
+      if(plotCancelFlag) break;
+      const pl=activePolylines[si];
+      await sendGcode(`G1 X${toGX(pl[0].x).toFixed(2)} Y${toGY(pl[0].y).toFixed(2)} F${feed}\n`);
+      updatePlotCoords(pl[0].x,pl[0].y,false);
+      await sendGcode(`G1 Z${pDn.toFixed(2)} F3000\n`);
+      updatePlotCoords(pl[0].x,pl[0].y,true);
+      for(let pi=1;pi<pl.length;pi++){
+        if(plotCancelFlag) break;
+        await sendGcode(`G1 X${toGX(pl[pi].x).toFixed(2)} Y${toGY(pl[pi].y).toFixed(2)} F${feed}\n`);
+        const dx=pl[pi].x-pl[pi-1].x,dy=pl[pi].y-pl[pi-1].y;
+        plotDistDone+=Math.sqrt(dx*dx+dy*dy)/1000;
+        updatePlotCoords(pl[pi].x,pl[pi].y,true);
+      }
+      await sendGcode(`G1 Z${pUp.toFixed(2)} F3000\n`);
+      updatePlotCoords(activePolylines[si][activePolylines[si].length-1].x,activePolylines[si][activePolylines[si].length-1].y,false);
+      updatePlotProgress(si+1,activePolylines.length,plotDistDone,plotDistTotal);
+    }
+  } finally {
+    plotRunning=false;
+    if(startBtn){startBtn.style.display=""; startBtn.disabled=false;}
+    if(stopBtn) stopBtn.style.display="none";
+    if(pauseBtn)pauseBtn.style.display="none";
+  }
+});
+
+document.getElementById("plotPauseBtn")?.addEventListener("click",()=>{
+  plotPaused=!plotPaused;
+  const btn=document.getElementById("plotPauseBtn");
+  if(btn)btn.textContent=plotPaused?"▶ Resume":"⏸ Pause";
+});
+document.getElementById("plotStopBtn")?.addEventListener("click",()=>{
+  plotCancelFlag=true; plotPaused=false;
+});
+
+// "Plot This" button in designs panel goes to plot panel
+document.getElementById("plotDesignBtn")?.addEventListener("click",()=>{
+  if(!serialWriter||!activePolylines.length)return;
+  showPanel("plot");
+  document.getElementById("plotDesignName").textContent=activePreset?.name||"Design";
+  const startBtn=document.getElementById("plotStartBtn");
+  if(startBtn){startBtn.disabled=false;}
+  updatePlotBed();
+});
+
+// Keep plot connection status updated
+setInterval(()=>{
+  const cs=document.getElementById("plotConnStatus");
+  if(cs)cs.textContent=serialWriter?(plotRunning?"Printing…":"Connected — idle"):"Disconnected";
+  const dot=document.getElementById("connDot");
+  if(dot){dot.className="nav-dot"+(serialWriter?(plotRunning?" plotting":" ok"):"");}
+  const b=document.getElementById("plotDesignBtn");if(b&&!b.textContent.includes("Plotting"))b.disabled=!serialWriter||!activePolylines.length;
+  const sb=document.getElementById("plotStartBtn");if(sb&&!plotRunning)sb.disabled=!serialWriter||!activePolylines.length;
+},800);
+
+window.addEventListener("resize",()=>{
+  if(document.getElementById("panelPlot")?.style.display!=="none") updatePlotBed();
+  if(document.getElementById("panelDesigns")?.style.display!=="none"){dtFitZoom();renderDesign();}
+});
+
+// ══════════════════════════════════════════════════════════════════════════
+//  AUTO BED LEVELING  (BLTouch / probe)
+// ══════════════════════════════════════════════════════════════════════════
+
+let ablLastProbeZ = null;
+
+document.getElementById("ablProbeBtn")?.addEventListener("click", async () => {
+  if (!serialWriter) { alert("Connect plotter first."); return; }
+  const btn = document.getElementById("ablProbeBtn");
+  btn.disabled = true; btn.textContent = "Probing…";
+  const speed = parseFloat(document.getElementById("ablProbeSpeed")?.value || "300");
+  // G30 single-point probe; result comes back in serial but we also read M114
+  await sendGcode(`G30 F${speed}\n`);           // probe current XY position
+  await sendGcode(`G4 P500\n`);                 // wait 500ms
+  await sendGcode(`M114\n`);                    // request position (Z will reflect probe offset)
+  document.getElementById("ablHint").textContent = "G30 sent — check serial for Z result, then set offset.";
+  btn.disabled = false; btn.textContent = "Probe Here";
+});
+
+document.getElementById("ablMeshBtn")?.addEventListener("click", async () => {
+  if (!serialWriter) { alert("Connect plotter first."); return; }
+  const btn = document.getElementById("ablMeshBtn");
+  btn.disabled = true; btn.textContent = "Leveling…";
+  document.getElementById("ablHint").textContent = "Running G29 mesh level — do not interrupt.";
+  await sendGcode(`G29\n`);                     // full mesh bed level
+  await sendGcode(`M500\n`);                    // save to EEPROM
+  document.getElementById("ablHint").textContent = "G29 complete. Mesh saved to EEPROM.";
+  btn.disabled = false; btn.textContent = "Run G29";
+});
+
+document.getElementById("ablSetOffsetBtn")?.addEventListener("click", () => {
+  const offset = parseFloat(document.getElementById("ablZOffset")?.value || "0");
+  if (!serialWriter) { alert("Connect plotter first."); return; }
+  sendGcode(`M851 Z${offset.toFixed(3)}\n`);   // set Z probe offset
+  sendGcode(`M500\n`);                          // save to EEPROM
+  document.getElementById("ablHint").textContent = `Z offset set to ${offset.toFixed(3)} mm and saved.`;
+});
+
+document.getElementById("ablEnabled")?.addEventListener("change", e => {
+  // Toggle ABL compensation
+  sendGcode(e.target.checked ? "M420 S1\n" : "M420 S0\n");
+  document.getElementById("ablHint").textContent = e.target.checked
+    ? "ABL compensation ON — mesh correction active during print."
+    : "ABL compensation OFF.";
+});
+
 // ── Init ──────────────────────────────────────────────────────────────────
-updateCanvasInfo();
-buildPresetList();
+// Run after current call stack clears so DOM is fully laid out
+requestAnimationFrame(() => {
+  updateCanvasInfo();
+  dtFitZoom();
+  // Add pencil presets to the dropdown (they were pushed after initial populate)
+  PRESETS.slice(22).forEach((p, i) => {
+    const o = document.createElement("option");
+    o.value = 22 + i; o.textContent = p.name;
+    dtDesignSelect?.appendChild(o);
+  });
+  buildPresetList();
+  // Auto-select eye preset
+  const eyeIdx = PRESETS.findIndex(p => p.id === "pencilEye");
+  if (eyeIdx >= 0) selectPreset(eyeIdx);
+});
 
 // Keep Plot button state synced with serial connection
 setInterval(() => {
