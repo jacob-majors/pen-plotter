@@ -1,5 +1,10 @@
 {
   "version": 2,
+  "framework": null,
+  "outputDirectory": ".",
+  "buildCommand": null,
+  "installCommand": null,
+  "devCommand": null,
   "routes": [
     { "src": "/sources", "dest": "/sources.html" },
     { "handle": "filesystem" },
