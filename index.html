@@ -294,30 +294,43 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 #panelDraw .draw-body {
   display: grid;
   grid-template-columns: 180px 1fr 200px;
+  grid-template-rows: 1fr;    /* row fills panel height */
   flex: 1; min-height: 0;
 }
 
-/* reuse dt-* classes for draw panel left/right panels */
+/* All grid cells fill their row height */
+#panelDraw .draw-body > * { min-height: 0; min-width: 0; overflow: hidden; }
+
 #panelDraw .dt-presets { border-right: 1px solid #2e2e2e; }
 #panelDraw .dt-props   { border-left:  1px solid #2e2e2e; }
 
+/* Canvas column: flex column so canvas fills above toolbar */
 .draw-canvas-wrap {
   display: flex; flex-direction: column;
-  background: #242424; position: relative; overflow: hidden;
+  background: #111; min-height: 0; overflow: hidden;
 }
-.draw-canvas-inner {
-  flex: 1; position: relative; overflow: hidden;
-  display: flex; align-items: center; justify-content: center;
-  background: #1e1e1e;
+
+/* Canvas region: the drawing area (no toolbar) */
+.canvas-area {
+  position: relative;
+  border-radius: 10px; overflow: hidden;
+  border: 1px solid var(--border);
+  background: #0b0e1a;
+  box-shadow: 0 8px 32px rgba(0,0,0,.5);
 }
-/* Keep existing canvas styles working inside new layout */
 #panelDraw .canvas-area {
+  flex: 1; min-height: 0;
   border-radius: 0; border: none; box-shadow: none;
-  position: relative; width: 100%; height: 100%;
+  background: transparent; overflow: hidden; position: relative;
 }
-#panelDraw .canvas-area canvas#drawCanvas {
-  width: 100%; height: 100%; display: block;
+
+/* Both canvases fill the canvas-area absolutely */
+#panelDraw #drawCanvas, #panelDraw #overlayCanvas {
+  position: absolute; top: 0; left: 0;
+  width: 100% !important; height: 100% !important;
+  display: block;
 }
+#panelDraw #overlayCanvas { pointer-events: none; }
 
 .draw-section-head {
   padding: 6px 10px 3px;
@@ -360,8 +373,10 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 #panelPlot .plot-body {
   display: grid;
   grid-template-columns: 220px 1fr 200px;
+  grid-template-rows: 1fr;
   flex: 1; min-height: 0;
 }
+#panelPlot .plot-body > * { min-height: 0; min-width: 0; overflow: hidden; }
 .plot-bed-wrap {
   background: #202020; display: flex; align-items: center; justify-content: center;
   overflow: hidden; position: relative;
@@ -503,7 +518,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 /* PIP camera */
 .pip {
   position: absolute;
-  bottom: 68px; right: 10px;
+  bottom: 10px; right: 10px;
   width: 190px; border-radius: 10px; overflow: hidden;
   border: 1px solid rgba(255,255,255,.12);
   background: #080b16;
@@ -1023,8 +1038,10 @@ footer { border-top: 1px solid var(--border); padding: 2.75rem 0 1.25rem; }
 .dt-body {
   display: grid;
   grid-template-columns: 176px 1fr 210px;
+  grid-template-rows: 1fr;
   flex: 1; min-height: 0;
 }
+.dt-body > * { min-height: 0; min-width: 0; }
 
 /* left: preset panel */
 .dt-presets {
@@ -1261,8 +1278,8 @@ footer { border-top: 1px solid var(--border); padding: 2.75rem 0 1.25rem; }
       </div>
       <div style="flex:1"></div>
       <div class="dt-group">
-        <button id="clearBtn" class="dt-btn">Clear</button>
-        <button id="saveBtn" class="dt-btn">Save PNG</button>
+        <button class="dt-btn" onclick="document.getElementById('clearBtn')?.click()">Clear</button>
+        <button class="dt-btn" onclick="document.getElementById('saveBtn')?.click()">Save PNG</button>
         <button id="startBtn" class="dt-btn dt-btn-primary">
           <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
           <span id="startLabel">Start Camera</span>
@@ -1308,11 +1325,12 @@ footer { border-top: 1px solid var(--border); padding: 2.75rem 0 1.25rem; }
         </div>
       </div>
 
-      <!-- Center: canvas -->
+      <!-- Center: canvas column -->
       <div class="draw-canvas-wrap">
-        <div class="canvas-area" style="position:relative;flex:1;background:#111">
-          <canvas id="drawCanvas" width="800" height="480" style="display:block;width:100%;height:100%"></canvas>
-          <canvas id="overlayCanvas" width="800" height="480" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none"></canvas>
+        <!-- Drawing canvas fills all space above the toolbar -->
+        <div class="canvas-area" id="canvasArea">
+          <canvas id="drawCanvas" width="800" height="480"></canvas>
+          <canvas id="overlayCanvas" width="800" height="480"></canvas>
           <div class="pip" id="pip">
             <div class="pip-top">
               <span class="pip-indicator" id="pipIndicator"><span class="pip-dot-inner"></span> LIVE</span>
@@ -1326,25 +1344,34 @@ footer { border-top: 1px solid var(--border); padding: 2.75rem 0 1.25rem; }
               </div>
             </div>
           </div>
-          <div class="mouse-info" id="mouseInfo">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="7" y="2" width="10" height="16" rx="5"/><line x1="12" y1="8" x2="12" y2="12"/></svg>
-            Mouse mode — body movement steers cursor (Pointer Lock)
+        </div>
+        <!-- Mouse mode strip sits between canvas and toolbar -->
+        <div class="mouse-info" id="mouseInfo">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="7" y="2" width="10" height="16" rx="5"/><line x1="12" y1="8" x2="12" y2="12"/></svg>
+          Mouse mode active — body movement controls cursor
+        </div>
+        <!-- Color/tool toolbar anchored to bottom -->
+        <div class="toolbar" id="toolbar">
+          <div class="colors">
+            <button class="color-btn active" data-color="#2d7ae0" style="background:#2d7ae0"></button>
+            <button class="color-btn" data-color="#0ea5c8" style="background:#0ea5c8"></button>
+            <button class="color-btn" data-color="#a855f7" style="background:#a855f7"></button>
+            <button class="color-btn" data-color="#f43f5e" style="background:#f43f5e"></button>
+            <button class="color-btn" data-color="#f97316" style="background:#f97316"></button>
+            <button class="color-btn" data-color="#22c55e" style="background:#22c55e"></button>
+            <button class="color-btn" data-color="#facc15" style="background:#facc15"></button>
+            <button class="color-btn" data-color="#ffffff" style="background:#ffffff"></button>
           </div>
-          <div class="toolbar" id="toolbar">
-            <div class="colors">
-              <button class="color-btn active" data-color="#2d7ae0" style="background:#2d7ae0"></button>
-              <button class="color-btn" data-color="#0ea5c8" style="background:#0ea5c8"></button>
-              <button class="color-btn" data-color="#a855f7" style="background:#a855f7"></button>
-              <button class="color-btn" data-color="#f43f5e" style="background:#f43f5e"></button>
-              <button class="color-btn" data-color="#f97316" style="background:#f97316"></button>
-              <button class="color-btn" data-color="#22c55e" style="background:#22c55e"></button>
-              <button class="color-btn" data-color="#facc15" style="background:#facc15"></button>
-              <button class="color-btn" data-color="#ffffff" style="background:#ffffff"></button>
-            </div>
-            <div class="toolbar-right"></div>
+          <div class="toolbar-right">
+            <button id="clearBtn" class="tool-btn">Clear</button>
+            <button id="saveBtn"  class="tool-btn">Save PNG</button>
           </div>
         </div>
-        <div class="dt-statusbar"><span id="drawStatus">Camera off</span><span></span></div>
+        <!-- Status bar -->
+        <div class="dt-statusbar" style="background:#1a1a1a;border-top:1px solid #2a2a2a">
+          <span id="drawStatus">Camera off — press Start Camera</span><span></span>
+        </div>
+      </div>
       </div>
 
       <!-- Right: manual move -->
