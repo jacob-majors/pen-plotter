@@ -2959,9 +2959,9 @@ printerBtn.addEventListener("click", async () => {
     await sendGcode(`G1 X${BED_MIN_MM} Y${BED_MIN_MM} F${TRAVEL_FEED}\n`); // move to start corner
 
     printerBtn.classList.add("connected");
-    printerLabel.textContent = "Disconnect Printer";
+    printerLabel.textContent = "Disconnect";
     setStatus("Printer connected", "on");
-    printerPanel.style.display = "grid";
+    printerPanel.style.display = "block";
     jogPos = { x: BED_MIN_MM, y: BED_MIN_MM };
     await movePenZ(penUpZ);
     updateBoundsHint();
@@ -2983,7 +2983,7 @@ async function disconnectPrinter() {
   currentZ = null;
   liveZLabel.textContent = "Live Z —";
   printerBtn.classList.remove("connected");
-  printerLabel.textContent = "Connect 3D Printer";
+  printerLabel.textContent = "Connect Plotter";
   printerPanel.style.display = "none";
 }
 
@@ -3400,8 +3400,8 @@ function showPanel(name) {
     if (!el) return;
     el.style.display = k === name ? "flex" : "none";
   });
-  if (name === "designs") { updateCanvasInfo(); dtFitZoom(); renderDesign(); }
-  if (name === "plot") { updatePlotBed(); }
+  if (name === "designs") { updateCanvasInfo(); requestAnimationFrame(() => { dtFitZoom(); renderDesign(); }); }
+  if (name === "plot") { requestAnimationFrame(() => updatePlotBed()); }
 }
 
 document.querySelectorAll(".nav-item[data-panel]").forEach(btn => {
@@ -3467,13 +3467,15 @@ function updateCanvasInfo() {
 let dtZoom = 1;
 function dtFitZoom() {
   const vp = document.getElementById("dtViewport");
-  if (!vp) return;
+  if (!vp || vp.clientWidth < 10) return; // panel not rendered yet
   const vw = vp.clientWidth  - 40;
   const vh = vp.clientHeight - 40;
-  const scale = 3.7795; // mm → px at 96dpi
+  if (vw <= 0 || vh <= 0) return;
+  const scale = 3.7795;
   dtZoom = Math.min(vw / (PW * scale), vh / (PH * scale), 1);
-  dtZoom = Math.max(dtZoom, 0.1);
-  document.getElementById("dtZoomLabel").textContent = Math.round(dtZoom * 100) + "%";
+  dtZoom = Math.max(dtZoom, 0.05);
+  const lbl = document.getElementById("dtZoomLabel");
+  if (lbl) lbl.textContent = Math.round(dtZoom * 100) + "%";
 }
 document.getElementById("dtZoomIn" ).addEventListener("click", () => { dtZoom = Math.min(dtZoom * 1.2, 4); document.getElementById("dtZoomLabel").textContent = Math.round(dtZoom*100)+"%"; renderDesign(); });
 document.getElementById("dtZoomOut").addEventListener("click", () => { dtZoom = Math.max(dtZoom / 1.2, .05); document.getElementById("dtZoomLabel").textContent = Math.round(dtZoom*100)+"%"; renderDesign(); });
@@ -4555,24 +4557,34 @@ let plotRunning=false, plotPaused=false, plotCancelFlag=false;
 let plotCurrentX=0, plotCurrentY=0, plotPenDown=false;
 let plotStrokeDone=0, plotStrokeTotal=0, plotDistDone=0, plotDistTotal=0;
 
-// Wire jog buttons in plot panel (duplicate IDs get -2 suffix)
-["Left","Right","Up","Down"].forEach(dir => {
-  const btn = document.getElementById("jog"+dir+"2");
-  if (btn) btn.addEventListener("click", () => {
-    const step = parseFloat(document.getElementById("jogStep2")?.value||"5");
-    const moves = {Left:[-step,0],Right:[step,0],Up:[0,-step],Down:[0,step]};
-    const [dx,dy]=moves[dir];
-    jogPos.x+=dx; jogPos.y+=dy;
-    sendGcode(`G1 X${jogPos.x.toFixed(2)} Y${jogPos.y.toFixed(2)} F${parseFloat(document.getElementById("xySpeed")?.value||12000)}\n`);
-  });
+// Plot panel jog buttons — reuse the same jogBy / jogCenter functions
+function plotJogStep() { return parseFloat(document.getElementById("jogStep2")?.value || "5"); }
+document.getElementById("jogLeft2") ?.addEventListener("click", () => jogBy(-plotJogStep(), 0));
+document.getElementById("jogRight2")?.addEventListener("click", () => jogBy( plotJogStep(), 0));
+document.getElementById("jogUp2")   ?.addEventListener("click", () => jogBy(0, -plotJogStep()));
+document.getElementById("jogDown2") ?.addEventListener("click", () => jogBy(0,  plotJogStep()));
+document.getElementById("jogCenter2")?.addEventListener("click", jogCenter);
+document.getElementById("setBL2")?.addEventListener("click", () => document.getElementById("setBL")?.click());
+document.getElementById("setBR2")?.addEventListener("click", () => document.getElementById("setBR")?.click());
+document.getElementById("setTL2")?.addEventListener("click", () => document.getElementById("setTL")?.click());
+document.getElementById("setTR2")?.addEventListener("click", () => document.getElementById("setTR")?.click());
+document.getElementById("liftBtn2")?.addEventListener("click", () => {
+  const z = parseFloat(document.getElementById("penUpZ2")?.value || document.getElementById("penUpZ")?.value || 8);
+  sendGcode(`G1 Z${z.toFixed(2)} F3000\n`);
 });
-document.getElementById("liftBtn2")?.addEventListener("click",()=>sendGcode(`G1 Z${parseFloat(document.getElementById("penUpZ")?.value||8).toFixed(2)} F3000\n`));
-document.getElementById("dropBtn2")?.addEventListener("click",()=>sendGcode(`G1 Z${parseFloat(document.getElementById("penDownZ")?.value||2).toFixed(2)} F3000\n`));
-document.getElementById("jogCenter2")?.addEventListener("click",()=>{jogPos.x=(bedX0+bedX1)/2;jogPos.y=(bedY0+bedY1)/2;sendGcode(`G1 X${jogPos.x.toFixed(2)} Y${jogPos.y.toFixed(2)} F${parseFloat(document.getElementById("xySpeed")?.value||12000)}\n`);});
+document.getElementById("dropBtn2")?.addEventListener("click", () => {
+  const z = parseFloat(document.getElementById("penDownZ2")?.value || document.getElementById("penDownZ")?.value || 2);
+  sendGcode(`G1 Z${z.toFixed(2)} F3000\n`);
+});
 
-// Sync xySpeed2 with main xySpeed
-document.getElementById("xySpeedSlider")?.addEventListener("input",e=>{if(document.getElementById("xySpeed2"))document.getElementById("xySpeed2").value=e.target.value;});
-document.getElementById("xySpeed2")?.addEventListener("input",e=>{if(document.getElementById("xySpeedSlider"))document.getElementById("xySpeedSlider").value=e.target.value;});
+// Sync plot speed slider ↔ xySpeed2 input
+document.getElementById("xySpeedSlider")?.addEventListener("input", e => {
+  const el = document.getElementById("xySpeed2"); if (el) el.value = e.target.value;
+});
+document.getElementById("xySpeed2")?.addEventListener("input", e => {
+  const sl = document.getElementById("xySpeedSlider"); if (sl) sl.value = e.target.value;
+  const el = document.getElementById("xySpeed"); if (el) el.value = e.target.value;
+});
 
 function updatePlotCoords(x, y, penIsDown) {
   plotCurrentX=x; plotCurrentY=y; plotPenDown=penIsDown;
@@ -4801,21 +4813,23 @@ document.getElementById("ablEnabled")?.addEventListener("change", e => {
 });
 
 // ── Init ──────────────────────────────────────────────────────────────────
-// Run after current call stack clears so DOM is fully laid out
-requestAnimationFrame(() => {
+// Populate the design dropdown with ALL presets (pencil ones added via push after initial forEach)
+PRESETS.slice(dtDesignSelect ? dtDesignSelect.options.length - 1 : 22).forEach((p, i) => {
+  const idx = (dtDesignSelect?.options.length || 1) - 1 + i;
+  const o = document.createElement("option");
+  o.value = idx; o.textContent = p.name;
+  dtDesignSelect?.appendChild(o);
+});
+
+// Two rAF frames: first lets browser paint the panel, second has real dimensions
+requestAnimationFrame(() => requestAnimationFrame(() => {
   updateCanvasInfo();
   dtFitZoom();
-  // Add pencil presets to the dropdown (they were pushed after initial populate)
-  PRESETS.slice(22).forEach((p, i) => {
-    const o = document.createElement("option");
-    o.value = 22 + i; o.textContent = p.name;
-    dtDesignSelect?.appendChild(o);
-  });
   buildPresetList();
-  // Auto-select eye preset
+  // Auto-select eye preset to show something immediately
   const eyeIdx = PRESETS.findIndex(p => p.id === "pencilEye");
   if (eyeIdx >= 0) selectPreset(eyeIdx);
-});
+}));
 
 // Keep Plot button state synced with serial connection
 setInterval(() => {
