@@ -13,3 +13,4 @@ resources/gesture_recognizer.task
 
 # Node
 website/node_modules/
+.vercel

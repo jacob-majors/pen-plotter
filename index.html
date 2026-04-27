@@ -1948,10 +1948,14 @@ const smoothVal    = document.getElementById("smoothVal");
 
 const dctx = drawCanvas.getContext("2d");
 const octx = overlayCanvas.getContext("2d");
+const DRAW_CANVAS_BG = "#ffffff";
 
 // Fill draw canvas
-dctx.fillStyle = "#0b0e1a";
-dctx.fillRect(0, 0, drawCanvas.width, drawCanvas.height);
+function clearDrawCanvas() {
+  dctx.fillStyle = DRAW_CANVAS_BG;
+  dctx.fillRect(0, 0, drawCanvas.width, drawCanvas.height);
+}
+clearDrawCanvas();
 
 const W = drawCanvas.width, H = drawCanvas.height;
 
@@ -2117,8 +2121,7 @@ function processHandGestures(lms) {
     // Peace ✌️ → clear canvas
     if (peace) {
       fireGesture(() => {
-        dctx.fillStyle = "#0b0e1a";
-        dctx.fillRect(0, 0, W, H);
+        clearDrawCanvas();
         prevX = null; prevY = null;
         showToast("✌️ Canvas cleared");
       });
@@ -2315,8 +2318,7 @@ function driveMouseFromTracking(sx, sy) {
 
 // ── Clear / Save ──
 clearBtn.addEventListener("click", () => {
-  dctx.fillStyle = "#0b0e1a";
-  dctx.fillRect(0, 0, W, H);
+  clearDrawCanvas();
   prevX = null; prevY = null;
 });
 saveBtn.addEventListener("click", () => {
@@ -2704,8 +2706,7 @@ clearSvgBtn.addEventListener("click", () => {
   svgFileNameEl.textContent = "No file chosen";
   svgHintEl.textContent = "No SVG loaded. SVGs auto-fit to the active boundary box.";
   plotSvgBtn.disabled = true;
-  dctx.fillStyle = "#0b0e1a";
-  dctx.fillRect(0, 0, W, H);
+  clearDrawCanvas();
   prevX = null; prevY = null;
 });
 
@@ -2811,20 +2812,46 @@ function samplePathD(d) {
   } catch(_) { return []; }
 }
 
+function fitNormalizedPathsToBounds(paths, scale = 1) {
+  if (!paths?.length) return [];
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  paths.forEach(pts => pts.forEach(p => {
+    if (!Number.isFinite(p.x) || !Number.isFinite(p.y)) return;
+    minX = Math.min(minX, p.x);
+    minY = Math.min(minY, p.y);
+    maxX = Math.max(maxX, p.x);
+    maxY = Math.max(maxY, p.y);
+  }));
+  if (!Number.isFinite(minX) || !Number.isFinite(minY)) return [];
+
+  const srcW = Math.max(maxX - minX, 1e-6);
+  const srcH = Math.max(maxY - minY, 1e-6);
+  const boundW = Math.max(boundTR.x - boundBL.x, 1);
+  const boundH = Math.max(boundTR.y - boundBL.y, 1);
+  const fit = Math.min(boundW / srcW, boundH / srcH) * Math.max(scale || 1, 0.01);
+  const drawW = srcW * fit;
+  const drawH = srcH * fit;
+  const offX = boundBL.x + (boundW - drawW) / 2 - minX * fit;
+  const offY = boundBL.y + (boundH - drawH) / 2 - minY * fit;
+
+  return paths.map(pts => pts.map(p => ({
+    x: Math.max(0, Math.min(220, offX + p.x * fit)),
+    y: Math.max(0, Math.min(220, offY + p.y * fit)),
+  })));
+}
+
 // Preview SVG paths on draw canvas
 function previewSVG(paths, scale) {
-  dctx.fillStyle = "#0b0e1a";
-  dctx.fillRect(0, 0, W, H);
-  const bw = boundTR.x - boundBL.x, bh = boundTR.y - boundBL.y;
+  clearDrawCanvas();
+  const fitted = fitNormalizedPathsToBounds(paths, scale);
   dctx.strokeStyle = brushColor; dctx.lineWidth = 1.5;
   dctx.lineCap = "round"; dctx.lineJoin = "round";
-  paths.forEach(pts => {
+  fitted.forEach(pts => {
     if (!pts.length) return;
     dctx.beginPath();
     pts.forEach((p, i) => {
-      // map normalised 0-1 → canvas pixels, applying boundary + scale
-      const cx = ((boundBL.x + p.x * bw * scale) / 220) * W;
-      const cy = ((boundBL.y + p.y * bh * scale) / 220) * H;
+      const cx = (p.x / 220) * W;
+      const cy = (p.y / 220) * H;
       i === 0 ? dctx.moveTo(cx, cy) : dctx.lineTo(cx, cy);
     });
     dctx.stroke();
@@ -2833,15 +2860,15 @@ function previewSVG(paths, scale) {
 
 // Send SVG paths to printer as G-code
 async function plotSVGPaths(paths, scale) {
-  const bw = boundTR.x - boundBL.x, bh = boundTR.y - boundBL.y;
+  const fitted = fitNormalizedPathsToBounds(paths, scale);
   const passes = parseInt(document.getElementById("linePasses")?.value || "1", 10);
   const spd = parseFloat(xySpeedEl.value);
   await movePenZ(penUpZ);
-  for (const pts of paths) {
+  for (const pts of fitted) {
     if (!pts.length) continue;
     const gcPts = pts.map(p => ({
-      gx: (boundBL.x + p.x * bw * scale).toFixed(2),
-      gy: (boundBL.y + p.y * bh * scale).toFixed(2)
+      gx: p.x.toFixed(2),
+      gy: p.y.toFixed(2)
     }));
     // Travel to path start
     await sendGcode(`G1 X${gcPts[0].gx} Y${gcPts[0].gy} F${TRAVEL_FEED}\n`);
@@ -3243,8 +3270,7 @@ function previewTextOnCanvas() {
   const sizePx = (parseFloat(textSizeEl.value) || 15) / 220 * W * 2.2; // mm→canvas px approx
   if (!txt) return;
 
-  dctx.fillStyle = "#0b0e1a";
-  dctx.fillRect(0, 0, W, H);
+  clearDrawCanvas();
 
   const { strokes, totalWidth } = buildTextStrokes(txt, sizePx);
   let originX;
@@ -3367,8 +3393,7 @@ plotTextBtn.addEventListener("click", async () => {
 clearTextBtn.addEventListener("click", () => {
   plotTextEl.value = "";
   plotTextBtn.disabled = true;
-  dctx.fillStyle = "#0b0e1a";
-  dctx.fillRect(0, 0, W, H);
+  clearDrawCanvas();
   textHintEl.textContent = serialWriter ? "Type text and click Plot Text." : "Connect printer to plot text.";
 });
 
@@ -4092,7 +4117,7 @@ function selectPreset(idx) {
   dtDesignSelect.value = idx;
   buildPresetList(document.getElementById("dtSearch").value, activeCat);
   document.getElementById("exportSvgBtn").disabled = false;
-  document.getElementById("plotDesignBtn").disabled = !serialWriter;
+  document.getElementById("plotDesignBtn").disabled = false;
   buildParamControls();
   regenerate();
 }
@@ -4235,29 +4260,6 @@ document.getElementById("exportSvgBtn").addEventListener("click", () => {
   const a=document.createElement("a");
   a.href=URL.createObjectURL(new Blob([svg],{type:"image/svg+xml"}));
   a.download=`${activePreset?.id||"design"}.svg`; a.click();
-});
-
-// ── Plot design to printer ────────────────────────────────────────────────
-document.getElementById("plotDesignBtn").addEventListener("click", async () => {
-  if (!serialWriter || !activePolylines.length) return;
-  const btn = document.getElementById("plotDesignBtn");
-  btn.disabled=true; btn.textContent="Plotting…";
-  const scX=(bedX1-bedX0)/PW, scY=(bedY1-bedY0)/PH, sc=Math.min(scX,scY);
-  const oX=bedX0+((bedX1-bedX0)-PW*sc)/2, oY=bedY0+((bedY1-bedY0)-PH*sc)/2;
-  const toGX=mm=>oX+mm*sc, toGY=mm=>oY+mm*sc;
-  const pUp=parseFloat(document.getElementById("penUpZ")?.value)||8;
-  const pDn=parseFloat(document.getElementById("penDownZ")?.value)||2;
-  const feed=parseFloat(document.getElementById("xySpeed")?.value)||12000;
-  try {
-    await sendGcode(`G1 Z${pUp.toFixed(2)} F3000\n`);
-    for (const pl of activePolylines) {
-      await sendGcode(`G1 X${toGX(pl[0].x).toFixed(2)} Y${toGY(pl[0].y).toFixed(2)} F${feed}\n`);
-      await sendGcode(`G1 Z${pDn.toFixed(2)} F3000\n`);
-      for(let i=1;i<pl.length;i++)
-        await sendGcode(`G1 X${toGX(pl[i].x).toFixed(2)} Y${toGY(pl[i].y).toFixed(2)} F${feed}\n`);
-      await sendGcode(`G1 Z${pUp.toFixed(2)} F3000\n`);
-    }
-  } finally { btn.disabled=false; btn.textContent="▶ Plot"; }
 });
 
 // ══════════════════════════════════════════════════════════════════════════

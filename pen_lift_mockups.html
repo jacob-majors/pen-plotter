@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Pen Lift — ACRO-Inspired Designs</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: #0b0f19;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  padding: 40px;
+}
+h1 { color: #f1f5f9; font-size: 20px; font-weight: 300; letter-spacing: 4px; text-transform: uppercase; margin-bottom: 4px; }
+.sub { color: #475569; font-size: 11px; font-family: 'Courier New'; letter-spacing: 1px; margin-bottom: 36px; }
+.grid { display: flex; gap: 32px; flex-wrap: wrap; align-items: flex-start; }
+.panel { background: #111827; border: 1px solid #1e293b; border-radius: 14px; padding: 24px; width: 440px; box-shadow: 0 20px 60px rgba(0,0,0,.6); }
+.ptag { display: inline-block; font-size: 9px; letter-spacing: 2px; padding: 3px 9px; border-radius: 4px; margin-bottom: 10px; font-family: 'Courier New'; text-transform: uppercase; font-weight: bold; }
+.rec { background: #0c2340; color: #60a5fa; border: 1px solid #1d4ed8; }
+.alt { background: #0b2210; color: #4ade80; border: 1px solid #166534; }
+.panel h2 { color: #f1f5f9; font-size: 15px; font-weight: 600; margin-bottom: 5px; }
+.panel > p { color: #94a3b8; font-size: 12px; line-height: 1.7; margin-bottom: 18px; }
+.pros { margin-top: 16px; display: grid; gap: 4px; font-size: 11px; font-family: 'Courier New'; }
+.pros .p { color: #4ade80; } .pros .c { color: #f87171; }
+.src { margin-top: 10px; font-size: 10px; color: #334155; font-family: 'Courier New'; border-top: 1px solid #1e293b; padding-top: 10px; }
+.src span { color: #475569; }
+</style>
+</head>
+<body>
+
+<h1>Pen Lift Mechanism</h1>
+<p class="sub">ACRO-INSPIRED · LINEAR RAILS + ELASTIC BAND · SERVO LIFT · ENDER 3 X-CARRIAGE</p>
+
+<div class="grid">
+
+<!-- =============================================================== DESIGN A: ACRO INSPIRED -->
+<div class="panel">
+  <div class="ptag rec">Recommended · ACRO-Inspired</div>
+  <h2>Design A — Linear Rails + Elastic Band</h2>
+  <p>Two 8mm linear rods with LM8UU bearings carry a sliding pen carriage. An elastic hair band pulls pen down for consistent drawing pressure. Servo lifts pen up between strokes. Based on the Tech2C/schemeandplot ACRO design.</p>
+
+  <svg width="392" height="570" viewBox="0 0 392 570" style="display:block">
+    <defs>
+      <pattern id="dotsA" width="14" height="14" patternUnits="userSpaceOnUse">
+        <circle cx="7" cy="7" r="0.9" fill="#1e293b"/>
+      </pattern>
+      <!-- Metal rod (chrome cylinder) -->
+      <linearGradient id="rodG" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%"   stop-color="#0f172a"/>
+        <stop offset="18%"  stop-color="#475569"/>
+        <stop offset="42%"  stop-color="#e2e8f0"/>
+        <stop offset="58%"  stop-color="#cbd5e1"/>
+        <stop offset="82%"  stop-color="#334155"/>
+        <stop offset="100%" stop-color="#0f172a"/>
+      </linearGradient>
+      <!-- Bearing ring -->
+      <radialGradient id="bearingG" cx="40%" cy="35%" r="65%">
+        <stop offset="0%"   stop-color="#475569"/>
+        <stop offset="60%"  stop-color="#1e293b"/>
+        <stop offset="100%" stop-color="#0f172a"/>
+      </radialGradient>
+      <!-- Carriage / housing (dark grey PLA) -->
+      <linearGradient id="hGA" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%"   stop-color="#1e293b"/>
+        <stop offset="20%"  stop-color="#475569"/>
+        <stop offset="55%"  stop-color="#64748b"/>
+        <stop offset="80%"  stop-color="#475569"/>
+        <stop offset="100%" stop-color="#1e293b"/>
+      </linearGradient>
+      <linearGradient id="hTopGA" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%"   stop-color="#94a3b8"/>
+        <stop offset="100%" stop-color="#475569"/>
+      </linearGradient>
+      <!-- Pen cylinder -->
+      <linearGradient id="penGA" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%"   stop-color="#1e293b"/>
+        <stop offset="14%"  stop-color="#64748b"/>
+        <stop offset="36%"  stop-color="#e2e8f0"/>
+        <stop offset="55%"  stop-color="#cbd5e1"/>
+        <stop offset="80%"  stop-color="#475569"/>
+        <stop offset="100%" stop-color="#0f172a"/>
+      </linearGradient>
+      <!-- Servo body -->
+      <linearGradient id="svGA" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%"   stop-color="#1e3a8a"/>
+        <stop offset="35%"  stop-color="#3b82f6"/>
+        <stop offset="65%"  stop-color="#2563eb"/>
+        <stop offset="100%" stop-color="#1e3a8a"/>
+      </linearGradient>
+      <!-- Servo horn -->
+      <linearGradient id="hornGA" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stop-color="#f8fafc"/>
+        <stop offset="100%" stop-color="#cbd5e1"/>
+      </linearGradient>
+      <!-- Metal plate -->
+      <linearGradient id="plateGA" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%"   stop-color="#334155"/>
+        <stop offset="50%"  stop-color="#1e293b"/>
+        <stop offset="100%" stop-color="#0f172a"/>
+      </linearGradient>
+      <!-- Cam (red) -->
+      <radialGradient id="camGA" cx="35%" cy="30%" r="65%">
+        <stop offset="0%" stop-color="#fca5a5"/>
+        <stop offset="50%" stop-color="#ef4444"/>
+        <stop offset="100%" stop-color="#7f1d1d"/>
+      </radialGradient>
+
+      <!-- Filters -->
+      <filter id="dsA">
+        <feDropShadow dx="2" dy="4" stdDeviation="5" flood-color="#000" flood-opacity="0.65"/>
+      </filter>
+      <filter id="smA">
+        <feDropShadow dx="1" dy="2" stdDeviation="2.5" flood-color="#000" flood-opacity="0.5"/>
+      </filter>
+      <filter id="glowA">
+        <feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#3b82f6" flood-opacity="0.45"/>
+      </filter>
+
+      <!-- Arrows -->
+      <marker id="adA2" markerWidth="8" markerHeight="8" refX="4" refY="7" orient="auto">
+        <polygon points="0,0 8,0 4,8" fill="#f87171"/>
+      </marker>
+      <marker id="auA2" markerWidth="8" markerHeight="8" refX="4" refY="1" orient="auto">
+        <polygon points="0,8 8,8 4,0" fill="#60a5fa"/>
+      </marker>
+      <marker id="clA" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+        <polygon points="0,0 6,3 0,6" fill="#475569"/>
+      </marker>
+    </defs>
+
+    <!-- Background -->
+    <rect width="392" height="570" fill="#0b0f19" rx="8"/>
+    <rect width="392" height="570" fill="url(#dotsA)" rx="8"/>
+
+    <!-- Banner -->
+    <rect x="12" y="12" width="368" height="26" rx="5" fill="#052e16" stroke="#166534" stroke-width="1"/>
+    <text x="196" y="29" text-anchor="middle" fill="#4ade80" font-size="10.5" font-family="'Courier New'" letter-spacing="0.5">▲  PEN UP  —  servo holds carriage  —  elastic band stretched</text>
+
+    <!-- ========== TOP MOUNTING PLATE (X-CARRIAGE) ========== -->
+    <rect x="56" y="76" width="280" height="22" rx="4" fill="url(#plateGA)" stroke="#475569" stroke-width="1.5" filter="url(#dsA)"/>
+    <!-- T-nut rail slots -->
+    <line x1="56" y1="84" x2="336" y2="84" stroke="#0f172a" stroke-width="1.5" opacity="0.7"/>
+    <line x1="56" y1="88" x2="336" y2="88" stroke="#475569" stroke-width="0.4" opacity="0.4"/>
+    <!-- bolt holes into carriage -->
+    <circle cx="88" cy="87" r="6.5" fill="#0b0f19" stroke="#475569" stroke-width="1.5"/>
+    <circle cx="88" cy="87" r="3" fill="#1e293b"/>
+    <circle cx="304" cy="87" r="6.5" fill="#0b0f19" stroke="#475569" stroke-width="1.5"/>
+    <circle cx="304" cy="87" r="3" fill="#1e293b"/>
+    <!-- rod press-fit holes -->
+    <circle cx="122" cy="87" r="5" fill="#0b0f19" stroke="#64748b" stroke-width="1"/>
+    <circle cx="270" cy="87" r="5" fill="#0b0f19" stroke="#64748b" stroke-width="1"/>
+    <text x="196" y="112" text-anchor="middle" fill="#334155" font-size="8.5" font-family="'Courier New'" letter-spacing="1">ENDER 3  X-CARRIAGE MOUNT PLATE</text>
+
+    <!-- ========== LEFT LINEAR ROD (8mm chrome steel) ========== -->
+    <!-- shadow -->
+    <rect x="115" y="97" width="16" height="302" rx="2" fill="#000" opacity="0.4" transform="translate(2,3)"/>
+    <!-- rod body -->
+    <rect x="113" y="97" width="18" height="300" rx="2" fill="url(#rodG)" stroke="#94a3b8" stroke-width="0.8"/>
+    <!-- rod top specular line -->
+    <line x1="118" y1="99" x2="118" y2="395" stroke="white" stroke-width="0.8" opacity="0.18"/>
+    <!-- top cap ellipse -->
+    <ellipse cx="122" cy="98" rx="9" ry="3.5" fill="#94a3b8" stroke="#e2e8f0" stroke-width="0.8"/>
+    <!-- bottom cap ellipse -->
+    <ellipse cx="122" cy="397" rx="9" ry="3.5" fill="#475569" stroke="#64748b" stroke-width="0.8"/>
+
+    <!-- ========== RIGHT LINEAR ROD (8mm chrome steel) ========== -->
+    <rect x="263" y="97" width="16" height="302" rx="2" fill="#000" opacity="0.4" transform="translate(2,3)"/>
+    <rect x="261" y="97" width="18" height="300" rx="2" fill="url(#rodG)" stroke="#94a3b8" stroke-width="0.8"/>
+    <line x1="266" y1="99" x2="266" y2="395" stroke="white" stroke-width="0.8" opacity="0.18"/>
+    <ellipse cx="270" cy="98" rx="9" ry="3.5" fill="#94a3b8" stroke="#e2e8f0" stroke-width="0.8"/>
+    <ellipse cx="270" cy="397" rx="9" ry="3.5" fill="#475569" stroke="#64748b" stroke-width="0.8"/>
+
+    <!-- ========== ROD LABEL ========== -->
+    <line x1="113" y1="248" x2="68" y2="234" stroke="#334155" stroke-width="1" marker-end="url(#clA)"/>
+    <text x="66" y="232" text-anchor="end" fill="#94a3b8" font-size="9" font-family="'Courier New'">8mm STEEL ROD</text>
+    <text x="66" y="243" text-anchor="end" fill="#475569" font-size="8" font-family="'Courier New'">×2, 55mm long</text>
+
+    <!-- ========== ELASTIC BANDS ========== -->
+    <!-- Left elastic band — goes from top plate hook to top of carriage, stretched in UP position -->
+    <!-- When pen is UP, elastic is stretched (more taut = straighter line) -->
+    <!-- Elastic goes from hook point at top plate to hook on carriage top -->
+    <!-- Left band side A -->
+    <line x1="101" y1="97" x2="101" y2="258" stroke="#f97316" stroke-width="4.5" stroke-linecap="round" opacity="0.75"/>
+    <line x1="105" y1="97" x2="105" y2="258" stroke="#fb923c" stroke-width="2" stroke-linecap="round" opacity="0.4"/>
+    <!-- left band hooks -->
+    <circle cx="103" cy="97" r="4" fill="#ea580c" stroke="#f97316" stroke-width="1.2"/>
+    <circle cx="103" cy="258" r="4" fill="#ea580c" stroke="#f97316" stroke-width="1.2"/>
+    <!-- Right band -->
+    <line x1="287" y1="97" x2="287" y2="258" stroke="#f97316" stroke-width="4.5" stroke-linecap="round" opacity="0.75"/>
+    <line x1="291" y1="97" x2="291" y2="258" stroke="#fb923c" stroke-width="2" stroke-linecap="round" opacity="0.4"/>
+    <circle cx="289" cy="97" r="4" fill="#ea580c" stroke="#f97316" stroke-width="1.2"/>
+    <circle cx="289" cy="258" r="4" fill="#ea580c" stroke="#f97316" stroke-width="1.2"/>
+
+    <!-- elastic label -->
+    <line x1="103" y1="177" x2="62" y2="162" stroke="#334155" stroke-width="1" marker-end="url(#clA)"/>
+    <text x="60" y="160" text-anchor="end" fill="#f97316" font-size="9" font-family="'Courier New'">ELASTIC BAND</text>
+    <text x="60" y="171" text-anchor="end" fill="#475569" font-size="8" font-family="'Courier New'">(hair band)</text>
+    <text x="60" y="181" text-anchor="end" fill="#475569" font-size="8" font-family="'Courier New'">pulls pen DOWN</text>
+
+    <!-- ========== SLIDING CARRIAGE (pen-UP position) ========== -->
+    <!-- shadow -->
+    <rect x="96" y="256" width="200" height="108" rx="5" fill="#000" opacity="0.5" transform="translate(4,5)"/>
+    <!-- carriage body -->
+    <rect x="92" y="252" width="208" height="110" rx="5" fill="url(#hGA)" stroke="#64748b" stroke-width="1.5" filter="url(#smA)"/>
+    <!-- top face gradient (3D depth hint) -->
+    <rect x="92" y="252" width="208" height="16" rx="5" fill="#94a3b8" opacity="0.25"/>
+    <!-- FDM layer lines -->
+    <g stroke="#94a3b8" stroke-width="0.35" opacity="0.2">
+      <line x1="94" y1="260" x2="298" y2="260"/><line x1="94" y1="264" x2="298" y2="264"/>
+      <line x1="94" y1="268" x2="298" y2="268"/><line x1="94" y1="272" x2="298" y2="272"/>
+      <line x1="94" y1="276" x2="298" y2="276"/><line x1="94" y1="280" x2="298" y2="280"/>
+    </g>
+    <!-- edge highlight -->
+    <line x1="93" y1="254" x2="93" y2="360" stroke="#94a3b8" stroke-width="0.8" opacity="0.3"/>
+    <line x1="93" y1="254" x2="299" y2="254" stroke="#94a3b8" stroke-width="0.8" opacity="0.35"/>
+
+    <!-- LM8UU BEARING LEFT (large ring with rod through center) -->
+    <!-- outer ring shadow -->
+    <circle cx="122" cy="307" r="22" fill="#000" opacity="0.35" transform="translate(2,3)"/>
+    <!-- outer bearing ring -->
+    <circle cx="122" cy="307" r="22" fill="url(#bearingG)" stroke="#475569" stroke-width="1.5"/>
+    <!-- bearing outer highlight -->
+    <circle cx="122" cy="307" r="22" fill="none" stroke="#64748b" stroke-width="0.5" opacity="0.5"/>
+    <!-- inner race ring -->
+    <circle cx="122" cy="307" r="13" fill="#0f172a" stroke="#334155" stroke-width="1"/>
+    <!-- rod visible inside bearing -->
+    <rect x="114" y="285" width="16" height="44" fill="url(#rodG)" opacity="0.9"/>
+    <!-- bore hole -->
+    <circle cx="122" cy="307" r="9" fill="#050810"/>
+    <!-- bearing highlight dot -->
+    <circle cx="116" cy="300" r="3" fill="#64748b" opacity="0.6"/>
+    <!-- LM8UU label -->
+    <text x="122" y="310" text-anchor="middle" fill="#60a5fa" font-size="7.5" font-family="'Courier New'" font-weight="bold">LM8</text>
+    <text x="122" y="319" text-anchor="middle" fill="#3b82f6" font-size="6.5" font-family="'Courier New'">UU</text>
+
+    <!-- LM8UU BEARING RIGHT -->
+    <circle cx="270" cy="307" r="22" fill="#000" opacity="0.35" transform="translate(2,3)"/>
+    <circle cx="270" cy="307" r="22" fill="url(#bearingG)" stroke="#475569" stroke-width="1.5"/>
+    <circle cx="270" cy="307" r="13" fill="#0f172a" stroke="#334155" stroke-width="1"/>
+    <rect x="262" y="285" width="16" height="44" fill="url(#rodG)" opacity="0.9"/>
+    <circle cx="270" cy="307" r="9" fill="#050810"/>
+    <circle cx="264" cy="300" r="3" fill="#64748b" opacity="0.6"/>
+    <text x="270" y="310" text-anchor="middle" fill="#60a5fa" font-size="7.5" font-family="'Courier New'" font-weight="bold">LM8</text>
+    <text x="270" y="319" text-anchor="middle" fill="#3b82f6" font-size="6.5" font-family="'Courier New'">UU</text>
+
+    <!-- LM8UU label callout -->
+    <line x1="144" y1="307" x2="178" y2="290" stroke="#334155" stroke-width="1" marker-end="url(#clA)"/>
+    <text x="180" y="288" fill="#60a5fa" font-size="9" font-family="'Courier New'">LM8UU BEARINGS</text>
+    <text x="180" y="299" fill="#475569" font-size="8" font-family="'Courier New'">×2, smooth linear slide</text>
+
+    <!-- Pen bore / clamp in center of carriage -->
+    <rect x="172" y="258" width="48" height="102" rx="4" fill="#0b0f19" stroke="#334155" stroke-width="1.2" opacity="0.9"/>
+    <!-- clamp split line -->
+    <line x1="196" y1="260" x2="196" y2="358" stroke="#334155" stroke-width="1" opacity="0.6"/>
+    <!-- clamp bolt -->
+    <circle cx="196" cy="286" r="6" fill="#1e293b" stroke="#475569" stroke-width="1.2"/>
+    <line x1="193" y1="286" x2="199" y2="286" stroke="#94a3b8" stroke-width="1.2"/>
+    <line x1="196" y1="283" x2="196" y2="289" stroke="#94a3b8" stroke-width="1.2"/>
+    <text x="196" y="345" text-anchor="middle" fill="#334155" font-size="7" font-family="'Courier New'">PEN</text>
+
+    <!-- Servo lift tab protruding from right of carriage -->
+    <rect x="300" y="290" width="26" height="14" rx="3" fill="#64748b" stroke="#94a3b8" stroke-width="1.5" filter="url(#smA)"/>
+    <line x1="302" y1="294" x2="324" y2="294" stroke="#94a3b8" stroke-width="0.8" opacity="0.5"/>
+    <!-- tab label -->
+    <line x1="326" y1="297" x2="346" y2="312" stroke="#334155" stroke-width="1" marker-end="url(#clA)"/>
+    <text x="348" y="310" fill="#e2e8f0" font-size="9" font-family="'Courier New'">SERVO TAB</text>
+    <text x="348" y="321" fill="#475569" font-size="8" font-family="'Courier New'">(arm lifts here)</text>
+
+    <!-- CARRIAGE label -->
+    <line x1="300" y1="258" x2="346" y2="242" stroke="#334155" stroke-width="1" marker-end="url(#clA)"/>
+    <text x="348" y="240" fill="#e2e8f0" font-size="9" font-family="'Courier New'">CARRIAGE</text>
+    <text x="348" y="251" fill="#475569" font-size="8" font-family="'Courier New'">(3D printed)</text>
+
+    <!-- ========== BOTTOM RETAINING PLATE ========== -->
+    <rect x="56" y="395" width="280" height="18" rx="3" fill="url(#hGA)" stroke="#475569" stroke-width="1.2"/>
+    <!-- rod through holes -->
+    <circle cx="122" cy="404" r="5" fill="#050810" stroke="#64748b" stroke-width="1"/>
+    <circle cx="270" cy="404" r="5" fill="#050810" stroke="#64748b" stroke-width="1"/>
+    <!-- pen pass-through hole -->
+    <rect x="178" y="396" width="40" height="17" rx="2" fill="#050810"/>
+    <line x1="178" y1="397" x2="178" y2="412" stroke="#475569" stroke-width="0.8"/>
+    <line x1="218" y1="397" x2="218" y2="412" stroke="#475569" stroke-width="0.8"/>
+
+    <!-- ========== PEN ========== -->
+    <!-- shadow -->
+    <rect x="177" y="410" width="40" height="120" rx="4" fill="#000" opacity="0.4" transform="translate(3,4)"/>
+    <!-- pen body -->
+    <rect x="174" y="406" width="44" height="118" rx="4" fill="url(#penGA)" stroke="#94a3b8" stroke-width="1"/>
+    <!-- specular -->
+    <rect x="181" y="412" width="12" height="108" rx="3" fill="white" opacity="0.05"/>
+    <!-- grip zone -->
+    <rect x="174" y="408" width="44" height="36" rx="3" fill="#1e293b" stroke="#334155" stroke-width="1"/>
+    <g stroke="#0f172a" stroke-width="1.5" opacity="0.6">
+      <line x1="175" y1="416" x2="217" y2="416"/><line x1="175" y1="422" x2="217" y2="422"/>
+      <line x1="175" y1="428" x2="217" y2="428"/><line x1="175" y1="434" x2="217" y2="434"/>
+      <line x1="175" y1="440" x2="217" y2="440"/>
+    </g>
+    <!-- barrel seam -->
+    <line x1="196" y1="444" x2="196" y2="524" stroke="#0f172a" stroke-width="0.5" opacity="0.3"/>
+    <!-- tip taper -->
+    <polygon points="174,524 218,524 196,550" fill="#1e293b" stroke="#475569" stroke-width="1.5"/>
+    <line x1="176" y1="526" x2="188" y2="547" stroke="#64748b" stroke-width="0.7" opacity="0.5"/>
+    <!-- ink ball -->
+    <circle cx="196" cy="550" r="2.5" fill="#1e40af"/>
+
+    <!-- Pen label -->
+    <line x1="218" y1="480" x2="348" y2="472" stroke="#334155" stroke-width="1" marker-end="url(#clA)"/>
+    <text x="350" y="470" fill="#94a3b8" font-size="9" font-family="'Courier New'">PEN (clamped)</text>
+    <text x="350" y="481" fill="#475569" font-size="8" font-family="'Courier New'">up to 10mm dia.</text>
+
+    <!-- ========== SG90 SERVO ========== -->
+    <!-- shadow -->
+    <rect x="315" y="240" width="72" height="118" rx="6" fill="#000" opacity="0.45" transform="translate(4,5)"/>
+    <!-- body -->
+    <rect x="311" y="236" width="72" height="118" rx="6" fill="url(#svGA)" stroke="#60a5fa" stroke-width="1.5" filter="url(#glowA)"/>
+    <!-- body detail lines -->
+    <line x1="311" y1="268" x2="383" y2="268" stroke="#1e3a8a" stroke-width="1" opacity="0.7"/>
+    <line x1="311" y1="314" x2="383" y2="314" stroke="#1e3a8a" stroke-width="1" opacity="0.7"/>
+    <!-- face plate -->
+    <rect x="323" y="278" width="48" height="30" rx="4" fill="#1e3a8a" opacity="0.75"/>
+    <text x="347" y="290" text-anchor="middle" fill="#bfdbfe" font-size="11" font-family="'Courier New'" font-weight="bold">SG90</text>
+    <text x="347" y="303" text-anchor="middle" fill="#93c5fd" font-size="8" font-family="'Courier New'">SERVO</text>
+    <!-- vent slots -->
+    <g stroke="#1e40af" stroke-width="0.8" opacity="0.5">
+      <line x1="323" y1="320" x2="371" y2="320"/>
+      <line x1="323" y1="325" x2="371" y2="325"/>
+      <line x1="323" y1="330" x2="371" y2="330"/>
+    </g>
+    <!-- wire connector -->
+    <rect x="331" y="354" width="40" height="10" rx="2" fill="#0f172a" stroke="#334155" stroke-width="1"/>
+    <rect x="335" y="352" width="6" height="5" rx="1" fill="#fbbf24"/>
+    <rect x="343" y="352" width="6" height="5" rx="1" fill="#f87171"/>
+    <rect x="351" y="352" width="6" height="5" rx="1" fill="#1e293b"/>
+    <rect x="359" y="352" width="6" height="5" rx="1" fill="#cbd5e1"/>
+    <!-- mounting ears -->
+    <rect x="297" y="264" width="14" height="22" rx="4" fill="#1e3a8a" stroke="#3b82f6" stroke-width="1.2"/>
+    <circle cx="304" cy="275" r="4.5" fill="#0b0f19" stroke="#3b82f6" stroke-width="1.2"/>
+    <rect x="383" y="264" width="14" height="22" rx="4" fill="#1e3a8a" stroke="#3b82f6" stroke-width="1.2"/>
+    <circle cx="390" cy="275" r="4.5" fill="#0b0f19" stroke="#3b82f6" stroke-width="1.2"/>
+    <!-- output shaft (LEFT face — arm goes left toward the carriage tab) -->
+    <circle cx="311" cy="295" r="12" fill="#1e3a8a" stroke="#60a5fa" stroke-width="1.5"/>
+    <circle cx="311" cy="295" r="5.5" fill="#0b0f19" stroke="#3b82f6" stroke-width="1"/>
+    <circle cx="308" cy="292" r="2" fill="#60a5fa" opacity="0.5"/>
+    <!-- horn base -->
+    <rect x="304" y="289" width="7" height="13" rx="3" fill="url(#hornGA)" stroke="#cbd5e1" stroke-width="1"/>
+
+    <!-- Ghost arm position (pen-DOWN / arm swung up/clear) -->
+    <line x1="311" y1="295" x2="311" y2="256" stroke="#e2e8f0" stroke-width="4" stroke-linecap="round" opacity="0.18"/>
+    <circle cx="311" cy="256" r="8" fill="#ef4444" opacity="0.18"/>
+    <text x="320" y="254" fill="#60a5fa" font-size="8" font-family="'Courier New'" opacity="0.45">↑ FREE</text>
+
+    <!-- Active arm (holding carriage tab UP — lifting pen) -->
+    <line x1="311" y1="295" x2="326" y2="297" stroke="#e2e8f0" stroke-width="5.5" stroke-linecap="round" filter="url(#smA)"/>
+    <line x1="311" y1="295" x2="326" y2="297" stroke="url(#hornGA)" stroke-width="4" stroke-linecap="round"/>
+    <!-- cam tip pressing tab -->
+    <circle cx="326" cy="297" r="9" fill="url(#camGA)" stroke="#ef4444" stroke-width="1.5"/>
+    <circle cx="322" cy="293" r="2.5" fill="white" opacity="0.45"/>
+
+    <!-- rotation arc -->
+    <path d="M 311,260 A 35,35 0 0,1 318,331" fill="none" stroke="#3b82f6" stroke-width="1.5" stroke-dasharray="5,4" opacity="0.45"/>
+    <text x="298" y="340" fill="#60a5fa" font-size="8" font-family="'Courier New'" opacity="0.6">↓ DOWN</text>
+    <text x="316" y="252" fill="#60a5fa" font-size="8" font-family="'Courier New'" opacity="0.45">UP ↑</text>
+
+    <!-- ========== TRAVEL ARROWS ========== -->
+    <line x1="50" y1="290" x2="50" y2="332" stroke="#f87171" stroke-width="2" marker-end="url(#adA2)"/>
+    <line x1="50" y1="385" x2="50" y2="343" stroke="#60a5fa" stroke-width="2" marker-end="url(#auA2)"/>
+    <rect x="32" y="341" width="36" height="22" rx="4" fill="#1e293b" stroke="#334155" stroke-width="1"/>
+    <text x="50" y="350" text-anchor="middle" fill="#f1f5f9" font-size="8" font-family="'Courier New'">5 mm</text>
+    <text x="50" y="360" text-anchor="middle" fill="#475569" font-size="7" font-family="'Courier New'">travel</text>
+
+    <!-- ========== GCODE BAR ========== -->
+    <rect x="12" y="536" width="368" height="22" rx="4" fill="#0f172a" stroke="#1e293b" stroke-width="1"/>
+    <text x="196" y="551" text-anchor="middle" font-size="10" font-family="'Courier New'">
+      <tspan fill="#94a3b8">M3 S10</tspan><tspan fill="#334155">  (GRBL spindle PWM)  pen up   </tspan><tspan fill="#94a3b8">M3 S20</tspan><tspan fill="#334155">  pen down</tspan>
+    </text>
+  </svg>
+
+  <div class="pros">
+    <div><span class="p">+</span> Linear rails = virtually zero friction — smooth, repeatable</div>
+    <div><span class="p">+</span> Elastic band gives consistent paper pressure (not servo-angle dependent)</div>
+    <div><span class="p">+</span> Proven design — exactly what the ACRO Instructables uses</div>
+    <div><span class="p">+</span> Pen swappable — just loosen clamp bolt</div>
+    <div><span class="c">−</span> Needs 2× LM8UU bearings + 8mm rod (cheap, ~$3 total)</div>
+    <div><span class="c">−</span> Pen is DOWN by default — add a hard stop or endstop to avoid dragging on power-on</div>
+  </div>
+  <div class="src"><span>Based on:</span> Tech2C Thingiverse thing:2459624 + schemeandplot ACRO mod · 55mm × 8mm rods · SG90 servo</div>
+</div>
+
+<!-- =============================================================== DESIGN B: SPRING + CAM -->
+<div class="panel">
+  <div class="ptag alt">Alternative · Simpler Build</div>
+  <h2>Design B — Spring-Loaded Cam</h2>
+  <p>Single printed housing with a vertical bore. Pen spring pushes pen UP by default — safe on power loss. Servo cam arm rotates to push a guide pin (and pen) down to draw.</p>
+
+  <svg width="392" height="570" viewBox="0 0 392 570" style="display:block">
+    <defs>
+      <pattern id="dotsB" width="14" height="14" patternUnits="userSpaceOnUse">
+        <circle cx="7" cy="7" r="0.9" fill="#1e293b"/>
+      </pattern>
+      <linearGradient id="hGB" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%"   stop-color="#1e293b"/>
+        <stop offset="20%"  stop-color="#475569"/>
+        <stop offset="55%"  stop-color="#64748b"/>
+        <stop offset="80%"  stop-color="#475569"/>
+        <stop offset="100%" stop-color="#1e293b"/>
+      </linearGradient>
+      <linearGradient id="hTopGB" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%"   stop-color="#94a3b8"/>
+        <stop offset="100%" stop-color="#475569"/>
+      </linearGradient>
+      <linearGradient id="penGB" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%"   stop-color="#1e293b"/>
+        <stop offset="14%"  stop-color="#64748b"/>
+        <stop offset="36%"  stop-color="#e2e8f0"/>
+        <stop offset="55%"  stop-color="#cbd5e1"/>
+        <stop offset="80%"  stop-color="#475569"/>
+        <stop offset="100%" stop-color="#0f172a"/>
+      </linearGradient>
+      <linearGradient id="svGB" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%"   stop-color="#064e3b"/>
+        <stop offset="30%"  stop-color="#059669"/>
+        <stop offset="70%"  stop-color="#047857"/>
+        <stop offset="100%" stop-color="#064e3b"/>
+      </linearGradient>
+      <linearGradient id="hornGB" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stop-color="#f8fafc"/>
+        <stop offset="100%" stop-color="#cbd5e1"/>
+      </linearGradient>
+      <linearGradient id="pinGB" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%"   stop-color="#f8fafc"/>
+        <stop offset="35%"  stop-color="#e2e8f0"/>
+        <stop offset="70%"  stop-color="#94a3b8"/>
+        <stop offset="100%" stop-color="#475569"/>
+      </linearGradient>
+      <radialGradient id="pinCapGB" cx="35%" cy="30%" r="70%">
+        <stop offset="0%"  stop-color="#f8fafc"/>
+        <stop offset="50%" stop-color="#94a3b8"/>
+        <stop offset="100%" stop-color="#334155"/>
+      </radialGradient>
+      <radialGradient id="camGB" cx="35%" cy="30%" r="65%">
+        <stop offset="0%"  stop-color="#6ee7b7"/>
+        <stop offset="50%" stop-color="#059669"/>
+        <stop offset="100%" stop-color="#064e3b"/>
+      </radialGradient>
+      <linearGradient id="sprGB" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%"   stop-color="#92400e"/>
+        <stop offset="40%"  stop-color="#f59e0b"/>
+        <stop offset="70%"  stop-color="#d97706"/>
+        <stop offset="100%" stop-color="#78350f"/>
+      </linearGradient>
+      <linearGradient id="plateGB" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%"   stop-color="#334155"/>
+        <stop offset="50%"  stop-color="#1e293b"/>
+        <stop offset="100%" stop-color="#0f172a"/>
+      </linearGradient>
+      <filter id="dsB"><feDropShadow dx="2" dy="4" stdDeviation="5" flood-color="#000" flood-opacity="0.65"/></filter>
+      <filter id="smB"><feDropShadow dx="1" dy="2" stdDeviation="2.5" flood-color="#000" flood-opacity="0.5"/></filter>
+      <filter id="glowB"><feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#059669" flood-opacity="0.45"/></filter>
+      <filter id="sglowB"><feDropShadow dx="0" dy="0" stdDeviation="3" flood-color="#f59e0b" flood-opacity="0.3"/></filter>
+      <marker id="adB2" markerWidth="8" markerHeight="8" refX="4" refY="7" orient="auto">
+        <polygon points="0,0 8,0 4,8" fill="#f87171"/>
+      </marker>
+      <marker id="auB2" markerWidth="8" markerHeight="8" refX="4" refY="1" orient="auto">
+        <polygon points="0,8 8,8 4,0" fill="#4ade80"/>
+      </marker>
+      <marker id="clB" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+        <polygon points="0,0 6,3 0,6" fill="#475569"/>
+      </marker>
+    </defs>
+
+    <!-- Background -->
+    <rect width="392" height="570" fill="#0b0f19" rx="8"/>
+    <rect width="392" height="570" fill="url(#dotsB)" rx="8"/>
+
+    <!-- Banner -->
+    <rect x="12" y="12" width="368" height="26" rx="5" fill="#052e16" stroke="#166534" stroke-width="1"/>
+    <text x="196" y="29" text-anchor="middle" fill="#4ade80" font-size="10.5" font-family="'Courier New'" letter-spacing="0.5">▲  PEN UP  —  cam clear of pin  —  spring pushing pen up</text>
+
+    <!-- ========== CARRIAGE PLATE ========== -->
+    <rect x="56" y="440" width="230" height="26" rx="4" fill="url(#plateGB)" stroke="#475569" stroke-width="1.5" filter="url(#dsB)"/>
+    <line x1="56" y1="449" x2="286" y2="449" stroke="#0f172a" stroke-width="1.5" opacity="0.6"/>
+    <circle cx="84" cy="453" r="6.5" fill="#0b0f19" stroke="#475569" stroke-width="1.5"/>
+    <circle cx="84" cy="453" r="3" fill="#1e293b"/>
+    <circle cx="258" cy="453" r="6.5" fill="#0b0f19" stroke="#475569" stroke-width="1.5"/>
+    <circle cx="258" cy="453" r="3" fill="#1e293b"/>
+    <rect x="70" y="433" width="16" height="12" rx="2" fill="#1e293b" stroke="#334155" stroke-width="1"/>
+    <rect x="250" y="433" width="16" height="12" rx="2" fill="#1e293b" stroke="#334155" stroke-width="1"/>
+    <text x="171" y="480" text-anchor="middle" fill="#334155" font-size="8.5" font-family="'Courier New'" letter-spacing="1">X-CARRIAGE PLATE</text>
+
+    <!-- ========== HOUSING ========== -->
+    <!-- left wall shadow + body -->
+    <rect x="93" y="196" width="32" height="244" rx="3" fill="#000" opacity="0.4" transform="translate(2,3)"/>
+    <rect x="91" y="193" width="32" height="247" rx="3" fill="url(#hGB)" stroke="#475569" stroke-width="1.2"/>
+    <line x1="92" y1="196" x2="92" y2="438" stroke="#94a3b8" stroke-width="0.8" opacity="0.3"/>
+    <!-- FDM layer lines -->
+    <g stroke="#94a3b8" stroke-width="0.35" opacity="0.18">
+      <line x1="93" y1="202" x2="121" y2="202"/><line x1="93" y1="206" x2="121" y2="206"/>
+      <line x1="93" y1="210" x2="121" y2="210"/><line x1="93" y1="214" x2="121" y2="214"/>
+      <line x1="93" y1="218" x2="121" y2="218"/><line x1="93" y1="222" x2="121" y2="222"/>
+    </g>
+
+    <!-- right wall (with slot gap) -->
+    <rect x="197" y="193" width="32" height="247" rx="3" fill="url(#hGB)" stroke="#475569" stroke-width="1.2"/>
+    <!-- slot void -->
+    <rect x="197" y="278" width="32" height="42" fill="#050810"/>
+    <line x1="197" y1="278" x2="229" y2="278" stroke="#64748b" stroke-width="1.5"/>
+    <line x1="197" y1="320" x2="229" y2="320" stroke="#64748b" stroke-width="1.5"/>
+    <!-- slot label -->
+    <text x="234" y="274" fill="#64748b" font-size="8.5" font-family="'Courier New'">SLOT</text>
+    <text x="234" y="285" fill="#475569" font-size="7.5" font-family="'Courier New'">3×5mm</text>
+
+    <!-- top cap -->
+    <rect x="91" y="193" width="138" height="22" rx="3" fill="url(#hTopGB)" stroke="#94a3b8" stroke-width="1.2"/>
+    <rect x="127" y="193" width="66" height="22" fill="#050810"/>
+    <line x1="127" y1="194" x2="127" y2="214" stroke="#475569" stroke-width="1"/>
+    <line x1="193" y1="194" x2="193" y2="214" stroke="#475569" stroke-width="1"/>
+
+    <!-- spring seat / bottom cap -->
+    <rect x="91" y="400" width="138" height="40" rx="3" fill="url(#hGB)" stroke="#475569" stroke-width="1.2"/>
+    <rect x="127" y="400" width="66" height="10" fill="#050810"/>
+
+    <!-- housing label -->
+    <text x="78" y="188" text-anchor="end" fill="#64748b" font-size="9" font-family="'Courier New'">3D PRINTED</text>
+    <line x1="80" y1="189" x2="91" y2="206" stroke="#1e293b" stroke-width="1" marker-end="url(#clB)"/>
+
+    <!-- ========== SPRING ========== -->
+    <!-- shadow -->
+    <g stroke="#78350f" stroke-width="5.5" stroke-linecap="round" fill="none" opacity="0.28" transform="translate(3,4)">
+      <polyline points="143,394 159,394 159,386 143,386 143,378 159,378 159,370 143,370 143,362 159,362 159,354 143,354"/>
+    </g>
+    <g stroke="url(#sprGB)" stroke-width="4" stroke-linecap="round" fill="none" filter="url(#sglowB)">
+      <polyline points="143,394 159,394 159,386 143,386 143,378 159,378 159,370 143,370 143,362 159,362 159,354 143,354"/>
+    </g>
+    <!-- back coil shading -->
+    <g stroke="#92400e" stroke-width="1.5" stroke-linecap="round" fill="none" opacity="0.5">
+      <line x1="143" y1="390" x2="159" y2="390"/>
+      <line x1="143" y1="382" x2="159" y2="382"/>
+      <line x1="143" y1="374" x2="159" y2="374"/>
+      <line x1="143" y1="366" x2="159" y2="366"/>
+      <line x1="143" y1="358" x2="159" y2="358"/>
+    </g>
+    <line x1="133" y1="396" x2="169" y2="396" stroke="#f59e0b" stroke-width="1" opacity="0.4"/>
+    <line x1="133" y1="354" x2="169" y2="354" stroke="#f59e0b" stroke-width="1" opacity="0.4"/>
+    <line x1="162" y1="374" x2="200" y2="388" stroke="#334155" stroke-width="1" marker-end="url(#clB)"/>
+    <text x="203" y="390" fill="#f59e0b" font-size="9" font-family="'Courier New'">PEN SPRING</text>
+    <text x="203" y="401" fill="#475569" font-size="8" font-family="'Courier New'">(from a Bic pen)</text>
+    <text x="203" y="411" fill="#475569" font-size="8" font-family="'Courier New'">holds pen UP ↑</text>
+
+    <!-- ========== PEN ========== -->
+    <!-- shadow -->
+    <rect x="131" y="65" width="60" height="296" rx="5" fill="#000" opacity="0.45" transform="translate(4,5)"/>
+    <!-- pen body -->
+    <rect x="127" y="61" width="66" height="296" rx="5" fill="url(#penGB)" stroke="#94a3b8" stroke-width="1"/>
+    <rect x="136" y="67" width="16" height="286" rx="3" fill="white" opacity="0.04"/>
+    <!-- grip zone -->
+    <rect x="127" y="63" width="66" height="44" rx="4" fill="#1e293b" stroke="#334155" stroke-width="1"/>
+    <g stroke="#0f172a" stroke-width="1.5" opacity="0.55">
+      <line x1="128" y1="72" x2="192" y2="72"/><line x1="128" y1="78" x2="192" y2="78"/>
+      <line x1="128" y1="84" x2="192" y2="84"/><line x1="128" y1="90" x2="192" y2="90"/>
+      <line x1="128" y1="96" x2="192" y2="96"/><line x1="128" y1="102" x2="192" y2="102"/>
+    </g>
+    <!-- seam -->
+    <line x1="160" y1="107" x2="160" y2="357" stroke="#0f172a" stroke-width="0.5" opacity="0.3"/>
+    <!-- tip -->
+    <polygon points="127,357 193,357 160,390" fill="#1e293b" stroke="#475569" stroke-width="1.5"/>
+    <line x1="130" y1="359" x2="144" y2="386" stroke="#64748b" stroke-width="0.7" opacity="0.5"/>
+    <circle cx="160" cy="390" r="2.5" fill="#1e40af"/>
+    <!-- pen label -->
+    <text x="160" y="48" text-anchor="middle" fill="#cbd5e1" font-size="10" font-family="'Courier New'" font-weight="bold">PEN BARREL</text>
+    <line x1="160" y1="52" x2="160" y2="61" stroke="#334155" stroke-width="1"/>
+
+    <!-- ========== GUIDE PIN ========== -->
+    <!-- shadow -->
+    <rect x="127" y="292" width="106" height="10" rx="2" fill="#000" opacity="0.4" transform="translate(3,4)"/>
+    <!-- pin rod -->
+    <rect x="127" y="290" width="104" height="10" rx="3" fill="url(#pinGB)" stroke="#e2e8f0" stroke-width="1"/>
+    <line x1="131" y1="292" x2="228" y2="292" stroke="white" stroke-width="1" opacity="0.55"/>
+    <!-- pin cap -->
+    <circle cx="231" cy="295" r="9" fill="url(#pinCapGB)" stroke="#e2e8f0" stroke-width="1" filter="url(#smB)"/>
+    <circle cx="231" cy="295" r="3.5" fill="#64748b"/>
+    <circle cx="227" cy="291" r="2.5" fill="white" opacity="0.45"/>
+    <!-- pin label -->
+    <line x1="231" y1="286" x2="248" y2="270" stroke="#334155" stroke-width="1" marker-end="url(#clB)"/>
+    <text x="250" y="268" fill="#e2e8f0" font-size="9" font-family="'Courier New'">GUIDE PIN</text>
+    <text x="250" y="279" fill="#475569" font-size="8" font-family="'Courier New'">(M3 × 20mm)</text>
+
+    <!-- ========== SG90 SERVO (green tint) ========== -->
+    <rect x="250" y="218" width="72" height="118" rx="6" fill="#000" opacity="0.45" transform="translate(4,5)"/>
+    <rect x="246" y="214" width="72" height="118" rx="6" fill="url(#svGB)" stroke="#34d399" stroke-width="1.5" filter="url(#glowB)"/>
+    <line x1="246" y1="246" x2="318" y2="246" stroke="#064e3b" stroke-width="1" opacity="0.7"/>
+    <line x1="246" y1="292" x2="318" y2="292" stroke="#064e3b" stroke-width="1" opacity="0.7"/>
+    <rect x="258" y="256" width="48" height="30" rx="4" fill="#064e3b" opacity="0.75"/>
+    <text x="282" y="268" text-anchor="middle" fill="#6ee7b7" font-size="11" font-family="'Courier New'" font-weight="bold">SG90</text>
+    <text x="282" y="281" text-anchor="middle" fill="#34d399" font-size="8" font-family="'Courier New'">SERVO</text>
+    <g stroke="#065f46" stroke-width="0.8" opacity="0.5">
+      <line x1="258" y1="298" x2="314" y2="298"/>
+      <line x1="258" y1="303" x2="314" y2="303"/>
+      <line x1="258" y1="308" x2="314" y2="308"/>
+    </g>
+    <!-- wires -->
+    <rect x="263" y="332" width="40" height="10" rx="2" fill="#0f172a" stroke="#334155" stroke-width="1"/>
+    <rect x="267" y="330" width="6" height="5" rx="1" fill="#fbbf24"/>
+    <rect x="275" y="330" width="6" height="5" rx="1" fill="#f87171"/>
+    <rect x="283" y="330" width="6" height="5" rx="1" fill="#1e293b"/>
+    <!-- ears -->
+    <rect x="232" y="242" width="14" height="22" rx="4" fill="#064e3b" stroke="#10b981" stroke-width="1.2"/>
+    <circle cx="239" cy="253" r="4.5" fill="#0b0f19" stroke="#10b981" stroke-width="1.2"/>
+    <rect x="318" y="242" width="14" height="22" rx="4" fill="#064e3b" stroke="#10b981" stroke-width="1.2"/>
+    <circle cx="325" cy="253" r="4.5" fill="#0b0f19" stroke="#10b981" stroke-width="1.2"/>
+    <!-- output shaft on LEFT side -->
+    <circle cx="246" cy="273" r="12" fill="#064e3b" stroke="#34d399" stroke-width="1.5"/>
+    <circle cx="246" cy="273" r="5.5" fill="#0b0f19" stroke="#10b981" stroke-width="1"/>
+    <circle cx="243" cy="270" r="2" fill="#34d399" opacity="0.5"/>
+    <!-- horn base -->
+    <rect x="239" y="267" width="7" height="13" rx="3" fill="url(#hornGB)" stroke="#cbd5e1" stroke-width="1"/>
+
+    <!-- Ghost arm (pen-UP / cam clear) -->
+    <line x1="246" y1="273" x2="246" y2="236" stroke="#e2e8f0" stroke-width="4" stroke-linecap="round" opacity="0.18"/>
+    <circle cx="246" cy="236" r="8" fill="#059669" opacity="0.18"/>
+    <text x="254" y="234" fill="#34d399" font-size="8" font-family="'Courier New'" opacity="0.4">FREE ↑</text>
+
+    <!-- Active arm (cam pressing pin down) -->
+    <line x1="246" y1="273" x2="231" y2="295" stroke="#e2e8f0" stroke-width="5.5" stroke-linecap="round" filter="url(#smB)"/>
+    <line x1="246" y1="273" x2="231" y2="295" stroke="url(#hornGB)" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="231" cy="295" r="11" fill="url(#camGB)" stroke="#059669" stroke-width="1.5"/>
+    <circle cx="227" cy="291" r="3" fill="white" opacity="0.45"/>
+    <text x="231" y="299" text-anchor="middle" fill="white" font-size="8" font-family="'Courier New'" font-weight="bold">CAM</text>
+
+    <!-- Rotation arc -->
+    <path d="M 246,240 A 33,33 0 0,1 230,302" fill="none" stroke="#34d399" stroke-width="1.5" stroke-dasharray="5,4" opacity="0.4"/>
+    <text x="222" y="310" fill="#34d399" font-size="8" font-family="'Courier New'" opacity="0.55">↙ push</text>
+    <text x="250" y="232" fill="#34d399" font-size="8" font-family="'Courier New'" opacity="0.4">↑ lift</text>
+
+    <!-- ========== TRAVEL ARROWS ========== -->
+    <line x1="60" y1="230" x2="60" y2="272" stroke="#f87171" stroke-width="2" marker-end="url(#adB2)"/>
+    <line x1="60" y1="325" x2="60" y2="283" stroke="#4ade80" stroke-width="2" marker-end="url(#auB2)"/>
+    <rect x="42" y="281" width="36" height="22" rx="4" fill="#1e293b" stroke="#334155" stroke-width="1"/>
+    <text x="60" y="290" text-anchor="middle" fill="#f1f5f9" font-size="8" font-family="'Courier New'">5 mm</text>
+    <text x="60" y="300" text-anchor="middle" fill="#475569" font-size="7" font-family="'Courier New'">travel</text>
+
+    <!-- ========== GCODE BAR ========== -->
+    <rect x="12" y="536" width="368" height="22" rx="4" fill="#0f172a" stroke="#1e293b" stroke-width="1"/>
+    <text x="196" y="551" text-anchor="middle" font-size="10" font-family="'Courier New'">
+      <tspan fill="#94a3b8">M280 P0 S60</tspan><tspan fill="#334155">  (Marlin servo)  pen up   </tspan><tspan fill="#94a3b8">M280 P0 S120</tspan><tspan fill="#334155">  pen down</tspan>
+    </text>
+  </svg>
+
+  <div class="pros">
+    <div><span class="p">+</span> No linear rails needed — single printed housing</div>
+    <div><span class="p">+</span> Pen UP by default (spring) — safe on power loss</div>
+    <div><span class="p">+</span> Fewer parts, faster to build</div>
+    <div><span class="c">−</span> Printed bore has more friction than LM8UU bearings</div>
+    <div><span class="c">−</span> Pen pressure not spring-controlled — depends on servo angle</div>
+  </div>
+  <div class="src"><span>Our original design ·</span> Uses coil spring from pen · M280 Marlin servo command</div>
+</div>
+
+</div>
+
+<!-- Architecture note -->
+<div style="margin-top:32px; background:#111827; border:1px solid #1e293b; border-radius:12px; padding:22px; max-width:920px; box-shadow:0 10px 40px rgba(0,0,0,.5)">
+  <p style="font-size:10px; color:#3b82f6; letter-spacing:2px; font-family:'Courier New'; margin-bottom:12px;">RASPBERRY PI + ENDER 3 ARCHITECTURE</p>
+  <div style="display:flex; gap:40px; flex-wrap:wrap">
+    <div style="font-size:11px; color:#94a3b8; line-height:1.9; font-family:'Courier New'">
+      <span style="color:#f1f5f9">ACRO Stack:</span><br>
+      Laptop/Pi → UGS → USB → Arduino GRBL<br>
+      Spindle PWM → servo (M3 S10/S20)<br>
+      <br>
+      <span style="color:#f1f5f9">Your Stack (better):</span><br>
+      Pi → your web app → USB serial → Ender 3 Marlin<br>
+      M280 P0 S[angle] → SG90 servo<br>
+      Browser on any device on WiFi
+    </div>
+    <div style="font-size:11px; color:#94a3b8; line-height:1.9; font-family:'Courier New'">
+      <span style="color:#f1f5f9">Pi runs:</span> your web plotter (Node/Python server)<br>
+      <span style="color:#f1f5f9">Pi connects:</span> USB-B to Ender 3 mainboard<br>
+      <span style="color:#f1f5f9">Pi streams:</span> G-code over /dev/ttyUSB0 @ 115200<br>
+      <span style="color:#f1f5f9">Or use:</span> OctoPrint as the G-code sender layer<br>
+      <span style="color:#f1f5f9">Pi model:</span> Pi 4 (2GB) is plenty — same as Instructables
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
