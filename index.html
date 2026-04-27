@@ -1327,7 +1327,7 @@ footer { border-top: 1px solid var(--border); padding: 2.75rem 0 1.25rem; }
 
       <!-- Center: canvas column -->
       <div class="draw-canvas-wrap">
-        <!-- Drawing canvas fills all space above the toolbar -->
+        <!-- Canvas area — both canvases fill absolutely, pip inside -->
         <div class="canvas-area" id="canvasArea">
           <canvas id="drawCanvas" width="800" height="480"></canvas>
           <canvas id="overlayCanvas" width="800" height="480"></canvas>
@@ -1345,12 +1345,12 @@ footer { border-top: 1px solid var(--border); padding: 2.75rem 0 1.25rem; }
             </div>
           </div>
         </div>
-        <!-- Mouse mode strip sits between canvas and toolbar -->
+        <!-- Mouse mode strip -->
         <div class="mouse-info" id="mouseInfo">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="7" y="2" width="10" height="16" rx="5"/><line x1="12" y1="8" x2="12" y2="12"/></svg>
-          Mouse mode active — body movement controls cursor
+          Mouse mode — body movement steers cursor
         </div>
-        <!-- Color/tool toolbar anchored to bottom -->
+        <!-- Color toolbar -->
         <div class="toolbar" id="toolbar">
           <div class="colors">
             <button class="color-btn active" data-color="#2d7ae0" style="background:#2d7ae0"></button>
@@ -1367,12 +1367,10 @@ footer { border-top: 1px solid var(--border); padding: 2.75rem 0 1.25rem; }
             <button id="saveBtn"  class="tool-btn">Save PNG</button>
           </div>
         </div>
-        <!-- Status bar -->
         <div class="dt-statusbar" style="background:#1a1a1a;border-top:1px solid #2a2a2a">
-          <span id="drawStatus">Camera off — press Start Camera</span><span></span>
+          <span id="drawStatus">Camera off</span><span></span>
         </div>
-      </div>
-      </div>
+      </div><!-- end draw-canvas-wrap -->
 
       <!-- Right: manual move -->
       <div class="dt-props">
@@ -4768,14 +4766,11 @@ document.getElementById("plotStopBtn")?.addEventListener("click",()=>{
   plotCancelFlag=true; plotPaused=false;
 });
 
-// "Plot This" button in designs panel goes to plot panel
+// "Plot This" always opens the plot panel (start button remains disabled until connected)
 document.getElementById("plotDesignBtn")?.addEventListener("click",()=>{
-  if(!serialWriter||!activePolylines.length)return;
   showPanel("plot");
-  document.getElementById("plotDesignName").textContent=activePreset?.name||"Design";
-  const startBtn=document.getElementById("plotStartBtn");
-  if(startBtn){startBtn.disabled=false;}
-  updatePlotBed();
+  document.getElementById("plotDesignName").textContent = activePreset?.name || "No design";
+  requestAnimationFrame(() => updatePlotBed());
 });
 
 // Keep plot connection status updated
@@ -4858,11 +4853,19 @@ requestAnimationFrame(() => requestAnimationFrame(() => {
   if (eyeIdx >= 0) selectPreset(eyeIdx);
 }));
 
-// Keep Plot button state synced with serial connection
+// Keep button states synced
 setInterval(() => {
+  // Plot This: navigates to plot panel — just needs a design loaded
   const b = document.getElementById("plotDesignBtn");
   if (b && !b.textContent.includes("Plotting"))
-    b.disabled = !serialWriter || !activePolylines.length;
+    b.disabled = !activePolylines.length;
+  // Start Plot: needs connection too
+  const sb = document.getElementById("plotStartBtn");
+  if (sb && !plotRunning)
+    sb.disabled = !serialWriter || !activePolylines.length;
+  // Nav connection dot
+  const dot = document.getElementById("connDot");
+  if (dot) dot.className = "nav-dot" + (serialWriter ? (plotRunning ? " plotting" : " ok") : "");
 }, 800);
 
 </script>
