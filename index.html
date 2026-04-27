@@ -1465,6 +1465,25 @@ footer { border-top: 1px solid var(--border); padding: 2.75rem 0 1.25rem; }
         <div class="dt-props-title">Settings</div>
         <div class="plot-scroll">
           <div class="dt-section">
+            <div class="dt-section-head">Paper</div>
+            <div class="dt-prop-row">
+              <span class="dt-prop-label">Width</span>
+              <span class="dt-prop-val-ro" id="plotPaperW">—</span>
+              <span class="dt-unit">mm</span>
+            </div>
+            <div class="dt-prop-row">
+              <span class="dt-prop-label">Height</span>
+              <span class="dt-prop-val-ro" id="plotPaperH">—</span>
+              <span class="dt-unit">mm</span>
+            </div>
+            <div class="dt-prop-row">
+              <span class="dt-prop-label">Margin</span>
+              <span class="dt-prop-val-ro" id="plotPaperM">—</span>
+              <span class="dt-unit">mm</span>
+            </div>
+            <div class="pp-hint" style="padding:4px 10px">Set in Design tab ↗</div>
+          </div>
+          <div class="dt-section">
             <div class="dt-section-head">Speed</div>
             <div class="dt-prop-row"><span class="dt-prop-label">XY Feed</span><input type="number" class="dt-prop-val" id="xySpeed2" value="12000" style="width:65px"><span class="dt-unit">mm/m</span></div>
             <input type="range" class="dt-prop-slider" id="xySpeedSlider" min="1000" max="20000" step="500" value="12000">
@@ -3483,9 +3502,22 @@ document.getElementById("dtShowDots"  ).addEventListener("change", () => renderD
 function getMargin() { return parseFloat(document.getElementById("dtMargin").value) || 12; }
 function updateCanvasInfo() {
   const m = getMargin();
-  document.getElementById("dtPropW").textContent      = PW.toFixed(1) + " mm";
-  document.getElementById("dtPropH").textContent      = PH.toFixed(1) + " mm";
-  document.getElementById("dtPropMargin").textContent = m + " mm";
+  // Design tab properties panel
+  const pw = document.getElementById("dtPropW");       if (pw) pw.textContent = PW.toFixed(1) + " mm";
+  const ph = document.getElementById("dtPropH");       if (ph) ph.textContent = PH.toFixed(1) + " mm";
+  const pm = document.getElementById("dtPropMargin");  if (pm) pm.textContent = m + " mm";
+
+  // Plot tab — sync paper size label and re-render bed
+  const bi = document.getElementById("plotBedInfo");
+  if (bi) bi.textContent = `${PW.toFixed(0)} × ${PH.toFixed(0)} mm  ·  margin ${m} mm`;
+  const pw2 = document.getElementById("plotPaperW");  if (pw2) pw2.textContent = PW.toFixed(1);
+  const ph2 = document.getElementById("plotPaperH");  if (ph2) ph2.textContent = PH.toFixed(1);
+  const pm2 = document.getElementById("plotPaperM");  if (pm2) pm2.textContent = m;
+
+  // Re-render the bed visualization if plot panel is open
+  if (document.getElementById("panelPlot")?.style.display !== "none") {
+    requestAnimationFrame(() => renderPlotBed());
+  }
 }
 
 // ── Zoom ──────────────────────────────────────────────────────────────────
