@@ -28,14 +28,20 @@
 #include <MultiStepper.h>
 #include <Servo.h>
 #include <EEPROM.h>
-// SD card: the Creality v4.2.2 uses SDIO hardware which requires the
-// STM32SD library from the STM32duino extras repo. That library is not
-// available via arduino-cli.  The SD file browser UI is fully implemented;
-// enable it by uncommenting the line below and installing STM32SD manually:
-// https://github.com/stm32duino/STM32SD
-//
-// #define SD_ENABLED
-// #include <STM32SD.h>
+// SD card — uses SdFat in SPI-compat mode via SDIO pins on v4.2.2:
+//   CS   = PC11 (SDIO_D3)   SCK  = PC12 (SDIO_CK)
+//   MOSI = PD2  (SDIO_CMD)  MISO = PC8  (SDIO_D0)
+// SdFat handles 1-bit SPI negotiation; no HAL/FatFs dependency needed.
+#define SD_ENABLED
+#include <SdFat.h>
+
+// SPI configuration for SD card on the onboard slot
+#define SD_CS_PIN   PC11
+#define SD_SCK_PIN  PC12
+#define SD_MOSI_PIN PD2
+#define SD_MISO_PIN PC8
+SPIClass SdSpi(SD_MOSI_PIN, SD_MISO_PIN, SD_SCK_PIN);
+SdFat32  SD_FS;
 
 // ── Pins ─────────────────────────────────────────────────────────────────────
 #define XY_EN    PC3
@@ -105,12 +111,17 @@ bool     sdOk      = false;
 bool     sdChecked = false;
 char     fileList[MAX_FILES][FNAME_LEN];
 uint8_t  fileCount = 0;
-bool     printing     = false;
-bool     printPaused  = false;
-uint32_t printTotal   = 0;
-uint32_t printDone    = 0;
+bool     printing    = false;
+bool     printPaused = false;
+File32   printFile;
+uint32_t printTotal  = 0;
+uint32_t printDone   = 0;
 char     printName[FNAME_LEN] = "";
-bool     printFileDummy = false;  // placeholder when SD disabled
+
+// ── SD write mode (M28/M29 — receive G-code from browser, save to SD) ────────
+bool     sdWriteMode = false;
+File32   sdWriteFile;
+char     sdWriteName[FNAME_LEN] = "";
 
 // ── Encoder ───────────────────────────────────────────────────────────────────
 bool     encA_last = HIGH, btn_last = HIGH;
@@ -181,18 +192,31 @@ int getDelta() {
 // SD card
 // ═════════════════════════════════════════════════════════════════════════════
 bool initSD() {
-#ifdef SD_ENABLED
-  return SD.begin(SD_DETECT);
-#else
-  return false;  // SD requires STM32SD library — see comment at top of file
-#endif
+  SdSpi.begin();
+  SdSpiConfig cfg(SD_CS_PIN, DEDICATED_SPI, SD_SCK_MHZ(4), &SdSpi);
+  return SD_FS.begin(cfg);
 }
 
 void scanFiles() {
   fileCount = 0;
-#ifdef SD_ENABLED
-  // File listing implemented — enable SD_ENABLED to activate
-#endif
+  if (!sdOk) return;
+  File32 root;
+  if (!root.open("/")) return;
+  File32 f;
+  while (f.openNext(&root, O_RDONLY) && fileCount < MAX_FILES) {
+    if (!f.isDir()) {
+      char n[FNAME_LEN]; f.getName(n, FNAME_LEN);
+      size_t len = strlen(n);
+      if ((len > 6 && strcasecmp(n + len - 6, ".gcode") == 0) ||
+          (len > 3 && strcasecmp(n + len - 3, ".gc")    == 0)) {
+        strncpy(fileList[fileCount], n, FNAME_LEN - 1);
+        fileList[fileCount][FNAME_LEN - 1] = '\0';
+        fileCount++;
+      }
+    }
+    f.close();
+  }
+  root.close();
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
@@ -224,11 +248,33 @@ float param(char* line, char p) {
   return ptr ? atof(ptr + 1) : NAN;
 }
 
+// Draw "SAVING..." on LCD during M28 upload
+void drawSavingScreen() {
+  lcd.clearBuffer(); hdr("SAVING TO SD");
+  lcd.setFont(u8g2_font_5x8_tr);
+  lcd.drawStr(4, 28, sdWriteName);
+  lcd.drawStr(4, 42, "Receiving from USB...");
+  lcd.drawStr(4, 56, "Do not disconnect.");
+  lcd.sendBuffer();
+}
+
 void execGcode(char* raw) {
   char* star = strchr(raw, '*'); if (star) *star = '\0';
   char* p = raw;
   if (*p == 'N' || *p == 'n') { while (*p && *p != ' ') p++; while (*p == ' ') p++; }
   if (!*p) { Serial.println(F("ok")); return; }
+
+  // ── SD write mode: funnel all lines to file until M29 ─────────────────────
+  if (sdWriteMode) {
+    // Check if this is M29 (stop writing)
+    bool isM29 = ((*p == 'M' || *p == 'm') && atoi(p + 1) == 29);
+    if (!isM29) {
+      if (sdOk && sdWriteFile) sdWriteFile.println(raw);
+      Serial.println(F("ok"));
+      return;
+    }
+    // M29 falls through below to close the file
+  }
 
   if (*p == 'G' || *p == 'g') {
     int   cmd = atoi(p + 1);
@@ -262,12 +308,41 @@ void execGcode(char* raw) {
 
   } else if (*p == 'M' || *p == 'm') {
     int cmd = atoi(p + 1);
-    if      (cmd == 84)  { motorsOff(); }
-    else if (cmd == 115) { Serial.println(F("FIRMWARE_NAME:PenPlotter "
-                           "FIRMWARE_VERSION:3.0 MACHINE_TYPE:PenPlotter "
-                           "EXTRUDER_COUNT:0")); }
-    else if (cmd == 203) { float v=param(p,'X'); if(!isnan(v)) gcFeed=constrain(v*X_SPM,200.f,SPEED_TRAVEL); }
-    else if (cmd == 204) { float a=param(p,'P'); if(!isnan(a)){sx.setAcceleration(a*X_SPM);sy.setAcceleration(a*Y_SPM);} }
+    if (cmd == 28) {
+      // M28 <filename> — open SD file for writing (browser upload)
+      char* fname = p + 3; while (*fname == ' ') fname++;
+      // Strip trailing whitespace
+      int fl = strlen(fname);
+      while (fl > 0 && (fname[fl-1] == ' ' || fname[fl-1] == '\r')) fname[--fl] = '\0';
+      if (!sdOk) { Serial.println(F("Error:No SD card")); return; }
+      if (sdWriteFile) sdWriteFile.close();
+      sdWriteFile.open(fname, O_WRONLY | O_CREAT | O_TRUNC);
+      if (sdWriteFile) {
+        strncpy(sdWriteName, fname, FNAME_LEN - 1);
+        sdWriteMode = true;
+        drawSavingScreen();
+        Serial.print(F("Writing:")); Serial.println(fname);
+      } else {
+        Serial.println(F("Error:SD open failed"));
+        return;
+      }
+    } else if (cmd == 29) {
+      // M29 — close file, refresh list
+      if (sdWriteMode && sdWriteFile) {
+        sdWriteFile.close();
+        sdWriteMode = false;
+        scanFiles();
+        beep(2000, 100); delay(80); beep(2500, 100);
+        scr = SCR_FILES; cur = 0; redraw = true;
+        Serial.print(F("Saved:")); Serial.println(sdWriteName);
+      }
+    } else if (cmd == 84)  { motorsOff();
+    } else if (cmd == 115) {
+      Serial.println(F("FIRMWARE_NAME:PenPlotter FIRMWARE_VERSION:3.0 "
+                       "MACHINE_TYPE:PenPlotter EXTRUDER_COUNT:0"));
+    } else if (cmd == 203) { float v=param(p,'X'); if(!isnan(v)) gcFeed=constrain(v*X_SPM,200.f,SPEED_TRAVEL);
+    } else if (cmd == 204) { float a=param(p,'P'); if(!isnan(a)){sx.setAcceleration(a*X_SPM);sy.setAcceleration(a*Y_SPM);}
+    }
   }
   Serial.println(F("ok"));
 }
@@ -292,20 +367,45 @@ void processSerial() {
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
-// SD file playback — stubbed until STM32SD library is installed
-// See comment at top of file for how to enable SD support.
+// SD file playback — one G-code line per loop call (non-blocking)
 #define LINE_BUF 96
 bool tickPrint() {
-  printing = false;  // no SD → immediately done
-  return false;
+  if (!printing || printPaused) return printing;
+  if (!printFile) { printing = false; return false; }
+
+  char line[LINE_BUF]; uint8_t len = 0;
+  while (printFile.available()) {
+    char c = (char)printFile.read();
+    printDone++;
+    if (c == '\n' || c == '\r') { if (len) break; }
+    else if (c != ';' && len < LINE_BUF - 1) line[len++] = c;
+  }
+
+  if (!printFile.available() && len == 0) {
+    printFile.close(); printing = false;
+    penUp_(); motorsOff();
+    beep(2000,200); delay(100); beep(2500,200);
+    scr = SCR_FILES; cur = 0; redraw = true;
+    return false;
+  }
+  if (len) { line[len] = '\0'; execGcode(line); redraw = true; }
+  return true;
 }
-void startPrint(uint8_t /*idx*/) {
-  // SD not enabled — show message
-  scr = SCR_FILES; cur = 0; redraw = true;
+
+void startPrint(uint8_t idx) {
+  if (idx >= fileCount || !sdOk) return;
+  printFile.open(fileList[idx], O_RDONLY);
+  if (!printFile) return;
+  printTotal = printFile.size(); printDone = 0;
+  strncpy(printName, fileList[idx], FNAME_LEN - 1);
+  printing = true; printPaused = false;
+  gcX = 0; gcY = 0; absMode = true; gcFeed = SPEED_DRAW;
+  scr = SCR_PRINTING; cur = 0; redraw = true;
 }
 
 void stopPrint() {
-  printing = false; printPaused = false; printFileDummy = false;
+  if (printFile) printFile.close();
+  printing = false; printPaused = false;
   penUp_(); motorsOff();
   scr = SCR_FILES; cur = 0; redraw = true;
 }
@@ -413,9 +513,9 @@ void scrFiles() {
   lcd.clearBuffer(); hdr("FILES  (SD CARD)");
   lcd.setFont(u8g2_font_5x8_tr);
   if (!sdOk) {
-    lcd.drawStr(4,24,"SD needs STM32SD lib.");
-    lcd.drawStr(4,36,"Use USB mode instead.");
-    lcd.drawStr(4,48,"(github.com/stm32duino)");
+    lcd.drawStr(4,24,"No SD card detected.");
+    lcd.drawStr(4,36,"Insert card, go back,");
+    lcd.drawStr(4,48,"then re-open Files.");
   } else if (fileCount == 0) {
     lcd.drawStr(4,32,"No .gcode files.");
     lcd.drawStr(4,44,"Copy files to SD root.");

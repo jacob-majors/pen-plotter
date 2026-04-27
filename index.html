@@ -1453,6 +1453,18 @@ footer { border-top: 1px solid var(--border); padding: 2.75rem 0 1.25rem; }
         <div class="plot-tbar-progress"><div class="plot-tbar-fill" id="plotTbarFill" style="width:0%"></div></div>
         <span class="dt-zoom-label" id="plotTbarPct">—</span>
       </div>
+      <div class="dt-sep"></div>
+      <div class="dt-group">
+        <!-- Upload to printer SD — stores via M28/M29, then works offline -->
+        <button class="dt-btn" id="uploadToSDBtn" disabled title="Upload G-code to printer SD card over USB — then unplug and run from Files menu">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Upload to SD
+        </button>
+        <button class="dt-btn" id="downloadGcodeBtn" disabled title="Download .gcode file to copy to SD card manually">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Download .gcode
+        </button>
+      </div>
       <div style="flex:1"></div>
       <div class="dt-group">
         <span style="font-size:11px;font-family:monospace;color:#555" id="plotPosLabel">X — · Y —</span>
@@ -4887,19 +4899,144 @@ requestAnimationFrame(() => requestAnimationFrame(() => {
   if (eyeIdx >= 0) selectPreset(eyeIdx);
 }));
 
+// ══════════════════════════════════════════════════════════════════════════
+//  G-CODE GENERATION  (shared by Upload to SD and Download .gcode)
+// ══════════════════════════════════════════════════════════════════════════
+
+function generateGcode() {
+  if (!activePolylines || !activePolylines.length) return null;
+
+  const scX = (bedX1 - bedX0) / PW, scY = (bedY1 - bedY0) / PH;
+  const sc  = Math.min(scX, scY);
+  const oX  = bedX0 + ((bedX1 - bedX0) - PW * sc) / 2;
+  const oY  = bedY0 + ((bedY1 - bedY0) - PH * sc) / 2;
+  const toGX = mm => (oX + mm * sc).toFixed(3);
+  const toGY = mm => (oY + mm * sc).toFixed(3);
+
+  const pUp  = parseFloat(document.getElementById("penUpZ2")?.value  || document.getElementById("penUpZ")?.value  || 8);
+  const pDn  = parseFloat(document.getElementById("penDownZ2")?.value|| document.getElementById("penDownZ")?.value|| 2);
+  const feed = parseFloat(document.getElementById("xySpeed2")?.value  || document.getElementById("xySpeed")?.value || 12000);
+  const margin = parseFloat(document.getElementById("dtMargin")?.value || 12);
+
+  const lines = [
+    `; PenPlotter G-code — ${activePreset?.name || "custom"}`,
+    `; Paper: ${PW.toFixed(1)} x ${PH.toFixed(1)} mm, margin ${margin} mm`,
+    `; Generated: ${new Date().toISOString()}`,
+    "; ─────────────────────────────────",
+    "G21",      // mm units
+    "G90",      // absolute mode
+    `G1 Z${pUp.toFixed(2)} F3000`,   // pen up
+    `G1 X${toGX(0)} Y${toGY(0)} F${feed}`,  // move to start
+  ];
+
+  for (const pl of activePolylines) {
+    lines.push(`G1 X${toGX(pl[0].x)} Y${toGY(pl[0].y)} F${feed}`);  // travel
+    lines.push(`G1 Z${pDn.toFixed(2)} F3000`);                        // pen down
+    for (let i = 1; i < pl.length; i++) {
+      lines.push(`G1 X${toGX(pl[i].x)} Y${toGY(pl[i].y)} F${feed}`);
+    }
+    lines.push(`G1 Z${pUp.toFixed(2)} F3000`);                        // pen up
+  }
+
+  lines.push(`G1 X${toGX(0)} Y${toGY(0)} F${feed}`); // return home
+  lines.push("M84");  // disable motors
+
+  return lines.join("\n") + "\n";
+}
+
+// ── Download .gcode — save file to disk, copy to SD card manually ──────────
+document.getElementById("downloadGcodeBtn")?.addEventListener("click", () => {
+  const gcode = generateGcode();
+  if (!gcode) return;
+  const name = (activePreset?.id || "design").replace(/[^a-z0-9]/gi,"_").slice(0,12) + ".gcode";
+  const blob = new Blob([gcode], { type: "text/plain" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  a.click();
+  URL.revokeObjectURL(a.href);
+});
+
+// ── Upload to SD — streams G-code via M28/M29 over Web Serial ──────────────
+// Flow: M28 filename.gcode  →  all G-code lines  →  M29
+// Firmware saves to SD card, then runs standalone without laptop.
+document.getElementById("uploadToSDBtn")?.addEventListener("click", async () => {
+  if (!serialWriter || !activePolylines?.length) return;
+
+  const btn  = document.getElementById("uploadToSDBtn");
+  const gcode = generateGcode();
+  if (!gcode) return;
+
+  const name  = (activePreset?.id || "design").replace(/[^a-z0-9]/gi,"_").slice(0,12) + ".gcode";
+  const lines = gcode.split("\n").filter(l => l.trim() && !l.startsWith(";"));
+  const total = lines.length;
+
+  btn.disabled = true;
+  btn.textContent = "Opening file…";
+
+  try {
+    // Tell firmware to open file for writing
+    await sendGcode(`M28 ${name}\n`);
+    await new Promise(r => setTimeout(r, 200)); // let firmware respond
+
+    // Stream all G-code lines
+    for (let i = 0; i < total; i++) {
+      await sendGcode(lines[i] + "\n");
+      const pct = Math.round((i + 1) / total * 100);
+      if (i % 20 === 0) btn.textContent = `Uploading ${pct}%…`;
+    }
+
+    // Tell firmware to close and save
+    await sendGcode("M29\n");
+    await new Promise(r => setTimeout(r, 300));
+
+    btn.textContent = `✓ Saved as ${name}`;
+    btn.style.color = "#22c55e";
+
+    // Show instructions
+    const hint = document.createElement("div");
+    hint.style.cssText="position:fixed;bottom:20px;right:20px;background:#1a3050;border:1px solid #2d5a9e;color:#7ab8ff;padding:12px 16px;border-radius:8px;font-size:12px;z-index:9999;max-width:280px;line-height:1.5";
+    hint.innerHTML = `<strong>${name}</strong> saved to printer SD card.<br>You can now unplug the USB cable.<br>On the printer: <em>Files → select file → click</em>`;
+    document.body.appendChild(hint);
+    setTimeout(() => hint.remove(), 8000);
+
+    setTimeout(() => {
+      btn.textContent = "Upload to SD";
+      btn.style.color = "";
+      btn.disabled = !serialWriter || !activePolylines?.length;
+    }, 5000);
+
+  } catch (e) {
+    btn.textContent = "Upload failed";
+    setTimeout(() => { btn.textContent = "Upload to SD"; btn.disabled = false; }, 3000);
+  }
+});
+
 // Keep button states synced
 setInterval(() => {
-  // Plot This: navigates to plot panel — just needs a design loaded
+  const hasDesign  = !!(activePolylines?.length);
+  const connected  = !!serialWriter;
+
+  // Design panel Plot button — always navigates, just needs a design
   const b = document.getElementById("plotDesignBtn");
-  if (b && !b.textContent.includes("Plotting"))
-    b.disabled = !activePolylines.length;
-  // Start Plot: needs connection too
+  if (b && !b.textContent.includes("Plotting")) b.disabled = !hasDesign;
+
+  // Plot panel buttons
   const sb = document.getElementById("plotStartBtn");
-  if (sb && !plotRunning)
-    sb.disabled = !serialWriter || !activePolylines.length;
-  // Nav connection dot
+  if (sb && !plotRunning) sb.disabled = !connected || !hasDesign;
+
+  // Upload to SD — needs connection + design
+  const up = document.getElementById("uploadToSDBtn");
+  if (up && !up.textContent.includes("Uploading") && !up.textContent.includes("✓"))
+    up.disabled = !connected || !hasDesign;
+
+  // Download .gcode — just needs a design (no connection needed)
+  const dl = document.getElementById("downloadGcodeBtn");
+  if (dl) dl.disabled = !hasDesign;
+
+  // Nav dot
   const dot = document.getElementById("connDot");
-  if (dot) dot.className = "nav-dot" + (serialWriter ? (plotRunning ? " plotting" : " ok") : "");
+  if (dot) dot.className = "nav-dot" + (connected ? (plotRunning ? " plotting" : " ok") : "");
 }, 800);
 
 </script>
