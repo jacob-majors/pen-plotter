@@ -44,6 +44,27 @@ SPIClass SdSpi(SD_MOSI_PIN, SD_MISO_PIN, SD_SCK_PIN);
 SdFat32  SD_FS;
 
 // ── Pins ─────────────────────────────────────────────────────────────────────
+// *** BLUE SCREEN FIX: the v4.2.2 has two display connector variants.
+// *** If the screen stays blue/blank after flashing, try swapping the comment:
+//
+// Option A — RET6 variant (most common Ender-3):
+#define LCD_CLK  PB13   // EXP3_06  ST7920 CLK
+#define LCD_DATA PB15   // EXP3_08  ST7920 DATA
+#define LCD_CS   PB12   // EXP3_07  ST7920 CS
+#define ENC_A    PB10   // EXP3_03  BTN_EN1
+#define ENC_B    PB14   // EXP3_05  BTN_EN2
+#define ENC_BTN  PB2    // EXP3_02  BTN_ENC
+#define BUZZ     PC6    // EXP3_01
+//
+// Option B — VET6 variant (some Ender-3 batches) — uncomment block below:
+// #define LCD_CLK  PA5
+// #define LCD_DATA PA7
+// #define LCD_CS   PA4
+// #define ENC_A    PB10
+// #define ENC_B    PA6
+// #define ENC_BTN  PC5
+// #define BUZZ     -1    // no beeper on VET6
+
 #define XY_EN    PC3
 #define X_STEP   PC2
 #define X_DIR    PB9
@@ -51,13 +72,6 @@ SdFat32  SD_FS;
 #define Y_DIR    PB5   // old Z_DIR
 #define PEN_PIN  PB0   // servo (repurposed BLTouch)
 #define SD_DETECT PC7  // SD card detect (LOW = inserted)
-#define ENC_A    PB10
-#define ENC_B    PB14
-#define ENC_BTN  PB2
-#define LCD_CLK  PB13
-#define LCD_DATA PB15
-#define LCD_CS   PB12
-#define BUZZ     PC6
 
 // ── Motion ───────────────────────────────────────────────────────────────────
 #define X_SPM         80.0f   // steps / mm — both axes (GT2 belt, 20T, 16× step)
@@ -81,7 +95,19 @@ SdFat32  SD_FS;
 #define MAGIC    0xC2   // bump this to reset saved values
 
 // ── Hardware ──────────────────────────────────────────────────────────────────
-U8G2_ST7920_128X64_F_SW_SPI lcd(U8G2_R0, LCD_CLK, LCD_DATA, LCD_CS);
+// ────────────────────────────────────────────────────────────────────────────
+// BLUE SCREEN FIX  (very important on STM32F103 @ 72MHz)
+//
+// Software SPI runs GPIO bit-bang at ~35MHz on STM32; the ST7920 display
+// only accepts up to 2.5MHz.  Solution: use SPI2 HARDWARE peripheral —
+// the LCD pins are literally the SPI2 hardware pins on v4.2.2 (RET6):
+//   PB13 = SPI2_SCK  = LCD_CLK
+//   PB15 = SPI2_MOSI = LCD_DATA
+//   PB12 = GPIO      = LCD_CS  (U8g2 controls this as GPIO)
+//
+// We then call setBusClock(1000000) to cap SPI2 at 1MHz — well within limit.
+// ────────────────────────────────────────────────────────────────────────────
+U8G2_ST7920_128X64_F_2ND_HW_SPI lcd(U8G2_R0, LCD_CS, U8X8_PIN_NONE);
 AccelStepper sx(AccelStepper::DRIVER, X_STEP, X_DIR);
 AccelStepper sy(AccelStepper::DRIVER, Y_STEP, Y_DIR);
 MultiStepper  xy;     // coordinates both axes simultaneously
@@ -727,7 +753,14 @@ void setup() {
   sdChecked = true;
   if(sdOk) scanFiles();
 
+  // LCD init — hardware SPI2 at 1MHz (capped via setBusClock).
+  // This is the fix for the blue screen: SW SPI runs 35MHz on STM32,
+  // hardware SPI2 with setBusClock(1MHz) runs within ST7920's spec.
+  delay(100);                 // let display power stabilise
+  lcd.setBusClock(1000000);   // 1MHz — safe for ST7920 (max 2.5MHz)
   lcd.begin();
+  delay(30);
+
   beep(1500,80); delay(100); beep(2200,80);
   redraw = true;
 }
