@@ -1860,6 +1860,9 @@ footer { border-top: 1px solid var(--border); padding: 2.75rem 0 1.25rem; }
         <button class="plot-play-btn go" id="plotStartBtn" disabled>▶ Start</button>
         <button class="plot-play-btn" id="plotPauseBtn" disabled style="display:none">⏸ Pause</button>
         <button class="plot-play-btn stop" id="plotStopBtn" disabled style="display:none">⏹ Stop</button>
+        <button class="plot-play-btn" id="killBtn" title="Emergency stop — halts motion immediately (M112)" style="background:rgba(239,68,68,.2);border-color:rgba(239,68,68,.5);color:#fca5a5;font-weight:900;letter-spacing:.04em">
+          ⬛ KILL
+        </button>
       </div>
       <div class="dt-sep"></div>
       <div class="dt-group" style="gap:8px;flex:1;max-width:300px">
@@ -1964,10 +1967,19 @@ footer { border-top: 1px solid var(--border); padding: 2.75rem 0 1.25rem; }
         </div>
       </div>
 
-      <!-- Center: bed visualization -->
-      <div class="plot-bed-wrap" id="plotBedWrap">
-        <canvas id="plotBedCanvas"></canvas>
-        <div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);font-size:10px;color:#444;font-family:monospace;white-space:nowrap" id="plotBedInfo">—</div>
+      <!-- Center: 3D visualizer (Three.js) + 2D fallback -->
+      <div class="plot-bed-wrap" id="plotBedWrap" style="flex-direction:column">
+        <!-- View toggle -->
+        <div style="position:absolute;top:8px;right:8px;z-index:10;display:flex;gap:4px">
+          <button id="view3DBtn" class="dt-btn" style="height:24px;padding:0 8px;font-size:10px;background:#1a3050;color:#4a9eff;border-color:#2d5a9e">3D</button>
+          <button id="view2DBtn" class="dt-btn" style="height:24px;padding:0 8px;font-size:10px">2D</button>
+          <button id="viewResetBtn" class="dt-btn" style="height:24px;padding:0 8px;font-size:10px" title="Reset camera">↺</button>
+        </div>
+        <!-- Three.js 3D canvas -->
+        <canvas id="canvas3D" style="width:100%;height:100%;display:block"></canvas>
+        <!-- 2D fallback canvas (hidden by default) -->
+        <canvas id="plotBedCanvas" style="width:100%;height:100%;display:none"></canvas>
+        <div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);font-size:10px;color:#555;font-family:monospace;white-space:nowrap;pointer-events:none" id="plotBedInfo">—</div>
       </div>
 
       <!-- Right: status -->
@@ -2349,6 +2361,8 @@ window.addEventListener("scroll", () => {
 <script type="module">
 import { FaceLandmarker, HandLandmarker, FilesetResolver }
   from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs";
+import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js";
+import { OrbitControls } from "https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/controls/OrbitControls.js";
 
 
 const video        = document.getElementById("video");
@@ -5786,6 +5800,425 @@ setInterval(() => {
   const dot = document.getElementById("connDot");
   if (dot) dot.className = "nav-dot" + (connected ? (plotRunning ? " plotting" : " ok") : "");
 }, 800);
+
+// ══════════════════════════════════════════════════════════════════════════
+//  3D VISUALIZER  (Three.js — Ender-3 pen plotter model)
+// ══════════════════════════════════════════════════════════════════════════
+
+let viz3 = null; // namespace for all 3D state
+
+function init3D() {
+  const canvas = document.getElementById("canvas3D");
+  if (!canvas || viz3) return;
+
+  const w = canvas.offsetWidth || 600;
+  const h = canvas.offsetHeight || 400;
+
+  const scene    = new THREE.Scene();
+  scene.background = new THREE.Color(0x1a1a1a);
+  scene.fog = new THREE.FogExp2(0x1a1a1a, 0.0018);
+
+  const camera = new THREE.PerspectiveCamera(42, w / h, 1, 2000);
+  camera.position.set(340, 240, 400);
+
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+  renderer.setSize(w, h);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.1;
+
+  const controls = new OrbitControls(camera, renderer.domElement);
+  controls.target.set(110, 15, 110);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.07;
+  controls.minDistance = 80;
+  controls.maxDistance = 700;
+  controls.maxPolarAngle = Math.PI * 0.48;
+  controls.update();
+
+  // ── Lighting ─────────────────────────────────────────────────────────
+  scene.add(new THREE.AmbientLight(0x606080, 0.6));
+  const sun = new THREE.DirectionalLight(0xfff5e0, 1.0);
+  sun.position.set(200, 350, 150);
+  sun.castShadow = true;
+  sun.shadow.camera.near = 10;
+  sun.shadow.camera.far  = 800;
+  sun.shadow.camera.left = sun.shadow.camera.bottom = -200;
+  sun.shadow.camera.right = sun.shadow.camera.top   =  400;
+  sun.shadow.mapSize.set(2048, 2048);
+  scene.add(sun);
+  scene.add(new THREE.PointLight(0x4a9eff, 0.3, 300).translateY(80));
+
+  // ── Materials ─────────────────────────────────────────────────────────
+  const mat = {
+    frame:    new THREE.MeshStandardMaterial({ color: 0x444444, metalness: 0.7, roughness: 0.4 }),
+    bed:      new THREE.MeshStandardMaterial({ color: 0x222222, metalness: 0.3, roughness: 0.8 }),
+    spring:   new THREE.MeshStandardMaterial({ color: 0x888888, metalness: 0.9, roughness: 0.2 }),
+    paper:    new THREE.MeshStandardMaterial({ color: 0xf5f0e8, roughness: 0.95 }),
+    carriage: new THREE.MeshStandardMaterial({ color: 0x3a3a3a, metalness: 0.5, roughness: 0.5 }),
+    pen:      new THREE.MeshStandardMaterial({ color: 0x2266cc, metalness: 0.2, roughness: 0.6 }),
+    penTip:   new THREE.MeshStandardMaterial({ color: 0x111111 }),
+    rail:     new THREE.MeshStandardMaterial({ color: 0x999999, metalness: 0.9, roughness: 0.1 }),
+    glow:     new THREE.MeshBasicMaterial({ color: 0x4a9eff, transparent: true, opacity: 0.7 }),
+  };
+
+  // ── Helper: extrusion profile box ─────────────────────────────────────
+  function profile(w, h, d, mat) {
+    return new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+  }
+  function rod(r, len, mat) {
+    const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, len, 12), mat);
+    return m;
+  }
+
+  // ── Base frame ────────────────────────────────────────────────────────
+  const frame = new THREE.Group();
+  scene.add(frame);
+
+  // Bottom horizontal rails
+  function addBar(x, y, z, rx, ry, rz, w, h, d) {
+    const b = profile(w, h, d, mat.frame);
+    b.position.set(x, y, z);
+    b.rotation.set(rx, ry, rz);
+    b.castShadow = true;
+    frame.add(b);
+    return b;
+  }
+  addBar(110, -8, -10, 0, 0, 0, 250, 12, 12); // front X base
+  addBar(110, -8, 230, 0, 0, 0, 250, 12, 12); // back X base
+  addBar(-10, -8, 110, 0, 0, 0, 12, 12, 240); // left Z base
+  addBar(230, -8, 110, 0, 0, 0, 12, 12, 240); // right Z base
+
+  // Vertical uprights (Z frame)
+  addBar(-10, 120, -10, 0, 0, 0, 12, 250, 12);
+  addBar(230, 120, -10, 0, 0, 0, 12, 250, 12);
+  addBar(-10,  60, 230, 0, 0, 0, 12, 120, 12);
+  addBar(230,  60, 230, 0, 0, 0, 12, 120, 12);
+
+  // Top cross bar (X-axis motor mount)
+  addBar(110, 245, -10, 0, 0, 0, 250, 12, 12);
+
+  // ── Heated bed ───────────────────────────────────────────────────────
+  const bedGroup = new THREE.Group();
+  scene.add(bedGroup);
+  const bedPlate = profile(230, 5, 230, mat.bed);
+  bedPlate.receiveShadow = true;
+  bedGroup.add(bedPlate);
+  bedGroup.position.set(110, 2, 110);
+
+  // Paper on bed
+  const paperMesh = new THREE.Mesh(
+    new THREE.PlaneGeometry(PW, PH),
+    mat.paper
+  );
+  paperMesh.rotation.x = -Math.PI / 2;
+  paperMesh.position.set(0, 3.2, 0);
+  paperMesh.receiveShadow = true;
+  bedGroup.add(paperMesh);
+
+  // Paper margin dashes
+  const marginGeo = new THREE.EdgesGeometry(new THREE.BoxGeometry(PW - 24, 0.1, PH - 24));
+  bedGroup.add(new THREE.LineSegments(marginGeo, new THREE.LineBasicMaterial({ color: 0xaaaaaa, transparent: true, opacity: 0.3 })));
+
+  // ── Y-axis smooth rods ────────────────────────────────────────────────
+  [-10, 230].forEach(xPos => {
+    const r = rod(4, 240, mat.rail);
+    r.rotation.x = Math.PI / 2;
+    r.position.set(xPos, 35, 110);
+    r.castShadow = true;
+    frame.add(r);
+  });
+
+  // ── X-axis gantry (moves in Y/Z plotter direction) ────────────────────
+  const gantry = new THREE.Group();
+  scene.add(gantry);
+  gantry.position.set(0, 40, 0); // default Y=0
+
+  // Gantry cross-bar
+  const gantryBar = profile(250, 14, 14, mat.frame);
+  gantryBar.position.set(110, 0, 0);
+  gantryBar.castShadow = true;
+  gantry.add(gantryBar);
+
+  // Smooth X rod
+  const xRod = rod(4, 250, mat.rail);
+  xRod.rotation.z = Math.PI / 2;
+  xRod.position.set(110, -6, 0);
+  gantry.add(xRod);
+
+  // Gantry end blocks (slide on Y rods)
+  [-10, 230].forEach(xPos => {
+    const block = profile(20, 30, 20, mat.carriage);
+    block.position.set(xPos, 0, 0);
+    block.castShadow = true;
+    gantry.add(block);
+  });
+
+  // ── Tool head carriage ────────────────────────────────────────────────
+  const toolGroup = new THREE.Group();
+  gantry.add(toolGroup);
+  toolGroup.position.set(110, 0, 0); // default X=110 (center)
+
+  // Carriage body
+  const carriageBody = profile(34, 36, 24, mat.carriage);
+  carriageBody.castShadow = true;
+  toolGroup.add(carriageBody);
+
+  // Pen holder (vertical cylinder)
+  const holderGeo = new THREE.CylinderGeometry(6, 6, 40, 12);
+  const holder = new THREE.Mesh(holderGeo, mat.carriage);
+  holder.position.set(0, -32, 0);
+  holder.castShadow = true;
+  toolGroup.add(holder);
+
+  // Pen body
+  const penBodyGeo = new THREE.CylinderGeometry(4.5, 4.5, 28, 12);
+  const penBody = new THREE.Mesh(penBodyGeo, mat.pen);
+  penBody.position.set(0, -58, 0);
+  penBody.castShadow = true;
+  toolGroup.add(penBody);
+
+  // Pen tip (cone)
+  const penTipGeo = new THREE.ConeGeometry(4, 10, 12);
+  const penTip = new THREE.Mesh(penTipGeo, mat.penTip);
+  penTip.position.set(0, -77, 0);
+  toolGroup.add(penTip);
+
+  // Contact glow dot (shows on paper when pen is down)
+  const glowDot = new THREE.Mesh(new THREE.CircleGeometry(5, 16), mat.glow);
+  glowDot.rotation.x = -Math.PI / 2;
+  glowDot.position.set(0, -39, 0); // paper level from gantry
+  glowDot.visible = false;
+  toolGroup.add(glowDot);
+
+  // ── Drawn path geometry ───────────────────────────────────────────────
+  // Drawn strokes (blue)
+  const drawnPositions = new Float32Array(300000 * 3);
+  const drawnGeo = new THREE.BufferGeometry();
+  drawnGeo.setAttribute("position", new THREE.BufferAttribute(drawnPositions, 3));
+  drawnGeo.setDrawRange(0, 0);
+  const drawnLine = new THREE.LineSegments(
+    drawnGeo,
+    new THREE.LineBasicMaterial({ color: 0x1a50c0, linewidth: 1 })
+  );
+  drawnLine.frustumCulled = false;
+  scene.add(drawnLine);
+
+  // Preview path (upcoming strokes, very faint)
+  let previewLine = null;
+
+  // ── State ─────────────────────────────────────────────────────────────
+  let drawnCount = 0;    // vertices added to drawnGeo
+  let prevPos    = null; // last pen position while drawing
+  let isPenDown  = false;
+
+  // ── Resize handler ────────────────────────────────────────────────────
+  function onResize() {
+    if (!canvas.offsetParent) return;
+    const w = canvas.offsetWidth, h = canvas.offsetHeight;
+    if (w < 10 || h < 10) return;
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+    renderer.setSize(w, h);
+  }
+  window.addEventListener("resize", onResize);
+
+  // ── Animation loop ────────────────────────────────────────────────────
+  let raf;
+  function animate() {
+    raf = requestAnimationFrame(animate);
+    controls.update();
+    renderer.render(scene, camera);
+  }
+  animate();
+
+  // ── Build preview path from design polylines ──────────────────────────
+  function buildPreview() {
+    if (previewLine) { scene.remove(previewLine); previewLine.geometry.dispose(); previewLine = null; }
+    if (!activePolylines?.length) return;
+
+    const scX = (bedX1 - bedX0) / PW, scY = (bedY1 - bedY0) / PH;
+    const sc  = Math.min(scX, scY);
+    const oX  = bedX0 + ((bedX1 - bedX0) - PW * sc) / 2;
+    const oY  = bedY0 + ((bedY1 - bedY0) - PH * sc) / 2;
+    const toGX = mm => oX + mm * sc;
+    const toGY = mm => oY + mm * sc;
+
+    const pts = [];
+    activePolylines.forEach(pl => {
+      for (let i = 1; i < pl.length; i++) {
+        pts.push(toGX(pl[i-1].x), 4.5, toGY(pl[i-1].y));
+        pts.push(toGX(pl[i].x),   4.5, toGY(pl[i].y));
+      }
+    });
+
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute("position", new THREE.Float32BufferAttribute(pts, 3));
+    previewLine = new THREE.LineSegments(geo, new THREE.LineBasicMaterial({
+      color: 0x2a4a80, transparent: true, opacity: 0.25
+    }));
+    previewLine.frustumCulled = false;
+    scene.add(previewLine);
+  }
+
+  // ── Exported API ──────────────────────────────────────────────────────
+  viz3 = {
+    // Move tool head to printer position (mm)
+    moveTo(px, py, penDown) {
+      // Map printer coords → 3D scene
+      // Printer X (0-220) → scene X (0-220), gantry stays at X=0 base, toolGroup slides
+      // Printer Y (0-220) → gantry Z (0-220)
+      // Paper: bedGroup at y=2, paper surface at y=4.5 in world space
+      // Gantry is at y=40 world → tool tip at world y = 40 - 77 + paperY
+      toolGroup.position.x = px;          // slides along gantry (X axis)
+      gantry.position.z    = py;          // gantry slides along Y rods
+
+      // Pen up/down: smoothly animate tool Z offset
+      const targetY = penDown ? -2 : 12;  // how many units gantry raises pen
+      toolGroup.position.y += (targetY - toolGroup.position.y) * 0.18;
+
+      glowDot.visible = penDown;
+
+      // Accumulate drawn path
+      if (penDown) {
+        const worldX = px, worldY = 4.6, worldZ = py;
+        if (prevPos && isPenDown) {
+          if (drawnCount + 6 < drawnPositions.length) {
+            drawnPositions[drawnCount++] = prevPos[0];
+            drawnPositions[drawnCount++] = prevPos[1];
+            drawnPositions[drawnCount++] = prevPos[2];
+            drawnPositions[drawnCount++] = worldX;
+            drawnPositions[drawnCount++] = worldY;
+            drawnPositions[drawnCount++] = worldZ;
+            drawnGeo.attributes.position.needsUpdate = true;
+            drawnGeo.setDrawRange(0, drawnCount / 3);
+          }
+        }
+        prevPos   = [worldX, worldY, worldZ];
+        isPenDown = true;
+      } else {
+        isPenDown = false;
+        prevPos   = [px, 4.6, py];
+      }
+    },
+
+    // Clear drawn path
+    clearPath() {
+      drawnCount = 0;
+      drawnGeo.setDrawRange(0, 0);
+      drawnGeo.attributes.position.needsUpdate = true;
+      prevPos = null; isPenDown = false;
+    },
+
+    // Rebuild the preview path when design changes
+    refreshPreview() { buildPreview(); },
+
+    // Reset camera to default view
+    resetCamera() {
+      camera.position.set(340, 240, 400);
+      controls.target.set(110, 15, 110);
+      controls.update();
+    },
+
+    // Update paper size when canvas dimensions change
+    updatePaper() {
+      paperMesh.scale.set(PW / 220, 1, PH / 220);
+    },
+
+    onResize,
+
+    destroy() { cancelAnimationFrame(raf); window.removeEventListener("resize", onResize); viz3 = null; }
+  };
+
+  // Build initial preview
+  buildPreview();
+  onResize();
+}
+
+// ── View toggle buttons ───────────────────────────────────────────────────
+function setView3D(use3D) {
+  const c3d = document.getElementById("canvas3D");
+  const c2d = document.getElementById("plotBedCanvas");
+  const b3d = document.getElementById("view3DBtn");
+  const b2d = document.getElementById("view2DBtn");
+  if (!c3d || !c2d) return;
+  c3d.style.display = use3D ? "block" : "none";
+  c2d.style.display = use3D ? "none"  : "block";
+  b3d.style.background = use3D ? "#1a3050" : "";
+  b3d.style.color      = use3D ? "#4a9eff" : "";
+  b3d.style.borderColor= use3D ? "#2d5a9e" : "";
+  b2d.style.background = use3D ? "" : "#1a3050";
+  b2d.style.color      = use3D ? "" : "#4a9eff";
+  if (use3D) { if (!viz3) init3D(); else viz3.onResize(); }
+  else updatePlotBed();
+}
+
+document.getElementById("view3DBtn")?.addEventListener("click",  () => setView3D(true));
+document.getElementById("view2DBtn")?.addEventListener("click",  () => setView3D(false));
+document.getElementById("viewResetBtn")?.addEventListener("click", () => viz3?.resetCamera());
+
+// Patch updatePlotCoords to drive the 3D visualizer in real-time
+const _origUpdateCoords = updatePlotCoords;
+window.updatePlotCoords = function(x, y, penIsDown) {
+  _origUpdateCoords?.(x, y, penIsDown);
+  if (viz3) viz3.moveTo(x, y, penIsDown);
+  document.getElementById("machXBig") && (document.getElementById("machXBig").textContent = x.toFixed(1) + " mm");
+  document.getElementById("machYBig") && (document.getElementById("machYBig").textContent = y.toFixed(1) + " mm");
+};
+
+// Init 3D when Run tab is first shown (lazy)
+const _origShowPanel = showPanel;
+window.showPanel = function(name) {
+  _origShowPanel(name);
+  if (name === "run") {
+    requestAnimationFrame(() => {
+      if (!viz3) init3D();
+      else { viz3.onResize(); viz3.refreshPreview(); }
+    });
+  }
+};
+
+// Refresh preview whenever design changes
+setInterval(() => {
+  if (viz3 && document.getElementById("panelPlot")?.style.display !== "none")
+    viz3.refreshPreview();
+}, 3000);
+
+// ── Kill / Emergency Stop button ──────────────────────────────────────────
+// Sends M112 (immediate halt) and M84 (motors off) then disconnects.
+// Hardware kill switch: wire a normally-closed button between the board's
+// RESET pin and GND on the Creality v4.2.2 — pressing it instantly resets
+// the STM32 MCU (same effect as power-cycling). No firmware change needed.
+//
+// Pin location on v4.2.2: RESET header pin next to the ISP connector,
+// or the small white RESET button on the board itself if present.
+document.getElementById("killBtn")?.addEventListener("click", async () => {
+  const btn = document.getElementById("killBtn");
+  if (!serialWriter) return;
+
+  btn.textContent = "KILLING…";
+  try {
+    // M112 = emergency stop (halts firmware immediately on Marlin-compatible boards)
+    await sendGcode("M112\n");
+    await sendGcode("M84\n");   // motors off
+    // Cancel any active plot
+    plotCancelFlag = true;
+    plotRunning    = false;
+    document.getElementById("plotStopBtn")?.dispatchEvent(new Event("click"));
+  } catch(e) { /* ignore */ }
+
+  // Flush & release port
+  try { serialWriter?.releaseLock(); } catch(_) {}
+  try { await serialPort?.close(); }   catch(_) {}
+  serialWriter = null; serialPort = null;
+
+  btn.textContent = "⬛ KILL";
+  if (viz3) viz3.clearPath();
+  appendConsole("⚠ Emergency stop sent — printer halted and disconnected.", "err");
+  showPanel("machine");
+});
 
 </script>
 </body>
