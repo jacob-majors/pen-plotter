@@ -978,6 +978,29 @@ footer { border-top: 1px solid var(--border); padding: 2.75rem 0 1.25rem; }
 /* nav connected state */
 .nav-item.connected { color: #22c55e !important; }
 
+/* Create panel mode bar */
+.create-mode-bar {
+  display: flex; gap: 2px;
+  background: #1a1a1a; border: 1px solid #333;
+  border-radius: 6px; padding: 2px;
+}
+.create-mode-btn {
+  display: flex; align-items: center; gap: 5px;
+  padding: 4px 10px; border-radius: 4px;
+  border: none; background: none; color: #555;
+  font-size: 11px; font-weight: 600; font-family: inherit; cursor: pointer;
+  transition: background .12s, color .12s; white-space: nowrap;
+}
+.create-mode-btn:hover { color: #999; background: #252525; }
+.create-mode-btn.active { background: #1a3050; color: #4a9eff; }
+.create-mode-view { display: flex; flex-direction: column; }
+
+/* Console output */
+#consoleOutput .cmd  { color: #4a9eff; }
+#consoleOutput .resp { color: #888; }
+#consoleOutput .err  { color: #ef4444; }
+#consoleOutput .info { color: #22c55e; }
+
 /* toolbar */
 .dt-toolbar {
   display: flex; align-items: center; gap: 0;
@@ -1207,21 +1230,25 @@ footer { border-top: 1px solid var(--border); padding: 2.75rem 0 1.25rem; }
 <!-- ████ APP ████ -->
 <div id="app">
 
-  <!-- ── Left nav sidebar ── -->
+  <!-- ── Left nav sidebar — 4 tabs ── -->
   <nav class="app-nav">
     <div class="nav-brand">P</div>
     <div class="nav-items">
-      <button class="nav-item active" data-panel="designs" title="Design">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-        <span class="nav-tip">Design</span>
+      <button class="nav-item" data-panel="machine" title="Machine">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="3" width="20" height="14" rx="2"/><polyline points="8 21 12 17 16 21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        <span class="nav-tip">Machine</span>
       </button>
-      <button class="nav-item" data-panel="draw" title="Track">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="4"/><path d="M6 20v-2a6 6 0 0 1 12 0v2"/></svg>
-        <span class="nav-tip">Track</span>
+      <button class="nav-item active" data-panel="create" title="Create">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5z"/><circle cx="6.5" cy="17.5" r="2"/></svg>
+        <span class="nav-tip">Create</span>
       </button>
-      <button class="nav-item" data-panel="plot" title="Plot">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="10"/><polygon points="10,8 16,12 10,16" fill="currentColor"/></svg>
-        <span class="nav-tip">Plot</span>
+      <button class="nav-item" data-panel="run" title="Run">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><polygon points="5,3 19,12 5,21" fill="currentColor"/></svg>
+        <span class="nav-tip">Run</span>
+      </button>
+      <button class="nav-item" data-panel="settings" title="Settings">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <span class="nav-tip">Settings</span>
       </button>
     </div>
     <div class="nav-foot">
@@ -1245,6 +1272,390 @@ footer { border-top: 1px solid var(--border); padding: 2.75rem 0 1.25rem; }
 
   <!-- intentionally empty header placeholder (nav scroll JS guard) -->
   <header id="nav" style="display:none"></header>
+
+  <!-- ══════════════════════════════════════════════════════════════════════
+       MACHINE PANEL — USB console, live position, manual jog
+       ══════════════════════════════════════════════════════════════════════ -->
+  <div id="panelMachine" class="panel" style="display:none">
+    <div class="dt-toolbar">
+      <div class="dt-group">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+        <span class="dt-label" style="color:#ccc">Machine Control</span>
+      </div>
+      <div class="dt-sep"></div>
+      <div class="dt-group" id="machineStatusBar">
+        <span class="dt-label">Status:</span>
+        <span class="dt-zoom-label" id="machineState" style="color:#22c55e">—</span>
+      </div>
+      <div class="dt-sep"></div>
+      <div class="dt-group">
+        <span class="dt-label">X</span><span class="dt-zoom-label" id="machX" style="font-family:monospace">—</span>
+        <span class="dt-label">Y</span><span class="dt-zoom-label" id="machY" style="font-family:monospace">—</span>
+      </div>
+      <div style="flex:1"></div>
+      <div class="dt-group">
+        <button class="dt-btn" id="machHomeX" title="Home X (G28 X)">Home X</button>
+        <button class="dt-btn" id="machHomeY" title="Home Y (G28 Y)">Home Y</button>
+        <button class="dt-btn" id="machHomeAll" title="Home all (G28)">Home All</button>
+        <button class="dt-btn" id="machZero" title="Set current position as 0,0 (G92 X0 Y0)">Set Zero</button>
+      </div>
+    </div>
+
+    <div class="dt-body" style="flex:1;min-height:0;grid-template-columns:200px 1fr 220px">
+      <!-- Left: machine status -->
+      <div class="dt-presets">
+        <div class="dt-presets-head">
+          <div class="dt-section-head" style="padding:0 0 4px">Connection</div>
+          <button class="draw-start-btn" id="machConnectBtn" onclick="document.getElementById('printerBtn')?.click()">
+            Connect via USB
+          </button>
+          <div style="font-size:10px;color:#555;text-align:center;padding-top:4px">Chrome / Edge only</div>
+        </div>
+        <div class="dt-preset-scroll">
+          <div class="dt-section">
+            <div class="dt-section-head">Position</div>
+            <div class="plot-coords" style="margin:4px 10px">
+              <div class="plot-coord"><div class="plot-coord-axis">X</div><div class="plot-coord-val" id="machXBig">—</div></div>
+              <div class="plot-coord"><div class="plot-coord-axis">Y</div><div class="plot-coord-val" id="machYBig">—</div></div>
+            </div>
+          </div>
+          <div class="dt-section">
+            <div class="dt-section-head">Pen</div>
+            <div class="dt-prop-row"><span class="dt-prop-label">State</span><span class="dt-prop-val-ro" id="machPenState">—</span></div>
+            <div class="dt-prop-row" style="gap:4px">
+              <button class="man-btn man-btn-pen" style="flex:1" id="machLiftBtn">↑ Up</button>
+              <button class="man-btn man-btn-pen" style="flex:1" id="machDropBtn">↓ Down</button>
+            </div>
+          </div>
+          <div class="dt-section">
+            <div class="dt-section-head">Quick Actions</div>
+            <div class="dt-prop-row"><button class="pp-btn" id="machPark" style="width:100%">Park (go 0,0)</button></div>
+            <div class="dt-prop-row"><button class="pp-btn" id="machMotorsOff" style="width:100%">Motors Off (M84)</button></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Center: G-code console -->
+      <div style="display:flex;flex-direction:column;background:#111;min-height:0">
+        <div style="padding:6px 10px;background:#1a1a1a;border-bottom:1px solid #2a2a2a;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#444">
+          G-Code Console
+        </div>
+        <div id="consoleOutput" style="flex:1;overflow-y:auto;padding:8px 10px;font-family:monospace;font-size:11.5px;line-height:1.7;color:#888;min-height:0"></div>
+        <div style="display:flex;gap:6px;padding:8px 10px;border-top:1px solid #2a2a2a;background:#161616">
+          <input type="text" id="consoleInput" placeholder="G1 X50 Y50 F3000 — type any G-code command" autocomplete="off" spellcheck="false"
+            style="flex:1;height:30px;padding:0 10px;background:#1e1e1e;border:1px solid #333;border-radius:4px;color:#ccc;font-family:monospace;font-size:12px">
+          <button class="dt-btn dt-btn-primary" id="consoleSend" style="height:30px;padding:0 14px">Send</button>
+          <button class="dt-btn" id="consoleClear" style="height:30px;padding:0 10px;font-size:10px">Clear</button>
+        </div>
+      </div>
+
+      <!-- Right: jog controls -->
+      <div class="dt-props">
+        <div class="dt-props-title">Manual Jog</div>
+        <div class="dt-props-scroll">
+          <div class="dt-section">
+            <div class="dt-prop-row"><span class="dt-prop-label">Step</span>
+              <select id="machJogStep" class="dt-select" style="flex:1;height:24px">
+                <option value="0.1">0.1 mm</option>
+                <option value="1">1 mm</option>
+                <option value="5" selected>5 mm</option>
+                <option value="10">10 mm</option>
+                <option value="50">50 mm</option>
+              </select>
+            </div>
+            <!-- Jog arrow pad -->
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;margin:6px 10px">
+              <div></div>
+              <button class="man-btn man-btn-y" id="machJogYp">Y+</button>
+              <div></div>
+              <button class="man-btn" id="machJogXm">X−</button>
+              <button class="man-btn" id="machJogCenter" style="font-size:.6rem;color:#555">⊕</button>
+              <button class="man-btn" id="machJogXp">X+</button>
+              <div></div>
+              <button class="man-btn man-btn-y" id="machJogYm">Y−</button>
+              <div></div>
+            </div>
+            <div class="pp-hint" style="padding:2px 10px 4px">Arrow keys also work</div>
+          </div>
+          <div class="dt-section">
+            <div class="dt-section-head">Feed Speed</div>
+            <div class="dt-prop-row"><span class="dt-prop-label">Speed</span>
+              <input type="number" class="dt-prop-val" id="machFeed" value="3000" style="width:65px"><span class="dt-unit">mm/m</span>
+            </div>
+          </div>
+          <div class="dt-section">
+            <div class="dt-section-head">Z / Pen Height</div>
+            <div class="dt-prop-row"><span class="dt-prop-label">Live Z</span><span class="dt-prop-val-ro" id="machLiveZ">—</span></div>
+            <div class="z-slider-wrap" style="margin:4px 10px">
+              <button class="pp-btn pp-btn-sm z-step-btn" id="zStepUp">+</button>
+              <div class="z-slider-inner">
+                <span class="z-tick z-tick-top">50</span>
+                <input type="range" id="zLiveSlider" class="z-slider" min="-50" max="50" step="0.5" value="8">
+                <span class="z-tick z-tick-bot">-50</span>
+              </div>
+              <button class="pp-btn pp-btn-sm z-step-btn" id="zStepDown">−</button>
+            </div>
+            <div class="dt-prop-row"><span class="dt-prop-label">Up Z</span><input type="number" class="dt-prop-val" id="penUpZ" value="8" style="width:55px"></div>
+            <div class="dt-prop-row"><span class="dt-prop-label">Down Z</span><input type="number" class="dt-prop-val" id="penDownZ" value="2" style="width:55px"></div>
+            <div class="dt-prop-row" style="gap:4px">
+              <button class="pp-btn pp-btn-sm" id="liftBtn" style="flex:1">↑ Pen Up</button>
+              <button class="pp-btn pp-btn-sm pp-btn-accent" id="dropBtn" style="flex:1">↓ Pen Down</button>
+            </div>
+          </div>
+          <div class="dt-section">
+            <div class="dt-section-head">Bounds</div>
+            <div class="dt-prop-row" style="gap:3px">
+              <button class="pp-btn pp-btn-sm" id="setBL">BL</button><button class="pp-btn pp-btn-sm" id="setBR">BR</button>
+              <button class="pp-btn pp-btn-sm" id="setTL">TL</button><button class="pp-btn pp-btn-sm" id="setTR">TR</button>
+              <button class="pp-btn pp-btn-accent pp-btn-sm" id="jogCenter">⊕</button>
+            </div>
+            <div class="pp-hint" id="boundsHint" style="padding:4px 10px">X 0–220 · Y 0–220</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════════
+       CREATE PANEL — Camera tracking | Freehand | Patterns | SVG | Text
+       ══════════════════════════════════════════════════════════════════════ -->
+  <!-- This wrapper shows/hides the existing sub-panels via JS mode switching -->
+  <div id="panelCreate" class="panel" style="display:flex;flex-direction:column">
+    <!-- Mode selector bar -->
+    <div class="dt-toolbar" style="gap:0;padding:0 8px">
+      <div class="create-mode-bar">
+        <button class="create-mode-btn active" data-mode="patterns">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+          Patterns
+        </button>
+        <button class="create-mode-btn" data-mode="camera">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M6 20v-2a6 6 0 0 1 12 0v2"/></svg>
+          Track
+        </button>
+        <button class="create-mode-btn" data-mode="svg">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          SVG
+        </button>
+        <button class="create-mode-btn" data-mode="text">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
+          Text
+        </button>
+      </div>
+      <div style="flex:1"></div>
+      <div class="dt-group">
+        <button class="dt-btn dt-btn-primary" id="sendToRunBtn" disabled>Send to Run →</button>
+      </div>
+    </div>
+    <!-- Sub-panels fill the remaining space -->
+    <div id="createModePanels" style="flex:1;min-height:0;position:relative;overflow:hidden">
+      <!-- Patterns mode (panelDesigns content, minus its toolbar) -->
+      <div id="createPatterns" class="create-mode-view" style="position:absolute;inset:0;display:flex;flex-direction:column"></div>
+      <!-- Camera/Track mode (panelDraw content) -->
+      <div id="createCamera" class="create-mode-view" style="position:absolute;inset:0;display:none;flex-direction:column"></div>
+      <!-- SVG import mode -->
+      <div id="createSVG" class="create-mode-view" style="position:absolute;inset:0;display:none;flex-direction:column;background:#1a1a1a">
+        <div class="dt-body" style="flex:1;min-height:0;grid-template-columns:260px 1fr">
+          <div class="dt-presets">
+            <div class="dt-presets-head">
+              <div class="dt-section-head" style="padding:0 0 4px">Import SVG</div>
+              <label class="pp-file-label" style="flex-direction:column;align-items:flex-start;gap:6px">
+                <input type="file" id="svgFile" accept=".svg" style="display:none">
+                <span class="pp-file-btn" style="width:100%;justify-content:center">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                  Choose SVG File
+                </span>
+                <span class="pp-file-name" id="svgFileName" style="font-size:11px;color:#666;width:100%;text-align:center">No file chosen</span>
+              </label>
+            </div>
+            <div class="dt-preset-scroll">
+              <div class="dt-section">
+                <div class="dt-section-head">Scale &amp; Position</div>
+                <div class="dt-prop-row"><span class="dt-prop-label">Scale</span><input type="number" class="dt-prop-val" id="svgScale" value="100" min="1" max="500" step="1" style="width:65px"><span class="dt-unit">%</span></div>
+              </div>
+              <div class="dt-section">
+                <div class="dt-prop-row"><button class="pp-btn pp-btn-accent" id="plotSvgBtn" disabled style="flex:1">Plot SVG</button><button class="pp-btn" id="clearSvgBtn">Clear</button></div>
+                <div class="pp-hint" id="svgHint" style="padding:4px 10px">SVGs auto-fit to the active boundary box.</div>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:center;background:#111;color:#333;font-size:13px">
+            SVG preview — load a file to see it here
+          </div>
+        </div>
+      </div>
+      <!-- Text to Plot mode -->
+      <div id="createText" class="create-mode-view" style="position:absolute;inset:0;display:none;flex-direction:column;background:#1a1a1a">
+        <div class="dt-body" style="flex:1;min-height:0;grid-template-columns:300px 1fr">
+          <div class="dt-presets">
+            <div class="dt-presets-head">
+              <div class="dt-section-head" style="padding:0 0 4px">Text to Plot
+                <button class="pp-btn pp-btn-sm" id="dictateBtn" style="float:right">🎤</button>
+              </div>
+              <textarea id="plotText" class="pp-textarea" placeholder="Type text to plot…" rows="4" style="width:100%;margin:0"></textarea>
+            </div>
+            <div class="dt-preset-scroll">
+              <div class="dt-section">
+                <div class="dt-section-head">Text Settings</div>
+                <div class="dt-prop-row"><span class="dt-prop-label">Size</span><input type="number" class="dt-prop-val" id="textSize" value="15" min="3" max="80" step="1" style="width:65px"><span class="dt-unit">mm</span></div>
+                <div class="dt-prop-row" style="gap:4px">
+                  <button class="pp-btn" id="textAlignLeft">⬛◻◻</button>
+                  <button class="pp-btn pp-btn-accent" id="textAlignCenter">◻⬛◻</button>
+                  <button class="pp-btn" id="textAlignRight">◻◻⬛</button>
+                </div>
+              </div>
+              <div class="dt-section">
+                <div class="dt-prop-row">
+                  <button class="pp-btn" id="previewTextBtn" style="flex:1">Preview</button>
+                  <button class="pp-btn pp-btn-accent" id="plotTextBtn" disabled style="flex:1">Plot Text</button>
+                  <button class="pp-btn" id="clearTextBtn">Clear</button>
+                </div>
+                <div class="pp-hint" id="textHint" style="padding:4px 10px">Connect plotter to plot.</div>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:center;background:#111;color:#333;font-size:13px">
+            Text preview — type above and click Preview
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════════
+       SETTINGS PANEL — Motor config, steps, direction, limits, homing
+       ══════════════════════════════════════════════════════════════════════ -->
+  <div id="panelSettings" class="panel" style="display:none;overflow:hidden">
+    <div class="dt-toolbar">
+      <span class="dt-label" style="color:#ccc;font-size:13px">Machine Settings</span>
+      <div style="flex:1"></div>
+      <div class="dt-group">
+        <button class="dt-btn dt-btn-primary" id="applySettingsBtn">Apply &amp; Save (M500)</button>
+        <button class="dt-btn" id="restoreSettingsBtn">Restore (M501)</button>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;height:calc(100% - 36px);overflow-y:auto">
+
+      <!-- Column 1: Motor -->
+      <div style="border-right:1px solid #2a2a2a;overflow-y:auto">
+        <div class="dt-section-head" style="padding:8px 12px 4px;font-size:11px">Motors &amp; Steps</div>
+        <div class="dt-section">
+          <div class="dt-section-head">Steps / mm  <span style="font-weight:400;color:#555">(M92)</span></div>
+          <div class="dt-prop-row"><span class="dt-prop-label">X steps/mm</span><input type="number" class="dt-prop-val" id="sX_spm" value="80" step="0.1" style="width:70px"></div>
+          <div class="dt-prop-row"><span class="dt-prop-label">Y steps/mm</span><input type="number" class="dt-prop-val" id="sY_spm" value="80" step="0.1" style="width:70px"></div>
+          <div class="pp-hint" style="padding:2px 10px 6px">GT2 belt 20T + 16× step = 80</div>
+        </div>
+        <div class="dt-section">
+          <div class="dt-section-head">Direction  <span style="font-weight:400;color:#555">(M569)</span></div>
+          <div class="dt-prop-row">
+            <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:#777;cursor:pointer">
+              <input type="checkbox" id="sX_inv" style="accent-color:#4a9eff"> Invert X direction
+            </label>
+          </div>
+          <div class="dt-prop-row">
+            <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:#777;cursor:pointer">
+              <input type="checkbox" id="sY_inv" style="accent-color:#4a9eff"> Invert Y direction
+            </label>
+          </div>
+        </div>
+        <div class="dt-section">
+          <div class="dt-section-head">Speed  <span style="font-weight:400;color:#555">(M203)</span></div>
+          <div class="dt-prop-row"><span class="dt-prop-label">Max X</span><input type="number" class="dt-prop-val" id="sX_vmax" value="200" style="width:70px"><span class="dt-unit">mm/s</span></div>
+          <div class="dt-prop-row"><span class="dt-prop-label">Max Y</span><input type="number" class="dt-prop-val" id="sY_vmax" value="200" style="width:70px"><span class="dt-unit">mm/s</span></div>
+        </div>
+        <div class="dt-section">
+          <div class="dt-section-head">Acceleration  <span style="font-weight:400;color:#555">(M204)</span></div>
+          <div class="dt-prop-row"><span class="dt-prop-label">Print</span><input type="number" class="dt-prop-val" id="sAccelP" value="1000" style="width:70px"><span class="dt-unit">mm/s²</span></div>
+          <div class="dt-prop-row"><span class="dt-prop-label">Travel</span><input type="number" class="dt-prop-val" id="sAccelT" value="2000" style="width:70px"><span class="dt-unit">mm/s²</span></div>
+        </div>
+      </div>
+
+      <!-- Column 2: Pen + Work Area -->
+      <div style="border-right:1px solid #2a2a2a;overflow-y:auto">
+        <div class="dt-section-head" style="padding:8px 12px 4px;font-size:11px">Pen &amp; Work Area</div>
+        <div class="dt-section">
+          <div class="dt-section-head">Pen Heights  <span style="font-weight:400;color:#555">(Z axis)</span></div>
+          <div class="dt-prop-row"><span class="dt-prop-label">Up Z</span><input type="number" class="dt-prop-val" id="sPenUp" value="8" step="0.5" style="width:65px"></div>
+          <div class="dt-prop-row"><span class="dt-prop-label">Down Z</span><input type="number" class="dt-prop-val" id="sPenDn" value="2" step="0.5" style="width:65px"></div>
+          <div class="dt-prop-row"><span class="dt-prop-label">Z speed</span><input type="number" class="dt-prop-val" id="sPenSpd" value="3000" style="width:65px"><span class="dt-unit">mm/m</span></div>
+        </div>
+        <div class="dt-section">
+          <div class="dt-section-head">Work Area  <span style="font-weight:400;color:#555">(M208)</span></div>
+          <div class="dt-prop-row"><span class="dt-prop-label">Max X</span><input type="number" class="dt-prop-val" id="sMaxX" value="220" style="width:65px"><span class="dt-unit">mm</span></div>
+          <div class="dt-prop-row"><span class="dt-prop-label">Max Y</span><input type="number" class="dt-prop-val" id="sMaxY" value="220" style="width:65px"><span class="dt-unit">mm</span></div>
+          <div class="dt-prop-row">
+            <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:#777;cursor:pointer">
+              <input type="checkbox" id="sSoftLimits" style="accent-color:#4a9eff"> Enable soft limits (M211 S1)
+            </label>
+          </div>
+        </div>
+        <div class="dt-section">
+          <div class="dt-section-head">Draw Speeds</div>
+          <div class="dt-prop-row"><span class="dt-prop-label">XY Feed</span><input type="number" class="dt-prop-val" id="xySpeed" value="12000" style="width:65px"><span class="dt-unit">mm/m</span></div>
+          <div class="dt-prop-row"><span class="dt-prop-label">Passes</span><input type="number" class="dt-prop-val" id="linePasses" value="2" style="width:55px"></div>
+          <div class="dt-prop-row"><button class="pp-btn pp-btn-turbo" id="turboBtn">Turbo</button><button class="pp-btn pp-btn-accent" id="applyMotionBtn">Apply</button></div>
+          <div class="dt-prop-row"><span class="dt-prop-label">Max speed</span><input type="number" class="dt-prop-val" id="maxSpeed" value="220" style="width:55px"><span class="dt-unit">mm/s</span></div>
+          <div class="dt-prop-row"><span class="dt-prop-label">Accel</span><input type="number" class="dt-prop-val" id="accelVal" value="6000" style="width:65px"></div>
+          <div class="dt-prop-row"><span class="dt-prop-label">Travel accel</span><input type="number" class="dt-prop-val" id="travelAccel" value="8000" style="width:65px"></div>
+        </div>
+      </div>
+
+      <!-- Column 3: Homing + Calibration -->
+      <div style="overflow-y:auto">
+        <div class="dt-section-head" style="padding:8px 12px 4px;font-size:11px">Homing &amp; Calibration</div>
+        <div class="dt-section">
+          <div class="dt-section-head">Limit Switches  <span style="font-weight:400;color:#555">(M119)</span></div>
+          <div class="dt-prop-row">
+            <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:#777;cursor:pointer">
+              <input type="checkbox" id="sXEndstop" style="accent-color:#4a9eff"> X endstop enabled
+            </label>
+          </div>
+          <div class="dt-prop-row"><span class="dt-prop-label">X type</span>
+            <select class="dt-select" id="sXEndstopType" style="height:22px;flex:1">
+              <option value="min">Min (normally open)</option>
+              <option value="min_nc">Min (normally closed)</option>
+              <option value="max">Max (normally open)</option>
+            </select>
+          </div>
+          <div class="dt-prop-row">
+            <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:#777;cursor:pointer">
+              <input type="checkbox" id="sYEndstop" style="accent-color:#4a9eff"> Y endstop enabled
+            </label>
+          </div>
+          <div class="dt-prop-row"><span class="dt-prop-label">Y type</span>
+            <select class="dt-select" id="sYEndstopType" style="height:22px;flex:1">
+              <option value="min">Min (normally open)</option>
+              <option value="min_nc">Min (normally closed)</option>
+              <option value="max">Max (normally open)</option>
+            </select>
+          </div>
+          <div class="dt-prop-row"><button class="pp-btn" id="sCheckEndstops" style="width:100%">Check Endstops (M119)</button></div>
+        </div>
+        <div class="dt-section">
+          <div class="dt-section-head">Homing  <span style="font-weight:400;color:#555">(G28)</span></div>
+          <div class="dt-prop-row"><span class="dt-prop-label">Homing speed</span><input type="number" class="dt-prop-val" id="sHomingSpeed" value="1500" style="width:65px"><span class="dt-unit">mm/m</span></div>
+          <div style="display:flex;gap:4px;padding:4px 10px">
+            <button class="pp-btn" id="sHomeX" style="flex:1">Home X</button>
+            <button class="pp-btn" id="sHomeY" style="flex:1">Home Y</button>
+            <button class="pp-btn pp-btn-accent" id="sHomeAll" style="flex:1">Home All</button>
+          </div>
+        </div>
+        <div class="dt-section">
+          <div class="dt-section-head">Calibration</div>
+          <div class="dt-prop-row"><button class="pp-btn pp-btn-accent" id="sSetZero" style="width:100%">Set Current Pos as Zero (G92 X0 Y0)</button></div>
+          <div class="dt-prop-row"><button class="pp-btn" id="sPark" style="width:100%">Go to Park Position (0,0)</button></div>
+          <div class="dt-section-head" style="margin-top:8px">Distance Calibration</div>
+          <div class="pp-hint" style="padding:2px 10px 4px">Move axis, enter expected vs actual distance to auto-calculate steps/mm</div>
+          <div class="dt-prop-row"><span class="dt-prop-label">Expected</span><input type="number" class="dt-prop-val" id="sCalExpected" value="100" style="width:60px"><span class="dt-unit">mm</span></div>
+          <div class="dt-prop-row"><span class="dt-prop-label">Actual</span><input type="number" class="dt-prop-val" id="sCalActual" value="100" style="width:60px"><span class="dt-unit">mm</span></div>
+          <div style="display:flex;gap:4px;padding:4px 10px">
+            <button class="pp-btn" id="sCalcX" style="flex:1">Calc X</button>
+            <button class="pp-btn" id="sCalcY" style="flex:1">Calc Y</button>
+          </div>
+          <div class="pp-hint" id="sCalResult" style="padding:4px 10px">—</div>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- ── Track panel (was Draw) ── -->
   <div id="panelDraw" class="panel" style="display:none">
@@ -1430,14 +1841,16 @@ footer { border-top: 1px solid var(--border); padding: 2.75rem 0 1.25rem; }
             <div class="dt-prop-row"><span class="dt-prop-label">Max speed</span><input type="number" class="dt-prop-val" id="maxSpeed" value="220" style="width:55px"><span class="dt-unit">mm/s</span></div>
             <div class="dt-prop-row"><span class="dt-prop-label">Accel</span><input type="number" class="dt-prop-val" id="accelVal" value="6000" style="width:65px"></div>
             <div class="dt-prop-row"><span class="dt-prop-label">Travel accel</span><input type="number" class="dt-prop-val" id="travelAccel" value="8000" style="width:65px"></div>
+            <div class="dt-prop-row"><button class="pp-btn pp-btn-accent" id="speedTestBtn" style="width:100%">Speed Test X ±15mm</button></div>
+            <div class="pp-hint" id="speedTestHint" style="padding:4px 10px">Runs 30 mm back and forth around bed center with pen up.</div>
           </div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- ── Plot panel ── -->
-  <div id="panelPlot" class="panel" style="display:none">
+  <!-- ── Run panel (plot execution) ── -->
+  <div id="panelPlot" id2="panelRun" class="panel" style="display:none">
     <div class="dt-toolbar">
       <div class="dt-group">
         <span class="dt-label" id="plotDesignName" style="color:#ccc;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">No design loaded</span>
@@ -2619,6 +3032,8 @@ const applyMotionEl = document.getElementById("applyMotionBtn");
 const maxSpeedEl    = document.getElementById("maxSpeed");
 const accelValEl    = document.getElementById("accelVal");
 const travelAccelEl = document.getElementById("travelAccel");
+const speedTestBtnEl = document.getElementById("speedTestBtn");
+const speedTestHintEl = document.getElementById("speedTestHint");
 const jogStepEl     = document.getElementById("jogStep");
 const boundsHintEl  = document.getElementById("boundsHint");
 
@@ -2947,6 +3362,54 @@ applyMotionEl.addEventListener("click", async () => {
   showToast("⚙️ Motion applied");
 });
 
+speedTestBtnEl?.addEventListener("click", async () => {
+  if (!serialWriter) {
+    alert("Connect plotter first.");
+    return;
+  }
+  if (speedTestRunning) {
+    stopSpeedTest();
+    return;
+  }
+
+  speedTestRunning = true;
+  updateSpeedTestUI();
+  showToast("Speed test running", "X axis oscillating 30 mm at center");
+
+  const vmax = parseFloat(maxSpeedEl.value) || 220;
+  const acc  = parseFloat(accelValEl.value) || 6000;
+  const tacc = parseFloat(travelAccelEl.value) || acc;
+  const feed = Math.max(parseFloat(xySpeedEl.value) || 12000, vmax * 60);
+  const centerX = (BED_MIN_MM + BED_MAX_MM) / 2;
+  const centerY = (BED_MIN_MM + BED_MAX_MM) / 2;
+  const halfSweep = SPEED_TEST_SWEEP_MM / 2;
+  const leftX = Math.max(BED_MIN_MM, centerX - halfSweep);
+  const rightX = Math.min(BED_MAX_MM, centerX + halfSweep);
+
+  try {
+    await movePenZ(penUpZ);
+    await sendGcode(`M203 X${vmax} Y${vmax}\n`);
+    await sendGcode(`M204 P${acc} T${tacc}\n`);
+    await sendGcode("G90\n");
+    await sendGcode(`G1 X${leftX.toFixed(2)} Y${centerY.toFixed(2)} F${feed.toFixed(0)}\n`);
+    jogPos = { x: leftX, y: centerY };
+
+    while (speedTestRunning && serialWriter) {
+      await sendGcode(`G1 X${rightX.toFixed(2)} Y${centerY.toFixed(2)} F${feed.toFixed(0)}\n`);
+      jogPos.x = rightX;
+      jogPos.y = centerY;
+      if (!speedTestRunning || !serialWriter) break;
+      await sendGcode(`G1 X${leftX.toFixed(2)} Y${centerY.toFixed(2)} F${feed.toFixed(0)}\n`);
+      jogPos.x = leftX;
+      jogPos.y = centerY;
+    }
+  } catch (e) {
+    console.error("Speed test error:", e);
+  } finally {
+    stopSpeedTest(true);
+  }
+});
+
 // ── Jog / Boundaries ──
 function updateBoundsHint() {
   boundsHintEl.textContent =
@@ -2955,14 +3418,14 @@ function updateBoundsHint() {
 
 async function jogBy(dx, dy) {
   if (!serialWriter) return;
-  jogPos.x = Math.max(0, Math.min(220, jogPos.x + dx));
-  jogPos.y = Math.max(0, Math.min(220, jogPos.y + dy));
+  jogPos.x = Math.max(BED_MIN_MM, Math.min(BED_MAX_MM, jogPos.x + dx));
+  jogPos.y = Math.max(BED_MIN_MM, Math.min(BED_MAX_MM, jogPos.y + dy));
   await sendGcode(`G1 X${jogPos.x.toFixed(2)} Y${jogPos.y.toFixed(2)} F${TRAVEL_FEED}\n`);
 }
 
 async function jogCenter() {
-  jogPos.x = (boundBL.x + boundTR.x) / 2;
-  jogPos.y = (boundBL.y + boundTR.y) / 2;
+  jogPos.x = Math.max(BED_MIN_MM, Math.min(BED_MAX_MM, (boundBL.x + boundTR.x) / 2));
+  jogPos.y = Math.max(BED_MIN_MM, Math.min(BED_MAX_MM, (boundBL.y + boundTR.y) / 2));
   await sendGcode(`G1 X${jogPos.x.toFixed(2)} Y${jogPos.y.toFixed(2)} F${TRAVEL_FEED}\n`);
 }
 
@@ -3012,9 +3475,40 @@ const BED_MAX_MM     = 215;    // Ender 3 usable travel ~215mm (220 - 5mm margin
 const FEED_RATE      = 4500;   // mm/min — conservative for pen on paper; raise if too slow
 const DRAW_FEED      = 4500;   // feed while drawing
 const TRAVEL_FEED    = 8000;   // feed while pen is up (faster repositioning)
+const SERIAL_BOOT_DELAY_MS = 2500;
+const HOMING_SETTLE_MS = 3500;
+const SPEED_TEST_SWEEP_MM = 30;
 
 const printerBtn   = document.getElementById("printerBtn");
 const printerLabel = document.getElementById("printerLabel");
+let speedTestRunning = false;
+
+function updatePrinterUI(connected, message = "") {
+  printerBtn.classList.toggle("connected", connected);
+  printerLabel.textContent = connected ? "Disconnect" : "Connect Plotter";
+  printerPanel.style.display = connected ? "block" : "none";
+  setStatus(message || (connected ? "Printer connected" : "Printer disconnected"), connected ? "on" : "idle");
+  const textHint = document.getElementById("textHint");
+  if (textHint) textHint.textContent = connected ? "Type text and click Plot Text." : "Connect plotter.";
+  if (!connected) stopSpeedTest(true);
+}
+
+function updateSpeedTestUI() {
+  if (!speedTestBtnEl) return;
+  speedTestBtnEl.textContent = speedTestRunning ? "Stop Speed Test" : "Speed Test X ±15mm";
+  speedTestBtnEl.classList.toggle("connected", speedTestRunning);
+  if (speedTestHintEl) {
+    speedTestHintEl.textContent = speedTestRunning
+      ? "Running flat-out in X around bed center. Click again to stop."
+      : "Runs 30 mm back and forth around bed center with pen up.";
+  }
+}
+
+function stopSpeedTest(silent = false) {
+  speedTestRunning = false;
+  updateSpeedTestUI();
+  if (!silent) showToast("Speed test stopped");
+}
 
 printerBtn.addEventListener("click", async () => {
   if (serialPort) {
@@ -3025,12 +3519,15 @@ printerBtn.addEventListener("click", async () => {
     return;
   }
   try {
-    serialPort = await navigator.serial.requestPort();
+    const knownPorts = await navigator.serial.getPorts();
+    serialPort = knownPorts.length === 1 ? knownPorts[0] : await navigator.serial.requestPort();
     await serialPort.open({ baudRate: 115200 });
+    await new Promise(r => setTimeout(r, SERIAL_BOOT_DELAY_MS));
     // Get a writer directly on the raw writable — no TextEncoderStream pipe needed
     serialWriter = serialPort.writable.getWriter();
 
     // Ender 3 / Marlin init sequence
+    await sendGcode("\n");
     await sendGcode("M110 N0\n");              // reset line number counter
     await sendGcode("M115\n");                 // firmware info (wakes Marlin up)
     await new Promise(r => setTimeout(r, 400));// brief pause for Marlin to respond
@@ -3038,22 +3535,23 @@ printerBtn.addEventListener("click", async () => {
     await sendGcode("G90\n");                  // absolute positioning
     await sendGcode("M84 S0\n");               // disable stepper timeout (keep motors on)
     await sendGcode("G28 X Y\n");              // home X and Y (Z not needed — pen is fixed height)
-    await new Promise(r => setTimeout(r, 3000));// wait for homing to finish (~2-3 s)
+    await new Promise(r => setTimeout(r, HOMING_SETTLE_MS));// wait for homing to finish
     await sendGcode(`G1 X${BED_MIN_MM} Y${BED_MIN_MM} F${TRAVEL_FEED}\n`); // move to start corner
 
-    printerBtn.classList.add("connected");
-    printerLabel.textContent = "Disconnect";
-    setStatus("Printer connected", "on");
-    printerPanel.style.display = "block";
     jogPos = { x: BED_MIN_MM, y: BED_MIN_MM };
+    boundBL = { x: BED_MIN_MM, y: BED_MIN_MM };
+    boundTR = { x: BED_MAX_MM, y: BED_MAX_MM };
+    updatePrinterUI(true, "Printer connected");
     await movePenZ(penUpZ);
     updateBoundsHint();
     if (document.getElementById("plotText").value.trim())
       document.getElementById("plotTextBtn").disabled = false;
-    document.getElementById("textHint").textContent = "Type text and click Plot Text.";
   } catch (e) {
     if (e.name !== "NotFoundError") console.error("Serial connect error:", e);
+    try { serialWriter?.releaseLock(); } catch(_) {}
+    try { await serialPort?.close();   } catch(_) {}
     serialPort = null; serialWriter = null;
+    updatePrinterUI(false, e.name === "NotFoundError" ? "Printer selection cancelled" : "Printer connection failed");
   }
 });
 
@@ -3065,9 +3563,7 @@ async function disconnectPrinter() {
   lastGcodeX = null; lastGcodeY = null;
   currentZ = null;
   liveZLabel.textContent = "Live Z —";
-  printerBtn.classList.remove("connected");
-  printerLabel.textContent = "Connect Plotter";
-  printerPanel.style.display = "none";
+  updatePrinterUI(false, "Printer disconnected");
 }
 
 // Serial write — fire and forget, no queue accumulation
@@ -3467,12 +3963,52 @@ dictateBtn.addEventListener("click", () => {
 //  DESIGN TOOL
 // ═══════════════════════════════════════════════════════════════════════════
 
-// ── Nav panel switching ────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════
+//  4-TAB NAVIGATION  (Machine | Create | Run | Settings)
+// ══════════════════════════════════════════════════════════════════════════
+
 const PANELS = {
-  designs: document.getElementById("panelDesigns"),
-  draw:    document.getElementById("panelDraw"),
-  plot:    document.getElementById("panelPlot"),
+  machine:  document.getElementById("panelMachine"),
+  create:   document.getElementById("panelCreate"),
+  run:      document.getElementById("panelPlot"),      // panelPlot is the Run tab
+  settings: document.getElementById("panelSettings"),
 };
+
+// The Create tab contains sub-panels (Patterns, Camera, SVG, Text).
+// We move the existing panelDesigns/panelDraw content INTO the Create sub-panels on first show.
+let createPanelsMounted = false;
+function mountCreateSubpanels() {
+  if (createPanelsMounted) return;
+  createPanelsMounted = true;
+  const patternsSlot = document.getElementById("createPatterns");
+  const cameraSlot   = document.getElementById("createCamera");
+  const designsPanel = document.getElementById("panelDesigns");
+  const drawPanel    = document.getElementById("panelDraw");
+  if (patternsSlot && designsPanel) {
+    // Move designs panel content (toolbar + body) into the Patterns slot
+    while (designsPanel.firstChild) patternsSlot.appendChild(designsPanel.firstChild);
+    designsPanel.style.display = "none";
+  }
+  if (cameraSlot && drawPanel) {
+    while (drawPanel.firstChild) cameraSlot.appendChild(drawPanel.firstChild);
+    drawPanel.style.display = "none";
+  }
+}
+
+let activeCreateMode = "patterns";
+function showCreateMode(mode) {
+  activeCreateMode = mode;
+  ["createPatterns","createCamera","createSVG","createText"].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = id === "create" + mode.charAt(0).toUpperCase() + mode.slice(1) ? "flex" : "none";
+  });
+  document.querySelectorAll(".create-mode-btn").forEach(b =>
+    b.classList.toggle("active", b.dataset.mode === mode));
+  if (mode === "patterns") { requestAnimationFrame(() => { dtFitZoom(); renderDesign(); }); }
+}
+
+document.querySelectorAll(".create-mode-btn").forEach(btn =>
+  btn.addEventListener("click", () => showCreateMode(btn.dataset.mode)));
 
 function showPanel(name) {
   document.querySelectorAll(".nav-item[data-panel]").forEach(b =>
@@ -3481,16 +4017,20 @@ function showPanel(name) {
     if (!el) return;
     el.style.display = k === name ? "flex" : "none";
   });
-  if (name === "designs") { updateCanvasInfo(); requestAnimationFrame(() => { dtFitZoom(); renderDesign(); }); }
-  if (name === "plot") { requestAnimationFrame(() => updatePlotBed()); }
+  if (name === "create") {
+    mountCreateSubpanels();
+    showCreateMode(activeCreateMode);
+    updateCanvasInfo();
+  }
+  if (name === "run")      requestAnimationFrame(() => updatePlotBed());
+  if (name === "machine")  updateMachinePanel();
 }
 
-document.querySelectorAll(".nav-item[data-panel]").forEach(btn => {
-  btn.addEventListener("click", () => showPanel(btn.dataset.panel));
-});
+document.querySelectorAll(".nav-item[data-panel]").forEach(btn =>
+  btn.addEventListener("click", () => showPanel(btn.dataset.panel)));
 
-// Start on designs panel
-showPanel("designs");
+// Start on Create → Patterns
+showPanel("create");
 
 // ── Canvas dimensions (mm) ────────────────────────────────────────────────
 let PW = 228.6, PH = 279.4;   // default 9×11
@@ -4275,6 +4815,213 @@ document.getElementById("exportSvgBtn").addEventListener("click", () => {
 });
 
 // ══════════════════════════════════════════════════════════════════════════
+//  MACHINE PANEL — console, jog, position tracking
+// ══════════════════════════════════════════════════════════════════════════
+
+// ── Serial reader (captures "ok" and other responses) ─────────────────────
+let serialReader = null;
+let consoleBuffer = '';
+
+async function startSerialReader() {
+  if (!serialPort?.readable) return;
+  serialReader = serialPort.readable.getReader();
+  const dec = new TextDecoder();
+  try {
+    while (true) {
+      const { value, done } = await serialReader.read();
+      if (done) break;
+      consoleBuffer += dec.decode(value, { stream: true });
+      let idx;
+      while ((idx = consoleBuffer.indexOf('\n')) >= 0) {
+        const line = consoleBuffer.slice(0, idx).trim();
+        consoleBuffer = consoleBuffer.slice(idx + 1);
+        if (line) {
+          appendConsole('← ' + line, line.startsWith('Error') ? 'err' : 'resp');
+          parseConsoleResponse(line);
+        }
+      }
+    }
+  } catch(e) { /* disconnected */ }
+}
+
+function parseConsoleResponse(line) {
+  // Parse "X:12.3 Y:45.6" position reports
+  const xm = line.match(/X:([-\d.]+)/); const ym = line.match(/Y:([-\d.]+)/);
+  if (xm) { const x=parseFloat(xm[1]); jogPos.x=x; posX=x; updateMachinePanel(); }
+  if (ym) { const y=parseFloat(ym[1]); jogPos.y=y; posY=y; updateMachinePanel(); }
+}
+
+function appendConsole(text, cls='resp') {
+  const out = document.getElementById("consoleOutput");
+  if (!out) return;
+  const line = document.createElement("div");
+  line.className = cls;
+  line.textContent = text;
+  out.appendChild(line);
+  // Keep last 200 lines
+  while (out.children.length > 200) out.removeChild(out.firstChild);
+  out.scrollTop = out.scrollHeight;
+}
+
+function updateMachinePanel() {
+  const x = jogPos?.x ?? 0, y = jogPos?.y ?? 0;
+  ['machX','machXBig'].forEach(id => { const e=document.getElementById(id); if(e) e.textContent=x.toFixed(2)+" mm"; });
+  ['machY','machYBig'].forEach(id => { const e=document.getElementById(id); if(e) e.textContent=y.toFixed(2)+" mm"; });
+  ['machLiveZ'].forEach(id => { const e=document.getElementById(id); if(e) e.textContent="—"; });
+  const s = document.getElementById("machineState");
+  if (s) s.textContent = serialWriter ? "Connected" : "Disconnected";
+  if (s) s.style.color = serialWriter ? "#22c55e" : "#666";
+  const ps = document.getElementById("machPenState");
+  if (ps) ps.textContent = "—";
+}
+
+// ── Console input ──────────────────────────────────────────────────────────
+(function() {
+  function sendConsoleCmd() {
+    const inp = document.getElementById("consoleInput");
+    if (!inp || !inp.value.trim()) return;
+    const cmd = inp.value.trim();
+    appendConsole('→ ' + cmd, 'cmd');
+    sendGcode(cmd + "\n");
+    inp.value = "";
+  }
+  document.getElementById("consoleSend")?.addEventListener("click", sendConsoleCmd);
+  document.getElementById("consoleInput")?.addEventListener("keydown", e => {
+    if (e.key === "Enter") sendConsoleCmd();
+  });
+  document.getElementById("consoleClear")?.addEventListener("click", () => {
+    const out = document.getElementById("consoleOutput"); if (out) out.innerHTML = "";
+  });
+})();
+
+// ── Machine jog buttons ───────────────────────────────────────────────────
+function machJog(dx, dy) {
+  const step = parseFloat(document.getElementById("machJogStep")?.value || "5");
+  const feed = parseFloat(document.getElementById("machFeed")?.value || "3000");
+  if (dx !== 0) { jogPos.x = Math.max(0, Math.min(220, jogPos.x + dx*step)); }
+  if (dy !== 0) { jogPos.y = Math.max(0, Math.min(220, jogPos.y + dy*step)); }
+  sendGcode(`G1 X${jogPos.x.toFixed(2)} Y${jogPos.y.toFixed(2)} F${feed}\n`);
+  updateMachinePanel();
+}
+document.getElementById("machJogXp")?.addEventListener("click", () => machJog( 1, 0));
+document.getElementById("machJogXm")?.addEventListener("click", () => machJog(-1, 0));
+document.getElementById("machJogYp")?.addEventListener("click", () => machJog( 0, 1));
+document.getElementById("machJogYm")?.addEventListener("click", () => machJog( 0,-1));
+document.getElementById("machJogCenter")?.addEventListener("click", jogCenter);
+document.getElementById("machLiftBtn")?.addEventListener("click", () => {
+  const z = parseFloat(document.getElementById("penUpZ")?.value||8);
+  sendGcode(`G1 Z${z.toFixed(2)} F3000\n`);
+});
+document.getElementById("machDropBtn")?.addEventListener("click", () => {
+  const z = parseFloat(document.getElementById("penDownZ")?.value||2);
+  sendGcode(`G1 Z${z.toFixed(2)} F3000\n`);
+});
+document.getElementById("machHomeX")?.addEventListener("click", () => sendGcode("G28 X\n"));
+document.getElementById("machHomeY")?.addEventListener("click", () => sendGcode("G28 Y\n"));
+document.getElementById("machHomeAll")?.addEventListener("click", () => sendGcode("G28\n"));
+document.getElementById("machZero")?.addEventListener("click", () => {
+  jogPos.x=0; jogPos.y=0;
+  sendGcode("G92 X0 Y0\n");
+  updateMachinePanel();
+});
+document.getElementById("machPark")?.addEventListener("click", () => {
+  const f = parseFloat(document.getElementById("machFeed")?.value||3000);
+  sendGcode(`G1 X0 Y0 F${f}\n`);
+  jogPos.x=0; jogPos.y=0; updateMachinePanel();
+});
+document.getElementById("machMotorsOff")?.addEventListener("click", () => sendGcode("M84\n"));
+
+// Wire existing jog to machine panel step and connect buttons
+document.getElementById("machConnectBtn")?.addEventListener("click", () =>
+  document.getElementById("printerBtn")?.click());
+
+// ── Send to Run button (in Create toolbar) ─────────────────────────────────
+document.getElementById("sendToRunBtn")?.addEventListener("click", () => showPanel("run"));
+
+// ══════════════════════════════════════════════════════════════════════════
+//  SETTINGS PANEL
+// ══════════════════════════════════════════════════════════════════════════
+
+function applySettings() {
+  if (!serialWriter) { appendConsole("⚠ Connect printer first", "err"); return; }
+  const xSpm = document.getElementById("sX_spm")?.value || 80;
+  const ySpm = document.getElementById("sY_spm")?.value || 80;
+  const xInv = document.getElementById("sX_inv")?.checked ? 1 : 0;
+  const yInv = document.getElementById("sY_inv")?.checked ? 1 : 0;
+  const xMax = document.getElementById("sX_vmax")?.value || 200;
+  const yMax = document.getElementById("sY_vmax")?.value || 200;
+  const accP = document.getElementById("sAccelP")?.value || 1000;
+  const accT = document.getElementById("sAccelT")?.value || 2000;
+  const maxX = document.getElementById("sMaxX")?.value || 220;
+  const maxY = document.getElementById("sMaxY")?.value || 220;
+  const softL = document.getElementById("sSoftLimits")?.checked;
+
+  const cmds = [
+    `M92 X${xSpm} Y${ySpm}`,
+    `M569 X${xInv} Y${yInv}`,
+    `M203 X${xMax} Y${yMax}`,
+    `M204 P${accP} T${accT}`,
+    `M208 X${maxX} Y${maxY}`,
+    softL ? "M211 S1" : "M211 S0",
+    "M500"  // save to EEPROM
+  ];
+  cmds.forEach(c => { appendConsole("→ " + c, "cmd"); sendGcode(c + "\n"); });
+  showPanel("machine"); // switch to machine to see responses
+}
+
+document.getElementById("applySettingsBtn")?.addEventListener("click", applySettings);
+document.getElementById("restoreSettingsBtn")?.addEventListener("click", () => {
+  sendGcode("M501\n"); appendConsole("→ M501 (restore from EEPROM)", "cmd");
+});
+
+// Homing from settings panel
+document.getElementById("sHomeX")?.addEventListener("click", () => { sendGcode("G28 X\n"); appendConsole("→ G28 X", "cmd"); });
+document.getElementById("sHomeY")?.addEventListener("click", () => { sendGcode("G28 Y\n"); appendConsole("→ G28 Y", "cmd"); });
+document.getElementById("sHomeAll")?.addEventListener("click", () => { sendGcode("G28\n"); appendConsole("→ G28", "cmd"); });
+document.getElementById("sSetZero")?.addEventListener("click", () => {
+  jogPos.x=0; jogPos.y=0;
+  sendGcode("G92 X0 Y0\n"); appendConsole("→ G92 X0 Y0 (set zero)", "cmd"); updateMachinePanel();
+});
+document.getElementById("sPark")?.addEventListener("click", () => { sendGcode("G1 X0 Y0 F3000\n"); appendConsole("→ G1 X0 Y0 (park)", "cmd"); });
+document.getElementById("sCheckEndstops")?.addEventListener("click", () => { sendGcode("M119\n"); appendConsole("→ M119 (check endstops)", "cmd"); showPanel("machine"); });
+
+// Distance calibration
+document.getElementById("sCalcX")?.addEventListener("click", () => {
+  const exp = parseFloat(document.getElementById("sCalExpected")?.value||100);
+  const act = parseFloat(document.getElementById("sCalActual")?.value||100);
+  if (!act) return;
+  const cur = parseFloat(document.getElementById("sX_spm")?.value||80);
+  const newVal = (cur * act / exp).toFixed(3);
+  if (document.getElementById("sX_spm")) document.getElementById("sX_spm").value = newVal;
+  document.getElementById("sCalResult").textContent = `X steps/mm → ${newVal}`;
+});
+document.getElementById("sCalcY")?.addEventListener("click", () => {
+  const exp = parseFloat(document.getElementById("sCalExpected")?.value||100);
+  const act = parseFloat(document.getElementById("sCalActual")?.value||100);
+  if (!act) return;
+  const cur = parseFloat(document.getElementById("sY_spm")?.value||80);
+  const newVal = (cur * act / exp).toFixed(3);
+  if (document.getElementById("sY_spm")) document.getElementById("sY_spm").value = newVal;
+  document.getElementById("sCalResult").textContent = `Y steps/mm → ${newVal}`;
+});
+
+// ── Patch connectPrinter to start serial reader ────────────────────────────
+const _origSendToRun = printerBtn?.onclick;
+// After connection established, start reading responses
+const _origConnectFn = window._connectPrinterPatched;
+if (!_origConnectFn) {
+  window._connectPrinterPatched = true;
+  setInterval(() => {
+    // Start reader when newly connected
+    if (serialWriter && !serialReader) startSerialReader();
+    // Log to console when connecting
+    updateMachinePanel();
+    const b = document.getElementById("sendToRunBtn");
+    if (b) b.disabled = !activePolylines?.length;
+  }, 800);
+}
+
+// ══════════════════════════════════════════════════════════════════════════
 //  PENCIL ART DESIGNS  (hatching-based photo-realistic presets)
 // ══════════════════════════════════════════════════════════════════════════
 
@@ -4894,6 +5641,7 @@ requestAnimationFrame(() => requestAnimationFrame(() => {
   updateCanvasInfo();
   dtFitZoom();
   buildPresetList();
+  updateSpeedTestUI();
   // Auto-select eye preset to show something immediately
   const eyeIdx = PRESETS.findIndex(p => p.id === "pencilEye");
   if (eyeIdx >= 0) selectPreset(eyeIdx);
