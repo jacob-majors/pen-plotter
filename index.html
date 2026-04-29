@@ -3,7 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Plotter — Repurposed 3D Printers as Accessible Art Machines</title>
+  <title>Pen Plotter — Jacob Majors &amp; Troy Pappas</title>
+  <!-- Favicon: inline SVG pen plotter icon -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%231a1a1a'/%3E%3Cpath d='M8 24 L20 12 L24 16 L12 28Z' fill='%234a9eff' opacity='.9'/%3E%3Cpath d='M20 8 L24 12' stroke='%234a9eff' stroke-width='3' stroke-linecap='round'/%3E%3Ccircle cx='10' cy='26' r='2' fill='%2322c55e'/%3E%3C/svg%3E">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%231a1a1a'/%3E%3Cpath d='M8 24 L20 12 L24 16 L12 28Z' fill='%234a9eff'/%3E%3C/svg%3E">
   <meta name="description" content="Plotter gives discarded 3D printers a second life as accessible art machines. Move any limb in front of a webcam and the repurposed printer draws it on real paper." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -380,6 +383,27 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 .plot-bed-wrap {
   background: #202020; display: flex; align-items: center; justify-content: center;
   overflow: hidden; position: relative;
+}
+.plot-bed-wrap canvas {
+  position: absolute;
+  inset: 0;
+}
+.plot-3d-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 24px;
+  color: #6b7280;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  background:
+    radial-gradient(circle at 50% 42%, rgba(255,255,255,0.04), transparent 34%),
+    linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.06));
+  pointer-events: none;
+  z-index: 2;
 }
 #plotBedCanvas { display: block; }
 .plot-controls { background: #222; border-right: 1px solid #2e2e2e; display: flex; flex-direction: column; overflow: hidden; }
@@ -978,6 +1002,45 @@ footer { border-top: 1px solid var(--border); padding: 2.75rem 0 1.25rem; }
 /* nav connected state */
 .nav-item.connected { color: #22c55e !important; }
 
+/* ── Tab toolbar ───────────────────────────────────────────────── */
+.tab-toolbar {
+  display: flex; align-items: center; height: 36px; flex-shrink: 0;
+  background: #252525; border-bottom: 1px solid #2e2e2e;
+  padding: 0 8px; gap: 0; overflow-x: auto;
+}
+.tab-toolbar::-webkit-scrollbar { display: none; }
+.sub-toolbar {
+  display: flex; align-items: center; height: 34px; flex-shrink: 0;
+  background: #1f1f1f; border-bottom: 1px solid #2a2a2a;
+  padding: 0 8px; gap: 0; overflow-x: auto;
+}
+.sub-toolbar::-webkit-scrollbar { display: none; }
+.mode-bar {
+  display: flex; gap: 1px; background: #1a1a1a;
+  border: 1px solid #2a2a2a; border-radius: 5px; padding: 2px;
+}
+.mode-btn {
+  display: flex; align-items: center; gap: 5px; padding: 3px 10px;
+  border-radius: 4px; border: none; background: none; color: #555;
+  font-size: 11px; font-weight: 600; font-family: inherit;
+  cursor: pointer; transition: background .12s, color .12s; white-space: nowrap;
+}
+.mode-btn:hover  { color: #999; background: #252525; }
+.mode-btn.active { background: #1a3050; color: #4a9eff; }
+.tab-action-btn {
+  height: 26px; padding: 0 12px; border-radius: 4px;
+  background: rgba(45,122,224,.15); border: 1px solid rgba(45,122,224,.35);
+  color: #5b9ef5; font-size: 11px; font-weight: 700; font-family: inherit;
+  cursor: pointer; white-space: nowrap; transition: background .12s;
+}
+.tab-action-btn:hover:not(:disabled) { background: rgba(45,122,224,.28); }
+.tab-action-btn:disabled { opacity: .35; cursor: not-allowed; }
+/* Console colors */
+#consoleOutput .c-cmd  { color: #4a9eff; }
+#consoleOutput .c-resp { color: #555; }
+#consoleOutput .c-err  { color: #f87171; }
+#consoleOutput .c-info { color: #4ade80; }
+
 /* Create panel mode bar */
 .create-mode-bar {
   display: flex; gap: 2px;
@@ -1226,864 +1289,142 @@ footer { border-top: 1px solid var(--border); padding: 2.75rem 0 1.25rem; }
   </style>
 </head>
 <body>
-
-<!-- ████ APP ████ -->
 <div id="app">
 
-  <!-- ── Left nav sidebar — 4 tabs ── -->
-  <nav class="app-nav">
-    <div class="nav-brand">P</div>
-    <div class="nav-items">
-      <button class="nav-item" data-panel="machine" title="Machine">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="3" width="20" height="14" rx="2"/><polyline points="8 21 12 17 16 21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-        <span class="nav-tip">Machine</span>
+<!-- ════════════════════════════════════════════════════════════════
+     NAV SIDEBAR  (icon nav, always visible)
+══════════════════════════════════════════════════════════════════ -->
+<nav class="app-nav">
+  <div class="nav-brand">P</div>
+  <div class="nav-items">
+    <button class="nav-item active" data-tab="design" title="Design">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5z"/></svg>
+      <span class="nav-tip">Design</span>
+    </button>
+    <button class="nav-item" data-tab="machine" title="Machine">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="3" width="20" height="14" rx="2"/><polyline points="8 21 12 17 16 21"/></svg>
+      <span class="nav-tip">Machine</span>
+    </button>
+    <button class="nav-item" data-tab="run" title="Run">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><polygon points="5,3 19,12 5,21" fill="currentColor"/></svg>
+      <span class="nav-tip">Run</span>
+    </button>
+    <button class="nav-item" data-tab="settings" title="Settings">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      <span class="nav-tip">Settings</span>
+    </button>
+  </div>
+  <div class="nav-foot">
+    <button class="nav-item" id="printerBtn" title="Connect Plotter">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="6" y="2" width="12" height="8" rx="1"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg>
+      <span class="nav-dot" id="connDot"></span>
+      <span class="nav-tip" id="printerLabel">Connect Plotter</span>
+    </button>
+  </div>
+</nav>
+
+<!-- JS compatibility shims (hidden, no duplicate IDs) -->
+<div id="statusEl" class="status-pill status-idle" style="display:none"><span class="status-dot-el"></span><span id="statusText">Ready</span></div>
+<section class="hero" style="display:none"><div class="mockup-body"><canvas id="heroCanvas" width="800" height="200"></canvas></div></section>
+<header id="nav" style="display:none"></header>
+<div id="printerPanel" style="display:none"></div>
+<!-- plotDesignBtn: navigates to Run tab with current design -->
+<button id="plotDesignBtn" style="display:none"></button>
+<!-- speedTest stubs -->
+<button id="speedTestBtn" style="display:none"></button>
+<span id="speedTestHint" style="display:none"></span>
+<!-- ABL stubs -->
+<button id="ablProbeBtn" style="display:none"></button>
+<button id="ablMeshBtn" style="display:none"></button>
+<button id="ablSetOffsetBtn" style="display:none"></button>
+<input id="ablEnabled" type="checkbox" style="display:none">
+<input id="ablZOffset" type="number" value="0" style="display:none">
+<input id="ablProbeSpeed" type="number" value="300" style="display:none">
+<span id="ablHint" style="display:none"></span>
+<!-- machPenState stub (Machine tab shows it in the status) -->
+<span id="machPenState" style="display:none"></span>
+<!-- plotPosLabel stub -->
+<span id="plotPosLabel" style="display:none"></span>
+
+<!-- ════════════════════════════════════════════════════════════════
+     TAB 1 — DESIGN
+     4 sub-modes: Patterns | Track | SVG | Text
+══════════════════════════════════════════════════════════════════ -->
+<div id="tabDesign" class="panel">
+
+  <!-- Mode bar -->
+  <div class="tab-toolbar">
+    <div class="mode-bar">
+      <button class="mode-btn active" data-mode="patterns">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        Patterns
       </button>
-      <button class="nav-item active" data-panel="create" title="Create">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5z"/><circle cx="6.5" cy="17.5" r="2"/></svg>
-        <span class="nav-tip">Create</span>
+      <button class="mode-btn" data-mode="track">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="8" r="4"/><path d="M6 20v-2a6 6 0 0 1 12 0v2"/></svg>
+        Track
       </button>
-      <button class="nav-item" data-panel="run" title="Run">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><polygon points="5,3 19,12 5,21" fill="currentColor"/></svg>
-        <span class="nav-tip">Run</span>
+      <button class="mode-btn" data-mode="svg">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        SVG
       </button>
-      <button class="nav-item" data-panel="settings" title="Settings">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-        <span class="nav-tip">Settings</span>
-      </button>
-    </div>
-    <div class="nav-foot">
-      <button class="nav-item" id="printerBtn" title="Connect Plotter">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="6" y="2" width="12" height="8" rx="1"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg>
-        <span class="nav-dot" id="connDot"></span>
-        <span class="nav-tip" id="printerLabel">Connect Plotter</span>
+      <button class="mode-btn" data-mode="text">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
+        Text
       </button>
     </div>
-  </nav>
-
-  <!-- Hidden legacy elements JS needs -->
-  <div id="statusEl" class="status-pill status-idle" style="display:none">
-    <span class="status-dot-el"></span><span id="statusText">Ready</span>
+    <div style="flex:1"></div>
+    <button class="tab-action-btn" id="sendToRunBtn" disabled>Send to Run ▶</button>
   </div>
 
-  <!-- (hero section — hidden, kept for heroCanvas JS) -->
-  <section class="hero" style="display:none">
-    <div class="mockup-body"><canvas id="heroCanvas" width="800" height="200"></canvas></div>
-  </section>
-
-  <!-- intentionally empty header placeholder (nav scroll JS guard) -->
-  <header id="nav" style="display:none"></header>
-
-  <!-- ══════════════════════════════════════════════════════════════════════
-       MACHINE PANEL — USB console, live position, manual jog
-       ══════════════════════════════════════════════════════════════════════ -->
-  <div id="panelMachine" class="panel" style="display:none">
-    <div class="dt-toolbar">
-      <div class="dt-group">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-        <span class="dt-label" style="color:#ccc">Machine Control</span>
+  <!-- ── Patterns mode ───────────────────────────────── -->
+  <div id="modePatterns" class="mode-view" style="flex:1;min-height:0;display:flex;flex-direction:column">
+    <!-- Patterns sub-toolbar -->
+    <div class="sub-toolbar">
+      <div class="dt-group"><span class="dt-label">Design</span>
+        <select class="dt-select" id="dtDesignSelect" style="min-width:150px"><option value="">— choose preset —</option></select>
       </div>
       <div class="dt-sep"></div>
-      <div class="dt-group" id="machineStatusBar">
-        <span class="dt-label">Status:</span>
-        <span class="dt-zoom-label" id="machineState" style="color:#22c55e">—</span>
-      </div>
-      <div class="dt-sep"></div>
-      <div class="dt-group">
-        <span class="dt-label">X</span><span class="dt-zoom-label" id="machX" style="font-family:monospace">—</span>
-        <span class="dt-label">Y</span><span class="dt-zoom-label" id="machY" style="font-family:monospace">—</span>
-      </div>
-      <div style="flex:1"></div>
-      <div class="dt-group">
-        <button class="dt-btn" id="machHomeX" title="Home X (G28 X)">Home X</button>
-        <button class="dt-btn" id="machHomeY" title="Home Y (G28 Y)">Home Y</button>
-        <button class="dt-btn" id="machHomeAll" title="Home all (G28)">Home All</button>
-        <button class="dt-btn" id="machZero" title="Set current position as 0,0 (G92 X0 Y0)">Set Zero</button>
-      </div>
-    </div>
-
-    <div class="dt-body" style="flex:1;min-height:0;grid-template-columns:200px 1fr 220px">
-      <!-- Left: machine status -->
-      <div class="dt-presets">
-        <div class="dt-presets-head">
-          <div class="dt-section-head" style="padding:0 0 4px">Connection</div>
-          <button class="draw-start-btn" id="machConnectBtn" onclick="document.getElementById('printerBtn')?.click()">
-            Connect via USB
-          </button>
-          <div style="font-size:10px;color:#555;text-align:center;padding-top:4px">Chrome / Edge only</div>
-        </div>
-        <div class="dt-preset-scroll">
-          <div class="dt-section">
-            <div class="dt-section-head">Position</div>
-            <div class="plot-coords" style="margin:4px 10px">
-              <div class="plot-coord"><div class="plot-coord-axis">X</div><div class="plot-coord-val" id="machXBig">—</div></div>
-              <div class="plot-coord"><div class="plot-coord-axis">Y</div><div class="plot-coord-val" id="machYBig">—</div></div>
-            </div>
-          </div>
-          <div class="dt-section">
-            <div class="dt-section-head">Pen</div>
-            <div class="dt-prop-row"><span class="dt-prop-label">State</span><span class="dt-prop-val-ro" id="machPenState">—</span></div>
-            <div class="dt-prop-row" style="gap:4px">
-              <button class="man-btn man-btn-pen" style="flex:1" id="machLiftBtn">↑ Up</button>
-              <button class="man-btn man-btn-pen" style="flex:1" id="machDropBtn">↓ Down</button>
-            </div>
-          </div>
-          <div class="dt-section">
-            <div class="dt-section-head">Quick Actions</div>
-            <div class="dt-prop-row"><button class="pp-btn" id="machPark" style="width:100%">Park (go 0,0)</button></div>
-            <div class="dt-prop-row"><button class="pp-btn" id="machMotorsOff" style="width:100%">Motors Off (M84)</button></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Center: G-code console -->
-      <div style="display:flex;flex-direction:column;background:#111;min-height:0">
-        <div style="padding:6px 10px;background:#1a1a1a;border-bottom:1px solid #2a2a2a;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#444">
-          G-Code Console
-        </div>
-        <div id="consoleOutput" style="flex:1;overflow-y:auto;padding:8px 10px;font-family:monospace;font-size:11.5px;line-height:1.7;color:#888;min-height:0"></div>
-        <div style="display:flex;gap:6px;padding:8px 10px;border-top:1px solid #2a2a2a;background:#161616">
-          <input type="text" id="consoleInput" placeholder="G1 X50 Y50 F3000 — type any G-code command" autocomplete="off" spellcheck="false"
-            style="flex:1;height:30px;padding:0 10px;background:#1e1e1e;border:1px solid #333;border-radius:4px;color:#ccc;font-family:monospace;font-size:12px">
-          <button class="dt-btn dt-btn-primary" id="consoleSend" style="height:30px;padding:0 14px">Send</button>
-          <button class="dt-btn" id="consoleClear" style="height:30px;padding:0 10px;font-size:10px">Clear</button>
-        </div>
-      </div>
-
-      <!-- Right: jog controls -->
-      <div class="dt-props">
-        <div class="dt-props-title">Manual Jog</div>
-        <div class="dt-props-scroll">
-          <div class="dt-section">
-            <div class="dt-prop-row"><span class="dt-prop-label">Step</span>
-              <select id="machJogStep" class="dt-select" style="flex:1;height:24px">
-                <option value="0.1">0.1 mm</option>
-                <option value="1">1 mm</option>
-                <option value="5" selected>5 mm</option>
-                <option value="10">10 mm</option>
-                <option value="50">50 mm</option>
-              </select>
-            </div>
-            <!-- Jog arrow pad -->
-            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;margin:6px 10px">
-              <div></div>
-              <button class="man-btn man-btn-y" id="machJogYp">Y+</button>
-              <div></div>
-              <button class="man-btn" id="machJogXm">X−</button>
-              <button class="man-btn" id="machJogCenter" style="font-size:.6rem;color:#555">⊕</button>
-              <button class="man-btn" id="machJogXp">X+</button>
-              <div></div>
-              <button class="man-btn man-btn-y" id="machJogYm">Y−</button>
-              <div></div>
-            </div>
-            <div class="pp-hint" style="padding:2px 10px 4px">Arrow keys also work</div>
-          </div>
-          <div class="dt-section">
-            <div class="dt-section-head">Feed Speed</div>
-            <div class="dt-prop-row"><span class="dt-prop-label">Speed</span>
-              <input type="number" class="dt-prop-val" id="machFeed" value="3000" style="width:65px"><span class="dt-unit">mm/m</span>
-            </div>
-          </div>
-          <div class="dt-section">
-            <div class="dt-section-head">Z / Pen Height</div>
-            <div class="dt-prop-row"><span class="dt-prop-label">Live Z</span><span class="dt-prop-val-ro" id="machLiveZ">—</span></div>
-            <div class="z-slider-wrap" style="margin:4px 10px">
-              <button class="pp-btn pp-btn-sm z-step-btn" id="zStepUp">+</button>
-              <div class="z-slider-inner">
-                <span class="z-tick z-tick-top">50</span>
-                <input type="range" id="zLiveSlider" class="z-slider" min="-50" max="50" step="0.5" value="8">
-                <span class="z-tick z-tick-bot">-50</span>
-              </div>
-              <button class="pp-btn pp-btn-sm z-step-btn" id="zStepDown">−</button>
-            </div>
-            <div class="dt-prop-row"><span class="dt-prop-label">Up Z</span><input type="number" class="dt-prop-val" id="penUpZ" value="8" style="width:55px"></div>
-            <div class="dt-prop-row"><span class="dt-prop-label">Down Z</span><input type="number" class="dt-prop-val" id="penDownZ" value="2" style="width:55px"></div>
-            <div class="dt-prop-row" style="gap:4px">
-              <button class="pp-btn pp-btn-sm" id="liftBtn" style="flex:1">↑ Pen Up</button>
-              <button class="pp-btn pp-btn-sm pp-btn-accent" id="dropBtn" style="flex:1">↓ Pen Down</button>
-            </div>
-          </div>
-          <div class="dt-section">
-            <div class="dt-section-head">Bounds</div>
-            <div class="dt-prop-row" style="gap:3px">
-              <button class="pp-btn pp-btn-sm" id="setBL">BL</button><button class="pp-btn pp-btn-sm" id="setBR">BR</button>
-              <button class="pp-btn pp-btn-sm" id="setTL">TL</button><button class="pp-btn pp-btn-sm" id="setTR">TR</button>
-              <button class="pp-btn pp-btn-accent pp-btn-sm" id="jogCenter">⊕</button>
-            </div>
-            <div class="pp-hint" id="boundsHint" style="padding:4px 10px">X 0–220 · Y 0–220</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ══════════════════════════════════════════════════════════════════════
-       CREATE PANEL — Camera tracking | Freehand | Patterns | SVG | Text
-       ══════════════════════════════════════════════════════════════════════ -->
-  <!-- This wrapper shows/hides the existing sub-panels via JS mode switching -->
-  <div id="panelCreate" class="panel" style="display:flex;flex-direction:column">
-    <!-- Mode selector bar -->
-    <div class="dt-toolbar" style="gap:0;padding:0 8px">
-      <div class="create-mode-bar">
-        <button class="create-mode-btn active" data-mode="patterns">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-          Patterns
-        </button>
-        <button class="create-mode-btn" data-mode="camera">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M6 20v-2a6 6 0 0 1 12 0v2"/></svg>
-          Track
-        </button>
-        <button class="create-mode-btn" data-mode="svg">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-          SVG
-        </button>
-        <button class="create-mode-btn" data-mode="text">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
-          Text
-        </button>
-      </div>
-      <div style="flex:1"></div>
-      <div class="dt-group">
-        <button class="dt-btn dt-btn-primary" id="sendToRunBtn" disabled>Send to Run →</button>
-      </div>
-    </div>
-    <!-- Sub-panels fill the remaining space -->
-    <div id="createModePanels" style="flex:1;min-height:0;position:relative;overflow:hidden">
-      <!-- Patterns mode (panelDesigns content, minus its toolbar) -->
-      <div id="createPatterns" class="create-mode-view" style="position:absolute;inset:0;display:flex;flex-direction:column"></div>
-      <!-- Camera/Track mode (panelDraw content) -->
-      <div id="createCamera" class="create-mode-view" style="position:absolute;inset:0;display:none;flex-direction:column"></div>
-      <!-- SVG import mode -->
-      <div id="createSVG" class="create-mode-view" style="position:absolute;inset:0;display:none;flex-direction:column;background:#1a1a1a">
-        <div class="dt-body" style="flex:1;min-height:0;grid-template-columns:260px 1fr">
-          <div class="dt-presets">
-            <div class="dt-presets-head">
-              <div class="dt-section-head" style="padding:0 0 4px">Import SVG</div>
-              <label class="pp-file-label" style="flex-direction:column;align-items:flex-start;gap:6px">
-                <input type="file" id="svgFile" accept=".svg" style="display:none">
-                <span class="pp-file-btn" style="width:100%;justify-content:center">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                  Choose SVG File
-                </span>
-                <span class="pp-file-name" id="svgFileName" style="font-size:11px;color:#666;width:100%;text-align:center">No file chosen</span>
-              </label>
-            </div>
-            <div class="dt-preset-scroll">
-              <div class="dt-section">
-                <div class="dt-section-head">Scale &amp; Position</div>
-                <div class="dt-prop-row"><span class="dt-prop-label">Scale</span><input type="number" class="dt-prop-val" id="svgScale" value="100" min="1" max="500" step="1" style="width:65px"><span class="dt-unit">%</span></div>
-              </div>
-              <div class="dt-section">
-                <div class="dt-prop-row"><button class="pp-btn pp-btn-accent" id="plotSvgBtn" disabled style="flex:1">Plot SVG</button><button class="pp-btn" id="clearSvgBtn">Clear</button></div>
-                <div class="pp-hint" id="svgHint" style="padding:4px 10px">SVGs auto-fit to the active boundary box.</div>
-              </div>
-            </div>
-          </div>
-          <div style="display:flex;align-items:center;justify-content:center;background:#111;color:#333;font-size:13px">
-            SVG preview — load a file to see it here
-          </div>
-        </div>
-      </div>
-      <!-- Text to Plot mode -->
-      <div id="createText" class="create-mode-view" style="position:absolute;inset:0;display:none;flex-direction:column;background:#1a1a1a">
-        <div class="dt-body" style="flex:1;min-height:0;grid-template-columns:300px 1fr">
-          <div class="dt-presets">
-            <div class="dt-presets-head">
-              <div class="dt-section-head" style="padding:0 0 4px">Text to Plot
-                <button class="pp-btn pp-btn-sm" id="dictateBtn" style="float:right">🎤</button>
-              </div>
-              <textarea id="plotText" class="pp-textarea" placeholder="Type text to plot…" rows="4" style="width:100%;margin:0"></textarea>
-            </div>
-            <div class="dt-preset-scroll">
-              <div class="dt-section">
-                <div class="dt-section-head">Text Settings</div>
-                <div class="dt-prop-row"><span class="dt-prop-label">Size</span><input type="number" class="dt-prop-val" id="textSize" value="15" min="3" max="80" step="1" style="width:65px"><span class="dt-unit">mm</span></div>
-                <div class="dt-prop-row" style="gap:4px">
-                  <button class="pp-btn" id="textAlignLeft">⬛◻◻</button>
-                  <button class="pp-btn pp-btn-accent" id="textAlignCenter">◻⬛◻</button>
-                  <button class="pp-btn" id="textAlignRight">◻◻⬛</button>
-                </div>
-              </div>
-              <div class="dt-section">
-                <div class="dt-prop-row">
-                  <button class="pp-btn" id="previewTextBtn" style="flex:1">Preview</button>
-                  <button class="pp-btn pp-btn-accent" id="plotTextBtn" disabled style="flex:1">Plot Text</button>
-                  <button class="pp-btn" id="clearTextBtn">Clear</button>
-                </div>
-                <div class="pp-hint" id="textHint" style="padding:4px 10px">Connect plotter to plot.</div>
-              </div>
-            </div>
-          </div>
-          <div style="display:flex;align-items:center;justify-content:center;background:#111;color:#333;font-size:13px">
-            Text preview — type above and click Preview
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ══════════════════════════════════════════════════════════════════════
-       SETTINGS PANEL — Motor config, steps, direction, limits, homing
-       ══════════════════════════════════════════════════════════════════════ -->
-  <div id="panelSettings" class="panel" style="display:none;overflow:hidden">
-    <div class="dt-toolbar">
-      <span class="dt-label" style="color:#ccc;font-size:13px">Machine Settings</span>
-      <div style="flex:1"></div>
-      <div class="dt-group">
-        <button class="dt-btn dt-btn-primary" id="applySettingsBtn">Apply &amp; Save (M500)</button>
-        <button class="dt-btn" id="restoreSettingsBtn">Restore (M501)</button>
-      </div>
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;height:calc(100% - 36px);overflow-y:auto">
-
-      <!-- Column 1: Motor -->
-      <div style="border-right:1px solid #2a2a2a;overflow-y:auto">
-        <div class="dt-section-head" style="padding:8px 12px 4px;font-size:11px">Motors &amp; Steps</div>
-        <div class="dt-section">
-          <div class="dt-section-head">Steps / mm  <span style="font-weight:400;color:#555">(M92)</span></div>
-          <div class="dt-prop-row"><span class="dt-prop-label">X steps/mm</span><input type="number" class="dt-prop-val" id="sX_spm" value="80" step="0.1" style="width:70px"></div>
-          <div class="dt-prop-row"><span class="dt-prop-label">Y steps/mm</span><input type="number" class="dt-prop-val" id="sY_spm" value="80" step="0.1" style="width:70px"></div>
-          <div class="pp-hint" style="padding:2px 10px 6px">GT2 belt 20T + 16× step = 80</div>
-        </div>
-        <div class="dt-section">
-          <div class="dt-section-head">Direction  <span style="font-weight:400;color:#555">(M569)</span></div>
-          <div class="dt-prop-row">
-            <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:#777;cursor:pointer">
-              <input type="checkbox" id="sX_inv" style="accent-color:#4a9eff"> Invert X direction
-            </label>
-          </div>
-          <div class="dt-prop-row">
-            <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:#777;cursor:pointer">
-              <input type="checkbox" id="sY_inv" style="accent-color:#4a9eff"> Invert Y direction
-            </label>
-          </div>
-        </div>
-        <div class="dt-section">
-          <div class="dt-section-head">Speed  <span style="font-weight:400;color:#555">(M203)</span></div>
-          <div class="dt-prop-row"><span class="dt-prop-label">Max X</span><input type="number" class="dt-prop-val" id="sX_vmax" value="200" style="width:70px"><span class="dt-unit">mm/s</span></div>
-          <div class="dt-prop-row"><span class="dt-prop-label">Max Y</span><input type="number" class="dt-prop-val" id="sY_vmax" value="200" style="width:70px"><span class="dt-unit">mm/s</span></div>
-        </div>
-        <div class="dt-section">
-          <div class="dt-section-head">Acceleration  <span style="font-weight:400;color:#555">(M204)</span></div>
-          <div class="dt-prop-row"><span class="dt-prop-label">Print</span><input type="number" class="dt-prop-val" id="sAccelP" value="1000" style="width:70px"><span class="dt-unit">mm/s²</span></div>
-          <div class="dt-prop-row"><span class="dt-prop-label">Travel</span><input type="number" class="dt-prop-val" id="sAccelT" value="2000" style="width:70px"><span class="dt-unit">mm/s²</span></div>
-        </div>
-      </div>
-
-      <!-- Column 2: Pen + Work Area -->
-      <div style="border-right:1px solid #2a2a2a;overflow-y:auto">
-        <div class="dt-section-head" style="padding:8px 12px 4px;font-size:11px">Pen &amp; Work Area</div>
-        <div class="dt-section">
-          <div class="dt-section-head">Pen Heights  <span style="font-weight:400;color:#555">(Z axis)</span></div>
-          <div class="dt-prop-row"><span class="dt-prop-label">Up Z</span><input type="number" class="dt-prop-val" id="sPenUp" value="8" step="0.5" style="width:65px"></div>
-          <div class="dt-prop-row"><span class="dt-prop-label">Down Z</span><input type="number" class="dt-prop-val" id="sPenDn" value="2" step="0.5" style="width:65px"></div>
-          <div class="dt-prop-row"><span class="dt-prop-label">Z speed</span><input type="number" class="dt-prop-val" id="sPenSpd" value="3000" style="width:65px"><span class="dt-unit">mm/m</span></div>
-        </div>
-        <div class="dt-section">
-          <div class="dt-section-head">Work Area  <span style="font-weight:400;color:#555">(M208)</span></div>
-          <div class="dt-prop-row"><span class="dt-prop-label">Max X</span><input type="number" class="dt-prop-val" id="sMaxX" value="220" style="width:65px"><span class="dt-unit">mm</span></div>
-          <div class="dt-prop-row"><span class="dt-prop-label">Max Y</span><input type="number" class="dt-prop-val" id="sMaxY" value="220" style="width:65px"><span class="dt-unit">mm</span></div>
-          <div class="dt-prop-row">
-            <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:#777;cursor:pointer">
-              <input type="checkbox" id="sSoftLimits" style="accent-color:#4a9eff"> Enable soft limits (M211 S1)
-            </label>
-          </div>
-        </div>
-        <div class="dt-section">
-          <div class="dt-section-head">Draw Speeds</div>
-          <div class="dt-prop-row"><span class="dt-prop-label">XY Feed</span><input type="number" class="dt-prop-val" id="xySpeed" value="12000" style="width:65px"><span class="dt-unit">mm/m</span></div>
-          <div class="dt-prop-row"><span class="dt-prop-label">Passes</span><input type="number" class="dt-prop-val" id="linePasses" value="2" style="width:55px"></div>
-          <div class="dt-prop-row"><button class="pp-btn pp-btn-turbo" id="turboBtn">Turbo</button><button class="pp-btn pp-btn-accent" id="applyMotionBtn">Apply</button></div>
-          <div class="dt-prop-row"><span class="dt-prop-label">Max speed</span><input type="number" class="dt-prop-val" id="maxSpeed" value="220" style="width:55px"><span class="dt-unit">mm/s</span></div>
-          <div class="dt-prop-row"><span class="dt-prop-label">Accel</span><input type="number" class="dt-prop-val" id="accelVal" value="6000" style="width:65px"></div>
-          <div class="dt-prop-row"><span class="dt-prop-label">Travel accel</span><input type="number" class="dt-prop-val" id="travelAccel" value="8000" style="width:65px"></div>
-        </div>
-      </div>
-
-      <!-- Column 3: Homing + Calibration -->
-      <div style="overflow-y:auto">
-        <div class="dt-section-head" style="padding:8px 12px 4px;font-size:11px">Homing &amp; Calibration</div>
-        <div class="dt-section">
-          <div class="dt-section-head">Limit Switches  <span style="font-weight:400;color:#555">(M119)</span></div>
-          <div class="dt-prop-row">
-            <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:#777;cursor:pointer">
-              <input type="checkbox" id="sXEndstop" style="accent-color:#4a9eff"> X endstop enabled
-            </label>
-          </div>
-          <div class="dt-prop-row"><span class="dt-prop-label">X type</span>
-            <select class="dt-select" id="sXEndstopType" style="height:22px;flex:1">
-              <option value="min">Min (normally open)</option>
-              <option value="min_nc">Min (normally closed)</option>
-              <option value="max">Max (normally open)</option>
-            </select>
-          </div>
-          <div class="dt-prop-row">
-            <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:#777;cursor:pointer">
-              <input type="checkbox" id="sYEndstop" style="accent-color:#4a9eff"> Y endstop enabled
-            </label>
-          </div>
-          <div class="dt-prop-row"><span class="dt-prop-label">Y type</span>
-            <select class="dt-select" id="sYEndstopType" style="height:22px;flex:1">
-              <option value="min">Min (normally open)</option>
-              <option value="min_nc">Min (normally closed)</option>
-              <option value="max">Max (normally open)</option>
-            </select>
-          </div>
-          <div class="dt-prop-row"><button class="pp-btn" id="sCheckEndstops" style="width:100%">Check Endstops (M119)</button></div>
-        </div>
-        <div class="dt-section">
-          <div class="dt-section-head">Homing  <span style="font-weight:400;color:#555">(G28)</span></div>
-          <div class="dt-prop-row"><span class="dt-prop-label">Homing speed</span><input type="number" class="dt-prop-val" id="sHomingSpeed" value="1500" style="width:65px"><span class="dt-unit">mm/m</span></div>
-          <div style="display:flex;gap:4px;padding:4px 10px">
-            <button class="pp-btn" id="sHomeX" style="flex:1">Home X</button>
-            <button class="pp-btn" id="sHomeY" style="flex:1">Home Y</button>
-            <button class="pp-btn pp-btn-accent" id="sHomeAll" style="flex:1">Home All</button>
-          </div>
-        </div>
-        <div class="dt-section">
-          <div class="dt-section-head">Calibration</div>
-          <div class="dt-prop-row"><button class="pp-btn pp-btn-accent" id="sSetZero" style="width:100%">Set Current Pos as Zero (G92 X0 Y0)</button></div>
-          <div class="dt-prop-row"><button class="pp-btn" id="sPark" style="width:100%">Go to Park Position (0,0)</button></div>
-          <div class="dt-section-head" style="margin-top:8px">Distance Calibration</div>
-          <div class="pp-hint" style="padding:2px 10px 4px">Move axis, enter expected vs actual distance to auto-calculate steps/mm</div>
-          <div class="dt-prop-row"><span class="dt-prop-label">Expected</span><input type="number" class="dt-prop-val" id="sCalExpected" value="100" style="width:60px"><span class="dt-unit">mm</span></div>
-          <div class="dt-prop-row"><span class="dt-prop-label">Actual</span><input type="number" class="dt-prop-val" id="sCalActual" value="100" style="width:60px"><span class="dt-unit">mm</span></div>
-          <div style="display:flex;gap:4px;padding:4px 10px">
-            <button class="pp-btn" id="sCalcX" style="flex:1">Calc X</button>
-            <button class="pp-btn" id="sCalcY" style="flex:1">Calc Y</button>
-          </div>
-          <div class="pp-hint" id="sCalResult" style="padding:4px 10px">—</div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ── Track panel (was Draw) ── -->
-  <div id="panelDraw" class="panel" style="display:none">
-    <!-- Toolbar -->
-    <div class="dt-toolbar">
-      <div class="dt-group">
-        <div class="draw-mode-toggle">
-          <button class="dmt-btn active" id="drawModeBtn" data-mode="draw">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5z"/></svg> Draw
-          </button>
-          <button class="dmt-btn" id="mouseModeBtn" data-mode="mouse">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="7" y="2" width="10" height="16" rx="5"/><line x1="12" y1="8" x2="12" y2="12"/></svg> Mouse
-          </button>
-        </div>
-      </div>
-      <div class="dt-sep"></div>
-      <div class="dt-group">
-        <span class="dt-label">Camera</span>
-        <select id="camSelect" class="dt-select" style="min-width:120px"><option value="">Default</option></select>
-      </div>
-      <div class="dt-sep"></div>
-      <div class="dt-group">
-        <span class="dt-label">Brush</span>
-        <input type="range" id="brushSlider" min="2" max="40" value="8" style="width:70px;height:3px;accent-color:#4a9eff">
-        <span class="dt-zoom-label" id="brushVal">8</span>
-      </div>
-      <div class="dt-group">
-        <span class="dt-label">Smooth</span>
-        <input type="range" id="smoothSlider" min="1" max="20" value="6" style="width:60px;height:3px;accent-color:#4a9eff">
-        <span class="dt-zoom-label" id="smoothVal">6</span>
-      </div>
-      <div style="flex:1"></div>
-      <div class="dt-group">
-        <button class="dt-btn" onclick="document.getElementById('clearBtn')?.click()">Clear</button>
-        <button class="dt-btn" onclick="document.getElementById('saveBtn')?.click()">Save PNG</button>
-        <button id="startBtn" class="dt-btn dt-btn-primary">
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
-          <span id="startLabel">Start Camera</span>
-        </button>
-      </div>
-    </div>
-
-    <!-- 3-column body -->
-    <div class="draw-body">
-      <!-- Left: track + gestures -->
-      <div class="dt-presets">
-        <div class="dt-presets-head" style="padding-bottom:6px">
-          <div class="dt-section-head" style="padding:0 0 4px">Track Mode</div>
-          <div class="track-opts" style="gap:3px">
-            <label class="track-opt">
-              <input type="radio" name="trackMode" value="nose" checked>
-              <div class="track-card" style="padding:5px 7px;border-radius:4px;background:#1e1e1e;border:1px solid #333;display:flex;align-items:center;gap:6px;cursor:pointer">
-                <span class="track-icon" style="font-size:.9rem">😶</span>
-                <div><div class="track-name" style="font-size:11px;font-weight:600;color:#bbb">Nose</div><div class="track-hint" style="font-size:10px;color:#555">Head move</div></div>
-              </div>
-            </label>
-            <label class="track-opt">
-              <input type="radio" name="trackMode" value="hand">
-              <div class="track-card" style="padding:5px 7px;border-radius:4px;background:#1e1e1e;border:1px solid #333;display:flex;align-items:center;gap:6px;cursor:pointer">
-                <span class="track-icon" style="font-size:.9rem">✋</span>
-                <div><div class="track-name" style="font-size:11px;font-weight:600;color:#bbb">Hand</div><div class="track-hint" style="font-size:10px;color:#555">Wrist/palm</div></div>
-              </div>
-            </label>
-            <label class="track-opt">
-              <input type="radio" name="trackMode" value="any">
-              <div class="track-card" style="padding:5px 7px;border-radius:4px;background:#1e1e1e;border:1px solid #333;display:flex;align-items:center;gap:6px;cursor:pointer">
-                <span class="track-icon" style="font-size:.9rem">✦</span>
-                <div><div class="track-name" style="font-size:11px;font-weight:600;color:#bbb">Any</div><div class="track-hint" style="font-size:10px;color:#555">Bright point</div></div>
-              </div>
-            </label>
-          </div>
-        </div>
-        <div class="dt-preset-scroll">
-          <div class="dt-section-head">Gesture Controls</div>
-          <div class="gesture-hints" id="gestureHints" style="padding:0 8px">
-            <div class="gesture-list" id="gestureList"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Center: canvas column -->
-      <div class="draw-canvas-wrap">
-        <!-- Canvas area — both canvases fill absolutely, pip inside -->
-        <div class="canvas-area" id="canvasArea">
-          <canvas id="drawCanvas" width="800" height="480"></canvas>
-          <canvas id="overlayCanvas" width="800" height="480"></canvas>
-          <div class="pip" id="pip">
-            <div class="pip-top">
-              <span class="pip-indicator" id="pipIndicator"><span class="pip-dot-inner"></span> LIVE</span>
-              <span class="pip-label" id="pipLabel">nose</span>
-            </div>
-            <div class="pip-body">
-              <video id="video" autoplay playsinline muted></video>
-              <div class="pip-off" id="pipOff">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="2" y1="2" x2="22" y2="22"/><path d="M10.66 6H14a2 2 0 012 2v2.34"/><path d="M6.07 6.07A1.96 1.96 0 006 8v8a2 2 0 002 2h8"/><path d="M10.73 15.27A2 2 0 0012 16a2 2 0 002-2"/></svg>
-                Off
-              </div>
-            </div>
-          </div>
-        </div>
-        <!-- Mouse mode strip -->
-        <div class="mouse-info" id="mouseInfo">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="7" y="2" width="10" height="16" rx="5"/><line x1="12" y1="8" x2="12" y2="12"/></svg>
-          Mouse mode — body movement steers cursor
-        </div>
-        <!-- Color toolbar -->
-        <div class="toolbar" id="toolbar">
-          <div class="colors">
-            <button class="color-btn active" data-color="#2d7ae0" style="background:#2d7ae0"></button>
-            <button class="color-btn" data-color="#0ea5c8" style="background:#0ea5c8"></button>
-            <button class="color-btn" data-color="#a855f7" style="background:#a855f7"></button>
-            <button class="color-btn" data-color="#f43f5e" style="background:#f43f5e"></button>
-            <button class="color-btn" data-color="#f97316" style="background:#f97316"></button>
-            <button class="color-btn" data-color="#22c55e" style="background:#22c55e"></button>
-            <button class="color-btn" data-color="#facc15" style="background:#facc15"></button>
-            <button class="color-btn" data-color="#ffffff" style="background:#ffffff"></button>
-          </div>
-          <div class="toolbar-right">
-            <button id="clearBtn" class="tool-btn">Clear</button>
-            <button id="saveBtn"  class="tool-btn">Save PNG</button>
-          </div>
-        </div>
-        <div class="dt-statusbar" style="background:#1a1a1a;border-top:1px solid #2a2a2a">
-          <span id="drawStatus">Camera off</span><span></span>
-        </div>
-      </div><!-- end draw-canvas-wrap -->
-
-      <!-- Right: manual move -->
-      <div class="dt-props">
-        <div class="dt-props-title">Manual Move</div>
-        <div class="dt-props-scroll">
-          <div class="dt-section">
-            <div class="dt-prop-row">
-              <span class="dt-prop-label">Step size</span>
-              <input type="number" class="dt-prop-val" id="jogStep" value="5" min="0.1" max="50" step="0.1" style="width:60px">
-              <span class="dt-unit">mm</span>
-            </div>
-            <div class="manual-grid" style="margin:4px 10px">
-              <button class="man-btn" id="jogLeft">◀ X−</button>
-              <button class="man-btn" id="jogRight">X+ ▶</button>
-              <button class="man-btn man-btn-y" id="jogUp">Y− ▲</button>
-              <button class="man-btn man-btn-y" id="jogDown">▼ Y+</button>
-              <button class="man-btn man-btn-pen" id="liftBtn">↑ Pen Up</button>
-              <button class="man-btn man-btn-pen" id="dropBtn">↓ Pen Down</button>
-            </div>
-          </div>
-          <div class="dt-section" id="printerPanel" style="display:none">
-            <div class="dt-section-head">Pen Heights <span class="dt-prop-val-ro" id="liveZLabel" style="font-family:monospace;float:right"></span></div>
-            <div class="z-slider-wrap" style="margin:4px 10px">
-              <button class="pp-btn pp-btn-sm z-step-btn" id="zStepUp">+</button>
-              <div class="z-slider-inner">
-                <span class="z-tick z-tick-top">50</span>
-                <input type="range" id="zLiveSlider" class="z-slider" min="-50" max="50" step="0.5" value="8">
-                <span class="z-tick z-tick-bot">-50</span>
-              </div>
-              <button class="pp-btn pp-btn-sm z-step-btn" id="zStepDown">−</button>
-            </div>
-            <div class="dt-prop-row"><span class="dt-prop-label">Pen Up Z</span><input type="number" class="dt-prop-val" id="penUpZ" value="8" style="width:60px"></div>
-            <div class="dt-prop-row"><span class="dt-prop-label">Pen Down Z</span><input type="number" class="dt-prop-val" id="penDownZ" value="2" style="width:60px"></div>
-            <div class="dt-section-head" style="margin-top:8px">Bounds</div>
-            <div class="bound-grid" style="margin:4px 10px"><button class="pp-btn pp-btn-sm" id="setBL">BL</button><button class="pp-btn pp-btn-sm" id="setBR">BR</button><button class="pp-btn pp-btn-sm" id="setTL">TL</button><button class="pp-btn pp-btn-sm" id="setTR">TR</button></div>
-            <div class="dt-prop-row" style="margin-top:4px"><button class="pp-btn pp-btn-accent" style="width:100%;margin:0 10px" id="jogCenter">⊕ Center</button></div>
-            <div class="pp-hint" id="boundsHint" style="padding:4px 10px">X 0–220 · Y 0–220</div>
-            <div class="dt-section-head" style="margin-top:8px">SVG Import</div>
-            <label class="pp-file-label" style="margin:4px 10px">
-              <input type="file" id="svgFile" accept=".svg" style="display:none">
-              <span class="pp-file-btn"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> SVG</span>
-              <span class="pp-file-name" id="svgFileName" style="font-size:10px;color:#555;overflow:hidden;text-overflow:ellipsis;max-width:80px">No file</span>
-            </label>
-            <div class="dt-prop-row"><span class="dt-prop-label">Scale</span><input type="number" class="dt-prop-val" id="svgScale" value="100" style="width:60px"><span class="dt-unit">%</span></div>
-            <div class="dt-prop-row"><button class="pp-btn pp-btn-accent" id="plotSvgBtn" disabled style="flex:1">Plot SVG</button><button class="pp-btn" id="clearSvgBtn">Clear</button></div>
-            <div class="pp-hint" id="svgHint" style="padding:4px 10px">No SVG loaded.</div>
-            <div class="dt-section-head" style="margin-top:8px">Text to Plot <button class="pp-btn pp-btn-sm" id="dictateBtn" style="margin-left:auto;float:right">🎤</button></div>
-            <textarea id="plotText" class="pp-textarea" placeholder="Type text…" rows="2" style="margin:4px 10px;width:calc(100% - 20px)"></textarea>
-            <div class="dt-prop-row"><span class="dt-prop-label">Size</span><input type="number" class="dt-prop-val" id="textSize" value="15" style="width:55px"><span class="dt-unit">mm</span></div>
-            <div class="dt-prop-row" style="gap:3px"><button class="pp-btn" id="textAlignLeft">⬛◻◻</button><button class="pp-btn pp-btn-accent" id="textAlignCenter">◻⬛◻</button><button class="pp-btn" id="textAlignRight">◻◻⬛</button></div>
-            <div class="dt-prop-row"><button class="pp-btn" id="previewTextBtn">Preview</button><button class="pp-btn pp-btn-accent" id="plotTextBtn" disabled>Plot</button><button class="pp-btn" id="clearTextBtn">Clear</button></div>
-            <div class="pp-hint" id="textHint" style="padding:4px 10px">Connect plotter.</div>
-            <div class="dt-section-head" style="margin-top:8px">Motion</div>
-            <div class="dt-prop-row"><span class="dt-prop-label">XY Speed</span><input type="number" class="dt-prop-val" id="xySpeed" value="12000" style="width:65px"><span class="dt-unit">mm/m</span></div>
-            <div class="dt-prop-row"><span class="dt-prop-label">Line passes</span><input type="number" class="dt-prop-val" id="linePasses" value="2" style="width:55px"></div>
-            <div class="dt-prop-row"><button class="pp-btn pp-btn-turbo" id="turboBtn">Turbo</button><button class="pp-btn pp-btn-accent" id="applyMotionBtn">Apply</button></div>
-            <div class="dt-prop-row"><span class="dt-prop-label">Max speed</span><input type="number" class="dt-prop-val" id="maxSpeed" value="220" style="width:55px"><span class="dt-unit">mm/s</span></div>
-            <div class="dt-prop-row"><span class="dt-prop-label">Accel</span><input type="number" class="dt-prop-val" id="accelVal" value="6000" style="width:65px"></div>
-            <div class="dt-prop-row"><span class="dt-prop-label">Travel accel</span><input type="number" class="dt-prop-val" id="travelAccel" value="8000" style="width:65px"></div>
-            <div class="dt-prop-row"><button class="pp-btn pp-btn-accent" id="speedTestBtn" style="width:100%">Speed Test X ±15mm</button></div>
-            <div class="pp-hint" id="speedTestHint" style="padding:4px 10px">Runs 30 mm back and forth around bed center with pen up.</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ── Run panel (plot execution) ── -->
-  <div id="panelPlot" id2="panelRun" class="panel" style="display:none">
-    <div class="dt-toolbar">
-      <div class="dt-group">
-        <span class="dt-label" id="plotDesignName" style="color:#ccc;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">No design loaded</span>
-      </div>
-      <div class="dt-sep"></div>
-      <div class="dt-group">
-        <button class="plot-play-btn go" id="plotStartBtn" disabled>▶ Start</button>
-        <button class="plot-play-btn" id="plotPauseBtn" disabled style="display:none">⏸ Pause</button>
-        <button class="plot-play-btn stop" id="plotStopBtn" disabled style="display:none">⏹ Stop</button>
-        <button class="plot-play-btn" id="killBtn" title="Emergency stop — halts motion immediately (M112)" style="background:rgba(239,68,68,.2);border-color:rgba(239,68,68,.5);color:#fca5a5;font-weight:900;letter-spacing:.04em">
-          ⬛ KILL
-        </button>
-      </div>
-      <div class="dt-sep"></div>
-      <div class="dt-group" style="gap:8px;flex:1;max-width:300px">
-        <div class="plot-tbar-progress"><div class="plot-tbar-fill" id="plotTbarFill" style="width:0%"></div></div>
-        <span class="dt-zoom-label" id="plotTbarPct">—</span>
-      </div>
-      <div class="dt-sep"></div>
-      <div class="dt-group">
-        <!-- Upload to printer SD — stores via M28/M29, then works offline -->
-        <button class="dt-btn" id="uploadToSDBtn" disabled title="Upload G-code to printer SD card over USB — then unplug and run from Files menu">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-          Upload to SD
-        </button>
-        <button class="dt-btn" id="downloadGcodeBtn" disabled title="Download .gcode file to copy to SD card manually">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-          Download .gcode
-        </button>
-      </div>
-      <div style="flex:1"></div>
-      <div class="dt-group">
-        <span style="font-size:11px;font-family:monospace;color:#555" id="plotPosLabel">X — · Y —</span>
-      </div>
-    </div>
-
-    <div class="plot-body">
-      <!-- Left: settings -->
-      <div class="plot-controls">
-        <div class="dt-props-title">Settings</div>
-        <div class="plot-scroll">
-          <div class="dt-section">
-            <div class="dt-section-head">Paper</div>
-            <div class="dt-prop-row">
-              <span class="dt-prop-label">Width</span>
-              <span class="dt-prop-val-ro" id="plotPaperW">—</span>
-              <span class="dt-unit">mm</span>
-            </div>
-            <div class="dt-prop-row">
-              <span class="dt-prop-label">Height</span>
-              <span class="dt-prop-val-ro" id="plotPaperH">—</span>
-              <span class="dt-unit">mm</span>
-            </div>
-            <div class="dt-prop-row">
-              <span class="dt-prop-label">Margin</span>
-              <span class="dt-prop-val-ro" id="plotPaperM">—</span>
-              <span class="dt-unit">mm</span>
-            </div>
-            <div class="pp-hint" style="padding:4px 10px">Set in Design tab ↗</div>
-          </div>
-          <div class="dt-section">
-            <div class="dt-section-head">Speed</div>
-            <div class="dt-prop-row"><span class="dt-prop-label">XY Feed</span><input type="number" class="dt-prop-val" id="xySpeed2" value="12000" style="width:65px"><span class="dt-unit">mm/m</span></div>
-            <input type="range" class="dt-prop-slider" id="xySpeedSlider" min="1000" max="20000" step="500" value="12000">
-            <div class="dt-prop-row"><span class="dt-prop-label">Max speed</span><input type="number" class="dt-prop-val" id="maxSpeed2" value="220" style="width:65px"><span class="dt-unit">mm/s</span></div>
-            <div class="dt-prop-row"><span class="dt-prop-label">Acceleration</span><input type="number" class="dt-prop-val" id="accelVal2" value="6000" style="width:65px"></div>
-          </div>
-          <div class="dt-section">
-            <div class="dt-section-head">Pen Height</div>
-            <div class="dt-prop-row"><span class="dt-prop-label">Up Z</span><input type="number" class="dt-prop-val" id="penUpZ2" value="8" style="width:60px"></div>
-            <div class="dt-prop-row"><span class="dt-prop-label">Down Z</span><input type="number" class="dt-prop-val" id="penDownZ2" value="2" style="width:60px"></div>
-            <div class="dt-prop-row"><span class="dt-prop-label">Passes</span><input type="number" class="dt-prop-val" id="linePasses2" value="1" min="1" max="8" style="width:55px"></div>
-          </div>
-          <div class="dt-section">
-            <div class="dt-section-head">Auto Bed Leveling</div>
-            <div class="dt-prop-row" style="flex-wrap:wrap;gap:4px">
-              <button class="plot-play-btn" id="ablProbeBtn" style="flex:1;font-size:11px" title="Probe Z at current position (G30)">
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-                Probe Here
-              </button>
-              <button class="plot-play-btn" id="ablMeshBtn" style="flex:1;font-size:11px" title="Full mesh bed level (G29)">
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h18v18H3z"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg>
-                Run G29
-              </button>
-            </div>
-            <div class="dt-prop-row"><span class="dt-prop-label">Probe Z</span><span class="dt-prop-val-ro" id="ablProbeZ">—</span></div>
-            <div class="dt-prop-row"><span class="dt-prop-label">Probe speed</span><input type="number" class="dt-prop-val" id="ablProbeSpeed" value="300" style="width:60px"><span class="dt-unit">mm/m</span></div>
-            <div class="dt-prop-row">
-              <label style="display:flex;align-items:center;gap:5px;font-size:11px;color:#777;cursor:pointer">
-                <input type="checkbox" id="ablEnabled" style="accent-color:#4a9eff"> Use ABL offset
-              </label>
-            </div>
-            <div class="dt-prop-row"><span class="dt-prop-label">Z offset</span><input type="number" class="dt-prop-val" id="ablZOffset" value="0" step="0.01" style="width:60px"><span class="dt-unit">mm</span></div>
-            <div class="dt-prop-row"><button class="plot-play-btn" id="ablSetOffsetBtn" style="width:100%;font-size:11px">Set Z Offset from Probe</button></div>
-            <div class="pp-hint" id="ablHint" style="padding:4px 10px">Probe paper surface then set offset.</div>
-          </div>
-          <div class="dt-section">
-            <div class="dt-section-head">Manual Jog</div>
-            <div class="dt-prop-row"><span class="dt-prop-label">Step</span><input type="number" class="dt-prop-val" id="jogStep2" value="5" style="width:60px"><span class="dt-unit">mm</span></div>
-            <div class="manual-grid" style="margin:4px 10px">
-              <button class="man-btn" id="jogLeft2">◀ X−</button>
-              <button class="man-btn" id="jogRight2">X+ ▶</button>
-              <button class="man-btn man-btn-y" id="jogUp2">Y− ▲</button>
-              <button class="man-btn man-btn-y" id="jogDown2">▼ Y+</button>
-              <button class="man-btn man-btn-pen" id="liftBtn2">↑ Up</button>
-              <button class="man-btn man-btn-pen" id="dropBtn2">↓ Down</button>
-            </div>
-            <div style="display:flex;gap:3px;padding:0 10px;margin-top:4px">
-              <button class="pp-btn pp-btn-sm" id="setBL2">BL</button><button class="pp-btn pp-btn-sm" id="setBR2">BR</button>
-              <button class="pp-btn pp-btn-sm" id="setTL2">TL</button><button class="pp-btn pp-btn-sm" id="setTR2">TR</button>
-              <button class="pp-btn pp-btn-accent pp-btn-sm" id="jogCenter2">⊕</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Center: 3D visualizer (Three.js) + 2D fallback -->
-      <div class="plot-bed-wrap" id="plotBedWrap" style="flex-direction:column">
-        <!-- View toggle -->
-        <div style="position:absolute;top:8px;right:8px;z-index:10;display:flex;gap:4px">
-          <button id="view3DBtn" class="dt-btn" style="height:24px;padding:0 8px;font-size:10px;background:#1a3050;color:#4a9eff;border-color:#2d5a9e">3D</button>
-          <button id="view2DBtn" class="dt-btn" style="height:24px;padding:0 8px;font-size:10px">2D</button>
-          <button id="viewResetBtn" class="dt-btn" style="height:24px;padding:0 8px;font-size:10px" title="Reset camera">↺</button>
-        </div>
-        <!-- Three.js 3D canvas -->
-        <canvas id="canvas3D" style="width:100%;height:100%;display:block"></canvas>
-        <!-- 2D fallback canvas (hidden by default) -->
-        <canvas id="plotBedCanvas" style="width:100%;height:100%;display:none"></canvas>
-        <div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);font-size:10px;color:#555;font-family:monospace;white-space:nowrap;pointer-events:none" id="plotBedInfo">—</div>
-      </div>
-
-      <!-- Right: status -->
-      <div class="plot-status">
-        <div class="dt-props-title">Live Status</div>
-        <div class="plot-scroll">
-          <div class="dt-section">
-            <div class="dt-section-head">Position</div>
-            <div class="plot-coords">
-              <div class="plot-coord"><div class="plot-coord-axis">X</div><div class="plot-coord-val" id="plotXVal">—</div></div>
-              <div class="plot-coord"><div class="plot-coord-axis">Y</div><div class="plot-coord-val" id="plotYVal">—</div></div>
-            </div>
-            <div class="dt-prop-row" style="margin-top:4px"><span class="dt-prop-label">Pen</span><span class="dt-prop-val-ro" id="plotPenState">—</span></div>
-          </div>
-          <div class="dt-section">
-            <div class="dt-section-head">Progress</div>
-            <div class="plot-stat-big" id="plotPctBig">—</div>
-            <div class="plot-stat-label">complete</div>
-            <div class="plot-progress-bar"><div class="plot-progress-fill" id="plotProgFill" style="width:0%"></div></div>
-            <div class="dt-prop-row"><span class="dt-prop-label">Stroke</span><span class="dt-prop-val-ro" id="plotStrokeInfo">— / —</span></div>
-            <div class="dt-prop-row"><span class="dt-prop-label">Distance</span><span class="dt-prop-val-ro" id="plotDistInfo">—</span></div>
-            <div class="dt-prop-row"><span class="dt-prop-label">Remaining</span><span class="dt-prop-val-ro" id="plotDistLeft">—</span></div>
-          </div>
-          <div class="dt-section">
-            <div class="dt-section-head">Connection</div>
-            <div class="dt-prop-row"><span class="dt-prop-label">Status</span><span class="dt-prop-val-ro" id="plotConnStatus">Disconnected</span></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ── Designs panel ── -->
-  <div id="panelDesigns" style="display:none; flex-direction:column; height:100vh; background:#1a1a1a; flex:1; min-width:0;">
-
-    <!-- Toolbar -->
-    <div class="dt-toolbar">
-      <!-- Design selector -->
-      <div class="dt-group">
-        <span class="dt-label">Design</span>
-        <select class="dt-select" id="dtDesignSelect" style="min-width:150px">
-          <option value="">— choose preset —</option>
-        </select>
-      </div>
-      <div class="dt-sep"></div>
-      <!-- Canvas size -->
-      <div class="dt-group">
-        <span class="dt-label">Canvas</span>
+      <div class="dt-group"><span class="dt-label">Canvas</span>
         <select class="dt-select" id="dtCanvasPreset">
           <option value="9x11">9 × 11 in</option>
           <option value="letter">Letter 8.5×11</option>
-          <option value="a4">A4</option>
-          <option value="a3">A3</option>
-          <option value="5x7">5 × 7 in</option>
-          <option value="square">Square 8×8 in</option>
+          <option value="a4">A4</option><option value="a3">A3</option>
+          <option value="5x7">5 × 7 in</option><option value="square">Square 8×8</option>
           <option value="custom">Custom…</option>
         </select>
         <input type="number" class="dt-num-input" id="dtW" value="228.6" step="0.1" min="10">
         <span class="dt-x">×</span>
         <input type="number" class="dt-num-input" id="dtH" value="279.4" step="0.1" min="10">
         <span class="dt-unit">mm</span>
-        <button class="dt-icon-btn" id="dtOrient" title="Swap width/height">⇅</button>
+        <button class="dt-icon-btn" id="dtOrient">⇅</button>
       </div>
       <div class="dt-sep"></div>
-      <!-- Margin -->
-      <div class="dt-group">
-        <span class="dt-label">Margin</span>
+      <div class="dt-group"><span class="dt-label">Margin</span>
         <input type="number" class="dt-num-input" id="dtMargin" value="12" step="1" min="0" max="60" style="width:46px">
         <span class="dt-unit">mm</span>
       </div>
       <div class="dt-sep"></div>
-      <!-- View -->
       <div class="dt-group">
-        <button class="dt-icon-btn" id="dtZoomOut" title="Zoom out">−</button>
+        <button class="dt-icon-btn" id="dtZoomOut">−</button>
         <span class="dt-zoom-label" id="dtZoomLabel">100%</span>
-        <button class="dt-icon-btn" id="dtZoomIn"  title="Zoom in">+</button>
-        <button class="dt-btn" id="dtZoomFit" style="padding:0 7px;font-size:10.5px">Fit</button>
+        <button class="dt-icon-btn" id="dtZoomIn">+</button>
+        <button class="dt-btn" id="dtZoomFit" style="font-size:10.5px;padding:0 7px">Fit</button>
       </div>
       <div class="dt-sep"></div>
-      <!-- Show travel -->
       <div class="dt-group">
-        <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#777;cursor:pointer;white-space:nowrap">
-          <input type="checkbox" id="dtShowTravel" checked style="accent-color:#4a9eff"> Travel
-        </label>
-        <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#777;cursor:pointer;white-space:nowrap">
-          <input type="checkbox" id="dtShowDots" checked style="accent-color:#4a9eff"> Dots
-        </label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#777;cursor:pointer;white-space:nowrap"><input type="checkbox" id="dtShowTravel" checked style="accent-color:#4a9eff"> Travel</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#777;cursor:pointer;white-space:nowrap"><input type="checkbox" id="dtShowDots" checked style="accent-color:#4a9eff"> Dots</label>
       </div>
-      <!-- Spacer -->
       <div style="flex:1"></div>
-      <!-- Actions -->
       <div class="dt-group">
         <button class="dt-btn" id="exportSvgBtn" disabled>Export SVG</button>
-        <button class="dt-btn dt-btn-primary" id="plotDesignBtn" disabled>▶ Plot</button>
       </div>
     </div>
-
-    <!-- Body -->
+    <!-- Patterns 3-column body -->
     <div class="dt-body" style="flex:1;min-height:0">
-
-      <!-- Left: presets -->
       <div class="dt-presets">
         <div class="dt-presets-head">
-          <input type="search" class="dt-search" id="dtSearch" placeholder="Search designs…">
+          <input type="search" class="dt-search" id="dtSearch" placeholder="Search…">
           <div class="dt-cats">
             <button class="dt-cat active" data-cat="all">All</button>
             <button class="dt-cat" data-cat="hatch">Hatch</button>
@@ -2095,21 +1436,12 @@ footer { border-top: 1px solid var(--border); padding: 2.75rem 0 1.25rem; }
         </div>
         <div class="dt-preset-scroll" id="presetList"></div>
       </div>
-
-      <!-- Center: canvas -->
       <div class="dt-canvas-wrap">
         <div class="dt-canvas-viewport" id="dtViewport">
-          <div class="dt-paper-wrap" id="dtPaperWrap">
-            <canvas id="designCanvas"></canvas>
-          </div>
+          <div class="dt-paper-wrap" id="dtPaperWrap"><canvas id="designCanvas"></canvas></div>
         </div>
-        <div class="dt-statusbar">
-          <span id="dtStats">Select a design to begin</span>
-          <span id="dtCoords"></span>
-        </div>
+        <div class="dt-statusbar"><span id="dtStats">Select a design</span><span id="dtCoords"></span></div>
       </div>
-
-      <!-- Right: properties -->
       <div class="dt-props">
         <div class="dt-props-title">Properties</div>
         <div class="dt-props-scroll">
@@ -2126,14 +1458,20 @@ footer { border-top: 1px solid var(--border); padding: 2.75rem 0 1.25rem; }
           <div class="dt-section" id="dtStatsSection" style="display:none">
             <div class="dt-section-head">Output</div>
             <div class="dt-prop-row"><span class="dt-prop-label">Strokes</span><span class="dt-prop-val-ro" id="dtStatStrokes">—</span></div>
-            <div class="dt-prop-row"><span class="dt-prop-label">Draw dist</span><span class="dt-prop-val-ro" id="dtStatDist">—</span></div>
+            <div class="dt-prop-row"><span class="dt-prop-label">Distance</span><span class="dt-prop-val-ro" id="dtStatDist">—</span></div>
             <div class="dt-prop-row"><span class="dt-prop-label">Lifts</span><span class="dt-prop-val-ro" id="dtStatLifts">—</span></div>
+          </div>
+          <div class="dt-section">
+            <div class="dt-section-head">Paper size sync</div>
+            <div class="dt-prop-row"><span class="dt-prop-label" id="plotPaperW" style="font-family:monospace">—</span></div>
+            <div class="dt-prop-row"><span class="dt-prop-label" id="plotPaperH" style="font-family:monospace">—</span></div>
+            <div class="dt-prop-row"><span class="dt-prop-label" id="plotPaperM" style="font-family:monospace">—</span></div>
           </div>
           <div class="dt-section">
             <div class="dt-section-head">Legend</div>
             <div class="dt-legend">
               <div class="dt-legend-row"><span class="dl-stroke" style="background:#3a72cc"></span>Draw stroke</div>
-              <div class="dt-legend-row"><span class="dl-stroke" style="background:#333;border-top:1px dashed #555;height:0"></span>Travel (pen up)</div>
+              <div class="dt-legend-row"><span class="dl-stroke" style="background:#333;border-top:1px dashed #555;height:0"></span>Travel</div>
               <div class="dt-legend-row"><span class="dl-dot" style="background:#22c55e"></span>Pen down</div>
               <div class="dt-legend-row"><span class="dl-dot" style="background:#f43f5e"></span>Pen lift</div>
             </div>
@@ -2143,226 +1481,569 @@ footer { border-top: 1px solid var(--border); padding: 2.75rem 0 1.25rem; }
     </div>
   </div>
 
-</div><!-- end app -->
-
-<!-- (sections below removed — app is now single-page) -->
-<section id="features" class="section" style="display:none">
-  <div class="container">
-    <div class="section-tag">Capabilities</div>
-    <h2>Any limb. Any movement. Any art.</h2>
-    <p class="section-sub">Built for people who can't hold a brush — but can move something.</p>
-
-    <div class="feat-grid">
-      <div class="feat-card span2">
-        <div class="feat-icon">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="7" r="4"/><path d="M12 11v10M8 21h8"/><path d="M9 14.5L6 19M15 14.5L18 19"/></svg>
-        </div>
-        <h3>Head &amp; face tracking</h3>
-        <p>Nod, tilt, and turn your head to steer the plotter across the full canvas. Full 2D drawing from neck movement alone, using MediaPipe's 478-point face mesh running at 30fps in your browser.</p>
-      </div>
-      <div class="feat-card">
-        <div class="feat-icon">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 11V6a2 2 0 00-4 0v1M14 7V4a2 2 0 00-4 0v3M10 7.5V5a2 2 0 00-4 0v6M6 11v2a6 6 0 006 6 6 6 0 006-6v-5a2 2 0 00-4 0"/></svg>
-        </div>
-        <h3>Hand &amp; wrist</h3>
-        <p>Wave a hand in the camera frame — the wrist landmark drives the pen. Fine gestures make fine strokes.</p>
-      </div>
-      <div class="feat-card">
-        <div class="feat-icon">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/></svg>
-        </div>
-        <h3>Any bright object</h3>
-        <p>A foot, elbow, or anything that contrasts with the background can become your drawing cursor.</p>
-      </div>
-      <div class="feat-card">
-        <div class="feat-icon">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
-        </div>
-        <h3>Repurposed 3D printer as plotter</h3>
-        <p>We strip the extruder from a discarded 3D printer and strap a pen where it was. Your body's X/Y position streams over USB as G-code, driving the same stepper motors that used to push plastic — now pushing ink.</p>
-      </div>
-      <div class="feat-card">
-        <div class="feat-icon">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-        </div>
-        <h3>Private by design</h3>
-        <p>All vision runs locally in your browser via WebAssembly. Zero video is ever sent to a server.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section class="section how-section" style="display:none">
-  <div class="container">
-    <div class="section-tag">Process</div>
-    <h2>From discarded printer to art machine in minutes.</h2>
-    <div class="steps">
-      <div class="step">
-        <div class="step-n">01</div>
-        <h3>Rescue a 3D printer</h3>
-        <p>Find any discarded or broken FDM printer. Remove the extruder and hotend — the frame, rails, and stepper motors are all you need.</p>
-      </div>
-      <div class="step">
-        <div class="step-n">02</div>
-        <h3>Attach a pen</h3>
-        <p>Mount a pen or marker where the extruder was. Load paper onto the bed. Your old printer is now a plotter.</p>
-      </div>
-      <div class="step">
-        <div class="step-n">03</div>
-        <h3>Connect &amp; point the camera</h3>
-        <p>Plug the printer in over USB and open Plotter in your browser. Aim the webcam at whatever limb someone can move — head, hand, foot, or elbow.</p>
-      </div>
-      <div class="step">
-        <div class="step-n">04</div>
-        <h3>Move. The printer draws.</h3>
-        <p>Body position streams as G-code over Web Serial in real time. The same steppers that used to push plastic now push ink — your movement becomes art on paper.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section id="story" class="section story-section" style="display:none">
-  <div class="container">
-    <div class="story-grid">
-      <div class="story-left">
-        <div class="section-tag">The Story</div>
-        <h2>Art should have no barriers.</h2>
-        <div class="authors">
-          <div class="author">
-            <div class="avatar">JM</div>
-            <div>
-              <div class="author-name">Jacob Majors</div>
-              <div class="author-role">Creator</div>
-            </div>
+  <!-- ── Track / Camera mode ─────────────────────────── -->
+  <div id="modeTrack" class="mode-view" style="display:none;flex:1;min-height:0">
+    <!-- Track 3-column body -->
+    <div class="dt-body" style="flex:1;min-height:0;grid-template-columns:180px 1fr 200px">
+      <!-- Left: camera + mode -->
+      <div class="dt-presets">
+        <div class="dt-presets-head" style="padding-bottom:6px">
+          <div class="seg-ctrl">
+            <button class="seg active" id="drawModeBtn" data-mode="draw">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5z"/></svg> Draw
+            </button>
+            <button class="seg" id="mouseModeBtn" data-mode="mouse">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="7" y="2" width="10" height="16" rx="5"/><line x1="12" y1="8" x2="12" y2="12"/></svg> Mouse
+            </button>
           </div>
-          <div class="author">
-            <div class="avatar">TP</div>
-            <div>
-              <div class="author-name">Troy Pappas</div>
-              <div class="author-role">Creator</div>
+          <div class="cam-select-wrap">
+            <label class="ctrl-label" for="camSelect">Camera</label>
+            <select id="camSelect" class="cam-select"><option value="">Default camera</option></select>
+          </div>
+          <button id="startBtn" class="start-btn">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
+            <span id="startLabel">Start Camera</span>
+          </button>
+          <div class="dt-section-head" style="margin-top:8px">Track Mode</div>
+          <div class="track-opts" style="gap:3px">
+            <label class="track-opt"><input type="radio" name="trackMode" value="nose" checked>
+              <div class="track-card" style="padding:4px 7px;border-radius:4px;background:#1e1e1e;border:1px solid #2e2e2e;display:flex;align-items:center;gap:6px;cursor:pointer">
+                <span style="font-size:.9rem">😶</span><div><div style="font-size:11px;font-weight:600;color:#bbb">Nose</div><div style="font-size:10px;color:#555">Head</div></div>
+              </div>
+            </label>
+            <label class="track-opt"><input type="radio" name="trackMode" value="hand">
+              <div class="track-card" style="padding:4px 7px;border-radius:4px;background:#1e1e1e;border:1px solid #2e2e2e;display:flex;align-items:center;gap:6px;cursor:pointer">
+                <span style="font-size:.9rem">✋</span><div><div style="font-size:11px;font-weight:600;color:#bbb">Hand</div><div style="font-size:10px;color:#555">Wrist</div></div>
+              </div>
+            </label>
+            <label class="track-opt"><input type="radio" name="trackMode" value="any">
+              <div class="track-card" style="padding:4px 7px;border-radius:4px;background:#1e1e1e;border:1px solid #2e2e2e;display:flex;align-items:center;gap:6px;cursor:pointer">
+                <span style="font-size:.9rem">✦</span><div><div style="font-size:11px;font-weight:600;color:#bbb">Any</div><div style="font-size:10px;color:#555">Object</div></div>
+              </div>
+            </label>
+          </div>
+        </div>
+        <div class="dt-preset-scroll">
+          <div class="gesture-hints" id="gestureHints"><div class="gesture-hints-title">Gesture controls</div><div class="gesture-list" id="gestureList"></div></div>
+        </div>
+      </div>
+      <!-- Center: drawing canvas -->
+      <div class="draw-canvas-wrap">
+        <div class="canvas-area" id="canvasArea">
+          <canvas id="drawCanvas" width="800" height="480"></canvas>
+          <canvas id="overlayCanvas" width="800" height="480"></canvas>
+          <div class="pip" id="pip">
+            <div class="pip-top"><span class="pip-indicator" id="pipIndicator"><span class="pip-dot-inner"></span> LIVE</span><span class="pip-label" id="pipLabel">nose</span></div>
+            <div class="pip-body"><video id="video" autoplay playsinline muted></video>
+              <div class="pip-off" id="pipOff"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="2" y1="2" x2="22" y2="22"/><path d="M10.66 6H14a2 2 0 012 2v2.34"/><path d="M6.07 6.07A1.96 1.96 0 006 8v8a2 2 0 002 2h8"/></svg>Off</div>
             </div>
           </div>
         </div>
-        <div class="story-school">Sonoma Academy · 2026</div>
+        <div class="mouse-info" id="mouseInfo"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="7" y="2" width="10" height="16" rx="5"/><line x1="12" y1="8" x2="12" y2="12"/></svg> Mouse mode active</div>
+        <div class="toolbar" id="toolbar">
+          <div class="colors">
+            <button class="color-btn active" data-color="#2d7ae0" style="background:#2d7ae0"></button>
+            <button class="color-btn" data-color="#0ea5c8" style="background:#0ea5c8"></button>
+            <button class="color-btn" data-color="#a855f7" style="background:#a855f7"></button>
+            <button class="color-btn" data-color="#f43f5e" style="background:#f43f5e"></button>
+            <button class="color-btn" data-color="#22c55e" style="background:#22c55e"></button>
+            <button class="color-btn" data-color="#facc15" style="background:#facc15"></button>
+            <button class="color-btn" data-color="#ffffff" style="background:#fff"></button>
+          </div>
+          <div class="toolbar-right">
+            <button id="clearBtn" class="tool-btn">Clear</button>
+            <button id="saveBtn" class="tool-btn">Save PNG</button>
+          </div>
+        </div>
+        <div class="dt-statusbar" style="background:#1a1a1a;border-top:1px solid #2a2a2a"><span id="drawStatus">Camera off</span><span></span></div>
       </div>
-      <div class="story-right">
-        <p>Plotter started with a simple but powerful question: <strong>what if someone can't hold a brush?</strong> For people with limited motor ability — whether from a condition, an injury, or a disability — traditional art tools are inaccessible. The canvas stays blank not because of a lack of creativity, but because of a lack of tools.</p>
-        <p>The idea grew out of <strong>Ramsey Mussalum's Design for Social Good</strong> course at Sonoma Academy — a class built around one idea: design should solve real problems for real people.</p>
-        <p>And there was a second problem hiding in plain sight: <strong>millions of 3D printers are discarded every year</strong> — broken, outdated, or simply abandoned. Those machines still have functional frames, rails, and stepper motors. Instead of the landfill, Plotter gives them a new purpose. Strip the extruder, strap a pen in its place, and the same hardware that once built plastic objects now creates art on paper.</p>
-        <p>Point a webcam at whatever limb someone <em>can</em> move — a head, a wrist, a foot — and body position streams over USB as G-code. The printer's X and Y axes follow in real time. The person becomes the artist. The machine becomes their hand.</p>
-        <blockquote>Rescued hardware. Zero subscriptions. Just movement, and art.</blockquote>
+      <!-- Right: brush + smooth -->
+      <div class="dt-props">
+        <div class="dt-props-title">Drawing</div>
+        <div class="dt-props-scroll">
+          <div class="dt-section">
+            <div class="dt-section-head">Brush</div>
+            <div class="dt-prop-row"><span class="dt-prop-label">Size</span><span class="dt-prop-val-ro" id="brushVal">8</span></div>
+            <input type="range" id="brushSlider" class="dt-prop-slider" min="2" max="40" value="8">
+          </div>
+          <div class="dt-section">
+            <div class="dt-section-head">Smoothing</div>
+            <div class="dt-prop-row"><span class="dt-prop-label">Amount</span><span class="dt-prop-val-ro" id="smoothVal">6</span></div>
+            <input type="range" id="smoothSlider" class="dt-prop-slider" min="1" max="20" value="6">
+          </div>
+        </div>
       </div>
     </div>
   </div>
-</section>
 
-<section class="section cta-section" style="display:none">
-  <div class="container cta-inner">
-    <div class="cta-glow"></div>
-    <h2>Ready to create?</h2>
-    <p>Free, open source, and always will be.</p>
-    <div class="hero-btns">
-      <a href="#demo" class="btn-brand btn-lg">Try it now — it's free</a>
-      <a href="https://github.com/troypappas1/Plotter" target="_blank" class="btn-outline btn-lg">Star on GitHub ★</a>
+  <!-- ── SVG mode ────────────────────────────────────── -->
+  <div id="modeSVG" class="mode-view" style="display:none;flex:1;min-height:0">
+    <div class="dt-body" style="flex:1;min-height:0;grid-template-columns:260px 1fr">
+      <div class="dt-presets">
+        <div class="dt-presets-head">
+          <div class="dt-section-head" style="padding:0 0 6px">Import SVG File</div>
+          <label class="pp-file-label" style="flex-direction:column;align-items:stretch;gap:6px">
+            <input type="file" id="svgFile" accept=".svg" style="display:none">
+            <span class="pp-file-btn" style="justify-content:center">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              Choose SVG File
+            </span>
+            <span class="pp-file-name" id="svgFileName" style="text-align:center">No file chosen</span>
+          </label>
+        </div>
+        <div class="dt-preset-scroll">
+          <div class="dt-section">
+            <div class="dt-section-head">Scale</div>
+            <div class="dt-prop-row"><span class="dt-prop-label">Scale</span><input type="number" class="dt-prop-val" id="svgScale2" value="100" min="1" max="500"><span class="dt-unit">%</span></div>
+          </div>
+          <div class="dt-section">
+            <div class="dt-prop-row"><button class="pp-btn pp-btn-accent" id="plotSvgBtn" disabled style="flex:1">Plot SVG</button><button class="pp-btn" id="clearSvgBtn">Clear</button></div>
+            <div class="pp-hint" id="svgHintDisp" style="padding:4px 10px">Load an SVG file to plot it.</div>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:center;background:#111;font-size:13px;color:#333;flex-direction:column;gap:8px">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="1"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        SVG preview — load a file above
+      </div>
     </div>
   </div>
-</section>
 
-<footer style="display:none">
-  <div class="container footer-inner">
-    <div class="footer-brand">
-      <div class="logo-mark">P</div>
-      <div>
-        <div class="footer-name">Plotter</div>
-        <div class="footer-desc">Rescued 3D printers. Art without barriers.</div>
+  <!-- ── Text mode ───────────────────────────────────── -->
+  <div id="modeText" class="mode-view" style="display:none;flex:1;min-height:0">
+    <div class="dt-body" style="flex:1;min-height:0;grid-template-columns:280px 1fr">
+      <div class="dt-presets">
+        <div class="dt-presets-head">
+          <div class="dt-section-head" style="padding:0 0 6px">Text to Plot <button class="pp-btn pp-btn-sm" id="dictateBtn" style="float:right">🎤</button></div>
+          <textarea id="plotText" class="pp-textarea" placeholder="Type text to plot…" rows="5" style="width:100%;margin:0"></textarea>
+        </div>
+        <div class="dt-preset-scroll">
+          <div class="dt-section">
+            <div class="dt-section-head">Options</div>
+            <div class="dt-prop-row"><span class="dt-prop-label">Size</span><input type="number" class="dt-prop-val" id="textSize" value="15" min="3" max="80"><span class="dt-unit">mm</span></div>
+            <div class="dt-prop-row" style="gap:4px">
+              <button class="pp-btn" id="textAlignLeft" title="Left">⬛◻◻</button>
+              <button class="pp-btn pp-btn-accent" id="textAlignCenter" title="Center">◻⬛◻</button>
+              <button class="pp-btn" id="textAlignRight" title="Right">◻◻⬛</button>
+            </div>
+          </div>
+          <div class="dt-section">
+            <div class="dt-prop-row"><button class="pp-btn" id="previewTextBtn" style="flex:1">Preview</button><button class="pp-btn pp-btn-accent" id="plotTextBtn" disabled style="flex:1">Plot</button><button class="pp-btn" id="clearTextBtn">Clear</button></div>
+            <div class="pp-hint" id="textHint" style="padding:4px 10px">Connect plotter to plot.</div>
+          </div>
+        </div>
       </div>
-    </div>
-    <div class="footer-cols">
-      <div class="footer-col">
-        <div class="fcol-title">Project</div>
-        <a href="#demo">Try Demo</a>
-        <a href="#features">Features</a>
-        <a href="sources.html">Sources</a>
-      </div>
-      <div class="footer-col">
-        <div class="fcol-title">Links</div>
-        <a href="https://github.com/troypappas1/Plotter" target="_blank">GitHub</a>
-        <a href="https://github.com/troypappas1/Plotter/issues/new" target="_blank">Report Issue</a>
+      <div style="display:flex;align-items:center;justify-content:center;background:#111;font-size:13px;color:#333;flex-direction:column;gap:8px">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="1"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
+        Text preview — type above and click Preview
       </div>
     </div>
   </div>
-  <div class="footer-bottom">
-    <span>© 2026 Jacob Majors &amp; Troy Pappas · Sonoma Academy</span>
-    <span>Camera processing runs locally in your browser.</span>
-  </div>
-</footer>
 
-<!-- ── Hero canvas animation ── -->
+</div><!-- end tabDesign -->
+
+<!-- ════════════════════════════════════════════════════════════════
+     TAB 2 — MACHINE
+══════════════════════════════════════════════════════════════════ -->
+<div id="tabMachine" class="panel" style="display:none">
+  <div class="tab-toolbar">
+    <div class="dt-group">
+      <span class="dt-label">Status</span>
+      <span class="dt-zoom-label" id="machineState" style="font-family:monospace;color:#22c55e">—</span>
+    </div>
+    <div class="dt-sep"></div>
+    <div class="dt-group">
+      <span class="dt-label">X</span><span class="dt-zoom-label" id="machX" style="font-family:monospace">—</span>
+      <span class="dt-label">Y</span><span class="dt-zoom-label" id="machY" style="font-family:monospace">—</span>
+    </div>
+    <div class="dt-sep"></div>
+    <div class="dt-group">
+      <button class="dt-btn" id="machHomeAll" title="G28">Home All</button>
+      <button class="dt-btn" id="machZero" title="G92 X0 Y0">Set Zero</button>
+      <button class="dt-btn" id="machPark" title="G1 X0 Y0">Park</button>
+      <button class="dt-btn" id="machMotorsOff" title="M84">Motors Off</button>
+    </div>
+    <div style="flex:1"></div>
+    <div class="dt-group"><button class="dt-btn" id="machConnectBtn">Connect Plotter</button></div>
+  </div>
+
+  <div class="dt-body" style="flex:1;min-height:0;grid-template-columns:200px 1fr 220px">
+    <!-- Left: status -->
+    <div class="dt-presets">
+      <div class="dt-presets-head">
+        <div class="dt-section-head" style="padding:0 0 4px">Position</div>
+        <div class="plot-coords">
+          <div class="plot-coord"><div class="plot-coord-axis">X</div><div class="plot-coord-val" id="machXBig">—</div></div>
+          <div class="plot-coord"><div class="plot-coord-axis">Y</div><div class="plot-coord-val" id="machYBig">—</div></div>
+        </div>
+      </div>
+      <div class="dt-preset-scroll">
+        <div class="dt-section">
+          <div class="dt-section-head">Pen</div>
+          <div class="dt-prop-row"><span class="dt-prop-label">Up Z</span><input type="number" class="dt-prop-val" id="penUpZMachine" value="8" style="width:55px"></div>
+          <div class="dt-prop-row"><span class="dt-prop-label">Down Z</span><input type="number" class="dt-prop-val" id="penDownZMachine" value="2" style="width:55px"></div>
+          <div class="dt-prop-row" style="gap:4px">
+            <button class="man-btn man-btn-pen" style="flex:1" id="liftBtn">↑ Up</button>
+            <button class="man-btn man-btn-pen" style="flex:1" id="dropBtn">↓ Down</button>
+          </div>
+        </div>
+        <div class="dt-section">
+          <div class="dt-section-head">Z Slider</div>
+          <div class="z-slider-wrap" style="margin:4px 10px">
+            <button class="pp-btn pp-btn-sm z-step-btn" id="zStepUpMachine">+</button>
+            <div class="z-slider-inner">
+              <span class="z-tick z-tick-top">50</span>
+              <input type="range" id="zLiveSliderMachine" class="z-slider" min="-50" max="50" step="0.5" value="8">
+              <span class="z-tick z-tick-bot">-50</span>
+            </div>
+            <button class="pp-btn pp-btn-sm z-step-btn" id="zStepDownMachine">−</button>
+          </div>
+          <div class="dt-prop-row"><span class="dt-prop-label">Live Z</span><span class="dt-prop-val-ro" id="liveZLabelMachine">—</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Center: G-code console -->
+    <div style="display:flex;flex-direction:column;background:#0e0e0e;min-height:0">
+      <div style="padding:6px 12px;border-bottom:1px solid #222;font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#3a3a3a;display:flex;justify-content:space-between;align-items:center">
+        <span>G-Code Console</span>
+        <button class="dt-btn" id="consoleClear" style="height:20px;padding:0 8px;font-size:9px">Clear</button>
+      </div>
+      <div id="consoleOutput" style="flex:1;overflow-y:auto;padding:8px 12px;font-family:monospace;font-size:11.5px;line-height:1.8;color:#666;min-height:0"></div>
+      <div style="display:flex;gap:6px;padding:8px 10px;border-top:1px solid #1e1e1e;background:#131313">
+        <input type="text" id="consoleInput" placeholder="Type any G-code — G1 X100 Y50 F3000" autocomplete="off" spellcheck="false"
+          style="flex:1;height:32px;padding:0 10px;background:#1a1a1a;border:1px solid #2e2e2e;border-radius:4px;color:#ccc;font-family:monospace;font-size:12px">
+        <button class="dt-btn dt-btn-primary" id="consoleSend" style="height:32px;padding:0 16px">Send</button>
+      </div>
+    </div>
+
+    <!-- Right: jog controls -->
+    <div class="dt-props">
+      <div class="dt-props-title">Manual Jog</div>
+      <div class="dt-props-scroll">
+        <div class="dt-section">
+          <div class="dt-section-head">Step Size</div>
+          <div class="dt-prop-row">
+            <select id="jogStep" class="dt-select" style="flex:1;height:24px">
+              <option value="0.1">0.1 mm</option><option value="1">1 mm</option>
+              <option value="5" selected>5 mm</option><option value="10">10 mm</option>
+              <option value="50">50 mm</option>
+            </select>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;margin:8px 10px 4px">
+            <div></div>
+            <button class="man-btn man-btn-y" id="jogYp">Y+</button>
+            <div></div>
+            <button class="man-btn" id="jogXm">X−</button>
+            <button class="man-btn" id="jogCenterM" style="font-size:.65rem;color:#555">⊕</button>
+            <button class="man-btn" id="jogXp">X+</button>
+            <div></div>
+            <button class="man-btn man-btn-y" id="jogYm">Y−</button>
+            <div></div>
+          </div>
+          <div class="pp-hint" style="padding:2px 10px 4px;text-align:center">Arrow keys also work</div>
+        </div>
+        <div class="dt-section">
+          <div class="dt-section-head">Feed Rate</div>
+          <div class="dt-prop-row"><span class="dt-prop-label">Speed</span><input type="number" class="dt-prop-val" id="jogFeedM" value="3000" style="width:65px"><span class="dt-unit">mm/m</span></div>
+        </div>
+        <div class="dt-section">
+          <div class="dt-section-head">Bounds</div>
+          <div class="dt-prop-row" style="gap:3px">
+            <button class="pp-btn pp-btn-sm" id="setBL">BL</button><button class="pp-btn pp-btn-sm" id="setBR">BR</button>
+            <button class="pp-btn pp-btn-sm" id="setTL">TL</button><button class="pp-btn pp-btn-sm" id="setTR">TR</button>
+            <button class="pp-btn pp-btn-accent pp-btn-sm" id="jogCenter">⊕</button>
+          </div>
+          <div class="pp-hint" id="boundsHint" style="padding:4px 10px">X 0–220 · Y 0–220</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     TAB 3 — RUN
+══════════════════════════════════════════════════════════════════ -->
+<div id="tabRun" class="panel" style="display:none">
+  <div class="tab-toolbar">
+    <div class="dt-group">
+      <span class="dt-label" id="plotDesignName" style="color:#ccc;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">No design</span>
+    </div>
+    <div class="dt-sep"></div>
+    <div class="dt-group">
+      <button class="plot-play-btn go" id="plotStartBtn" disabled>▶ Start</button>
+      <button class="plot-play-btn" id="plotPauseBtn" disabled style="display:none">⏸ Pause</button>
+      <button class="plot-play-btn stop" id="plotStopBtn" disabled style="display:none">⏹ Stop</button>
+      <button class="plot-play-btn" id="killBtn" style="background:rgba(239,68,68,.18);border-color:rgba(239,68,68,.4);color:#fca5a5;font-weight:900" title="Emergency stop (M112)">⬛ KILL</button>
+    </div>
+    <div class="dt-sep"></div>
+    <div class="dt-group" style="gap:8px;flex:1;max-width:260px">
+      <div class="plot-tbar-progress"><div class="plot-tbar-fill" id="plotTbarFill" style="width:0%"></div></div>
+      <span class="dt-zoom-label" id="plotTbarPct">—</span>
+    </div>
+    <div style="flex:1"></div>
+    <div class="dt-group">
+      <button class="dt-btn" id="uploadToSDBtn" disabled title="Save to printer SD via USB, then run without laptop">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Upload to SD
+      </button>
+      <button class="dt-btn" id="downloadGcodeBtn" disabled title="Download .gcode file">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Download .gcode
+      </button>
+      <div class="dt-sep"></div>
+      <button class="dt-icon-btn" id="view3DBtn" title="3D view" style="background:#1a3050;color:#4a9eff;border-color:#1d4a84">3D</button>
+      <button class="dt-icon-btn" id="view2DBtn" title="2D view">2D</button>
+      <button class="dt-icon-btn" id="viewResetBtn" title="Reset camera">↺</button>
+    </div>
+  </div>
+
+  <div class="dt-body" style="flex:1;min-height:0;grid-template-columns:220px 1fr 200px">
+    <!-- Left: settings -->
+    <div class="dt-presets" style="border-right:1px solid #2a2a2a">
+      <div class="dt-presets-head"><div class="dt-section-head" style="padding:0">Plot Settings</div></div>
+      <div class="dt-preset-scroll">
+        <div class="dt-section">
+          <div class="dt-section-head">Paper <span style="font-weight:400;color:#555">(from Design tab)</span></div>
+          <div class="dt-prop-row"><span class="dt-prop-label">Width</span><span class="dt-prop-val-ro" id="runPaperW">—</span></div>
+          <div class="dt-prop-row"><span class="dt-prop-label">Height</span><span class="dt-prop-val-ro" id="runPaperH">—</span></div>
+        </div>
+        <div class="dt-section">
+          <div class="dt-section-head">Pen</div>
+          <div class="dt-prop-row">
+            <span class="dt-prop-label">Preset</span>
+            <select id="penPreset" class="dt-select" style="flex:1;height:24px">
+              <option value="ultrafine">0.2 mm Fineliner</option>
+              <option value="fine" selected>0.4 mm Fineliner</option>
+              <option value="gel">0.6 mm Gel Pen</option>
+              <option value="marker">1.0 mm Marker</option>
+            </select>
+          </div>
+          <div class="dt-prop-row"><span class="dt-prop-label">Nib Width</span><span class="dt-prop-val-ro" id="penNibLabel">0.40 mm</span></div>
+        </div>
+        <div class="dt-section">
+          <div class="dt-section-head">Pen Heights</div>
+          <div class="z-slider-wrap" style="margin:4px 10px">
+            <button class="pp-btn pp-btn-sm z-step-btn" id="zStepUp">+</button>
+            <div class="z-slider-inner">
+              <span class="z-tick z-tick-top">50</span>
+              <input type="range" id="zLiveSlider" class="z-slider" min="-50" max="50" step="0.5" value="8">
+              <span class="z-tick z-tick-bot">-50</span>
+            </div>
+            <button class="pp-btn pp-btn-sm z-step-btn" id="zStepDown">−</button>
+          </div>
+          <div class="dt-prop-row"><span class="dt-prop-label">Up Z</span><input type="number" class="dt-prop-val" id="penUpZ" value="8" style="width:55px"></div>
+          <div class="dt-prop-row"><span class="dt-prop-label">Down Z</span><input type="number" class="dt-prop-val" id="penDownZ" value="2" style="width:55px"></div>
+          <div class="dt-prop-row"><span class="dt-prop-label">Live Z</span><span class="dt-prop-val-ro" id="liveZLabel">—</span></div>
+        </div>
+        <div class="dt-section">
+          <div class="dt-section-head">Speed</div>
+          <div class="dt-prop-row"><span class="dt-prop-label">XY Feed</span><input type="number" class="dt-prop-val" id="xySpeed" value="12000" style="width:65px"><span class="dt-unit">mm/m</span></div>
+          <input type="range" class="dt-prop-slider" id="xySpeedSlider" min="1000" max="20000" step="500" value="12000">
+          <div class="dt-prop-row"><span class="dt-prop-label">Passes</span><input type="number" class="dt-prop-val" id="linePasses" value="2" style="width:55px"></div>
+          <div class="dt-prop-row"><button class="pp-btn pp-btn-turbo" id="turboBtn">Turbo</button><button class="pp-btn pp-btn-accent" id="applyMotionBtn">Apply</button></div>
+          <div class="dt-prop-row"><span class="dt-prop-label">Max</span><input type="number" class="dt-prop-val" id="maxSpeed" value="220" style="width:55px"><span class="dt-unit">mm/s</span></div>
+          <div class="dt-prop-row"><span class="dt-prop-label">Accel</span><input type="number" class="dt-prop-val" id="accelVal" value="6000" style="width:65px"></div>
+          <div class="dt-prop-row"><span class="dt-prop-label">T.Accel</span><input type="number" class="dt-prop-val" id="travelAccel" value="8000" style="width:65px"></div>
+        </div>
+        <div class="dt-section">
+          <div class="dt-section-head">Bounds</div>
+          <div class="dt-prop-row" style="gap:3px">
+            <button class="pp-btn pp-btn-sm" id="setBL2">BL</button><button class="pp-btn pp-btn-sm" id="setBR2">BR</button>
+            <button class="pp-btn pp-btn-sm" id="setTL2">TL</button><button class="pp-btn pp-btn-sm" id="setTR2">TR</button>
+            <button class="pp-btn pp-btn-accent pp-btn-sm" id="jogCenter2">⊕</button>
+          </div>
+          <div class="pp-hint" id="boundsHint2" style="padding:4px 10px">X 0–220 · Y 0–220</div>
+        </div>
+        <div class="dt-section">
+          <div class="dt-section-head">Jog (while running)</div>
+          <div class="dt-prop-row"><span class="dt-prop-label">Step</span><input type="number" class="dt-prop-val" id="jogStepR" value="5" style="width:60px"><span class="dt-unit">mm</span></div>
+          <div class="manual-grid" style="margin:4px 10px">
+            <button class="man-btn" id="jogLeft2">◀ X−</button><button class="man-btn" id="jogRight2">X+ ▶</button>
+            <button class="man-btn man-btn-y" id="jogUp2">Y− ▲</button><button class="man-btn man-btn-y" id="jogDown2">▼ Y+</button>
+            <button class="man-btn man-btn-pen" id="liftBtn2">↑ Up</button><button class="man-btn man-btn-pen" id="dropBtn2">↓ Down</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Center: 3D / 2D view -->
+    <div class="plot-bed-wrap" id="plotBedWrap" style="position:relative;flex-direction:column">
+      <canvas id="canvas3D" style="width:100%;height:100%;display:block"></canvas>
+      <canvas id="canvas3DFallback" style="width:100%;height:100%;display:none"></canvas>
+      <canvas id="plotBedCanvas" style="width:100%;height:100%;display:none"></canvas>
+      <div class="plot-3d-overlay" id="plot3DOverlay">Loading 3D preview…</div>
+      <div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);font-size:10px;color:#444;font-family:monospace;white-space:nowrap;pointer-events:none" id="plotBedInfo">—</div>
+    </div>
+
+    <!-- Right: live status -->
+    <div class="plot-status">
+      <div class="dt-props-title">Live Status</div>
+      <div class="plot-scroll">
+        <div class="dt-section">
+          <div class="dt-section-head">Position</div>
+          <div class="plot-coords">
+            <div class="plot-coord"><div class="plot-coord-axis">X</div><div class="plot-coord-val" id="plotXVal">—</div></div>
+            <div class="plot-coord"><div class="plot-coord-axis">Y</div><div class="plot-coord-val" id="plotYVal">—</div></div>
+          </div>
+          <div class="dt-prop-row"><span class="dt-prop-label">Pen</span><span class="dt-prop-val-ro" id="plotPenState">—</span></div>
+        </div>
+        <div class="dt-section">
+          <div class="dt-section-head">Progress</div>
+          <div class="plot-stat-big" id="plotPctBig">—</div>
+          <div class="plot-stat-label">complete</div>
+          <div class="plot-progress-bar"><div class="plot-progress-fill" id="plotProgFill" style="width:0%"></div></div>
+          <div class="dt-prop-row"><span class="dt-prop-label">Stroke</span><span class="dt-prop-val-ro" id="plotStrokeInfo">— / —</span></div>
+          <div class="dt-prop-row"><span class="dt-prop-label">Done</span><span class="dt-prop-val-ro" id="plotDistInfo">—</span></div>
+          <div class="dt-prop-row"><span class="dt-prop-label">Left</span><span class="dt-prop-val-ro" id="plotDistLeft">—</span></div>
+        </div>
+        <div class="dt-section">
+          <div class="dt-section-head">Connection</div>
+          <div class="dt-prop-row"><span class="dt-prop-label">USB</span><span class="dt-prop-val-ro" id="plotConnStatus">Disconnected</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     TAB 4 — SETTINGS
+══════════════════════════════════════════════════════════════════ -->
+<div id="tabSettings" class="panel" style="display:none">
+  <div class="tab-toolbar">
+    <span class="dt-label" style="color:#ccc;font-size:12px">Machine Settings</span>
+    <div style="flex:1"></div>
+    <div class="dt-group">
+      <button class="dt-btn dt-btn-primary" id="applySettingsBtn">Apply &amp; Save (M500)</button>
+      <button class="dt-btn" id="restoreSettingsBtn">Restore (M501)</button>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;height:calc(100% - 36px);overflow:hidden">
+
+    <div style="border-right:1px solid #222;overflow-y:auto">
+      <div class="dt-section-head" style="padding:8px 12px 4px">Motors &amp; Motion</div>
+      <div class="dt-section">
+        <div class="dt-section-head">Steps/mm <span style="font-weight:400;color:#555">(M92)</span></div>
+        <div class="dt-prop-row"><span class="dt-prop-label">X steps/mm</span><input type="number" class="dt-prop-val" id="sX_spm" value="80" step="0.1" style="width:70px"></div>
+        <div class="dt-prop-row"><span class="dt-prop-label">Y steps/mm</span><input type="number" class="dt-prop-val" id="sY_spm" value="80" step="0.1" style="width:70px"></div>
+        <div class="pp-hint" style="padding:2px 10px 6px">GT2 belt 20T + 16× step = 80</div>
+      </div>
+      <div class="dt-section">
+        <div class="dt-section-head">Direction <span style="font-weight:400;color:#555">(M569)</span></div>
+        <div class="dt-prop-row"><label style="display:flex;align-items:center;gap:6px;font-size:11px;color:#777;cursor:pointer"><input type="checkbox" id="sX_inv" style="accent-color:#4a9eff"> Invert X</label></div>
+        <div class="dt-prop-row"><label style="display:flex;align-items:center;gap:6px;font-size:11px;color:#777;cursor:pointer"><input type="checkbox" id="sY_inv" style="accent-color:#4a9eff"> Invert Y</label></div>
+      </div>
+      <div class="dt-section">
+        <div class="dt-section-head">Max Speed <span style="font-weight:400;color:#555">(M203)</span></div>
+        <div class="dt-prop-row"><span class="dt-prop-label">X max</span><input type="number" class="dt-prop-val" id="sX_vmax" value="200" style="width:70px"><span class="dt-unit">mm/s</span></div>
+        <div class="dt-prop-row"><span class="dt-prop-label">Y max</span><input type="number" class="dt-prop-val" id="sY_vmax" value="200" style="width:70px"><span class="dt-unit">mm/s</span></div>
+      </div>
+      <div class="dt-section">
+        <div class="dt-section-head">Acceleration <span style="font-weight:400;color:#555">(M204)</span></div>
+        <div class="dt-prop-row"><span class="dt-prop-label">Print</span><input type="number" class="dt-prop-val" id="sAccelP" value="1000" style="width:70px"><span class="dt-unit">mm/s²</span></div>
+        <div class="dt-prop-row"><span class="dt-prop-label">Travel</span><input type="number" class="dt-prop-val" id="sAccelT" value="2000" style="width:70px"><span class="dt-unit">mm/s²</span></div>
+      </div>
+    </div>
+
+    <div style="border-right:1px solid #222;overflow-y:auto">
+      <div class="dt-section-head" style="padding:8px 12px 4px">Pen &amp; Work Area</div>
+      <div class="dt-section">
+        <div class="dt-section-head">Pen Heights</div>
+        <div class="dt-prop-row"><span class="dt-prop-label">Up Z</span><input type="number" class="dt-prop-val" id="sPenUp" value="8" step="0.5" style="width:65px"></div>
+        <div class="dt-prop-row"><span class="dt-prop-label">Down Z</span><input type="number" class="dt-prop-val" id="sPenDn" value="2" step="0.5" style="width:65px"></div>
+        <div class="dt-prop-row"><span class="dt-prop-label">Z speed</span><input type="number" class="dt-prop-val" id="sPenSpd" value="3000" style="width:65px"><span class="dt-unit">mm/m</span></div>
+      </div>
+      <div class="dt-section">
+        <div class="dt-section-head">Work Area <span style="font-weight:400;color:#555">(M208)</span></div>
+        <div class="dt-prop-row"><span class="dt-prop-label">Max X</span><input type="number" class="dt-prop-val" id="sMaxX" value="220" style="width:65px"><span class="dt-unit">mm</span></div>
+        <div class="dt-prop-row"><span class="dt-prop-label">Max Y</span><input type="number" class="dt-prop-val" id="sMaxY" value="220" style="width:65px"><span class="dt-unit">mm</span></div>
+        <div class="dt-prop-row"><label style="display:flex;align-items:center;gap:6px;font-size:11px;color:#777;cursor:pointer"><input type="checkbox" id="sSoftLimits" style="accent-color:#4a9eff"> Enable soft limits</label></div>
+      </div>
+    </div>
+
+    <div style="overflow-y:auto">
+      <div class="dt-section-head" style="padding:8px 12px 4px">Homing &amp; Calibration</div>
+      <div class="dt-section">
+        <div class="dt-section-head">Limit Switches</div>
+        <div class="dt-prop-row"><label style="display:flex;align-items:center;gap:6px;font-size:11px;color:#777;cursor:pointer"><input type="checkbox" id="sXEndstop" style="accent-color:#4a9eff"> X endstop</label></div>
+        <div class="dt-prop-row"><label style="display:flex;align-items:center;gap:6px;font-size:11px;color:#777;cursor:pointer"><input type="checkbox" id="sYEndstop" style="accent-color:#4a9eff"> Y endstop</label></div>
+        <div class="dt-prop-row"><button class="pp-btn" id="sCheckEndstops" style="width:100%">Check (M119)</button></div>
+      </div>
+      <div class="dt-section">
+        <div class="dt-section-head">Homing <span style="font-weight:400;color:#555">(G28)</span></div>
+        <div class="dt-prop-row"><span class="dt-prop-label">Speed</span><input type="number" class="dt-prop-val" id="sHomingSpeed" value="1500" style="width:65px"><span class="dt-unit">mm/m</span></div>
+        <div style="display:flex;gap:4px;padding:4px 10px">
+          <button class="pp-btn" id="sHomeX" style="flex:1">Home X</button>
+          <button class="pp-btn" id="sHomeY" style="flex:1">Home Y</button>
+          <button class="pp-btn pp-btn-accent" id="sHomeAll" style="flex:1">Home All</button>
+        </div>
+      </div>
+      <div class="dt-section">
+        <div class="dt-section-head">Calibration</div>
+        <div class="dt-prop-row"><button class="pp-btn pp-btn-accent" id="sSetZero" style="width:100%">Set Zero (G92 X0 Y0)</button></div>
+        <div class="dt-prop-row"><button class="pp-btn" id="sPark" style="width:100%">Go to Park (0,0)</button></div>
+        <div class="dt-section-head" style="margin-top:8px">Distance Cal</div>
+        <div class="pp-hint" style="padding:2px 10px 4px">Move axis, measure actual distance</div>
+        <div class="dt-prop-row"><span class="dt-prop-label">Expected</span><input type="number" class="dt-prop-val" id="sCalExpected" value="100" style="width:60px"><span class="dt-unit">mm</span></div>
+        <div class="dt-prop-row"><span class="dt-prop-label">Actual</span><input type="number" class="dt-prop-val" id="sCalActual" value="100" style="width:60px"><span class="dt-unit">mm</span></div>
+        <div style="display:flex;gap:4px;padding:4px 10px">
+          <button class="pp-btn" id="sCalcX" style="flex:1">Recalc X</button>
+          <button class="pp-btn" id="sCalcY" style="flex:1">Recalc Y</button>
+        </div>
+        <div class="pp-hint" id="sCalResult" style="padding:4px 10px">—</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</div><!-- end #app -->
+
 <script>
-(function(){
-  const c = document.getElementById("heroCanvas");
-  if (!c) return;
-  const ctx = c.getContext("2d");
-  ctx.fillStyle = "#0b0e1a";
-  ctx.fillRect(0, 0, c.width, c.height);
-
-  const strokes = [
-    { color:"#2d7ae0", w:3, pts:[] },
-    { color:"#0ea5c8", w:2, pts:[] },
-    { color:"#a855f7", w:2.5, pts:[] },
-    { color:"#f43f5e", w:2, pts:[] },
-    { color:"#22c55e", w:1.5, pts:[] },
-  ];
-  strokes.forEach((s,i) => {
-    let x = 40 + i*150, y = 80 + Math.sin(i)*40;
-    for(let j=0;j<50;j++){
-      x += 7 + Math.random()*5;
-      y += (Math.random()-0.5)*30;
-      y = Math.max(20, Math.min(c.height-20, y));
-      s.pts.push({x,y});
-    }
-  });
-
-  let frame = 0;
-  function draw(){
-    ctx.fillStyle = "rgba(11,14,26,0.06)";
-    ctx.fillRect(0,0,c.width,c.height);
-    const p = ((frame % 100) / 100);
-    strokes.forEach(s => {
-      const end = Math.max(2, Math.floor(p * s.pts.length));
-      ctx.beginPath();
-      ctx.moveTo(s.pts[0].x, s.pts[0].y);
-      for(let i=1;i<end;i++) ctx.lineTo(s.pts[i].x, s.pts[i].y);
-      ctx.strokeStyle = s.color;
-      ctx.lineWidth = s.w;
-      ctx.lineCap = "round";
-      ctx.lineJoin = "round";
-      ctx.stroke();
-      const tip = s.pts[end-1];
-      ctx.beginPath();
-      ctx.arc(tip.x, tip.y, s.w*2.5, 0, Math.PI*2);
-      ctx.fillStyle = s.color;
-      ctx.fill();
-    });
-    frame++;
-    requestAnimationFrame(draw);
-  }
-  draw();
-})();
-
-// Nav scroll (no-op — nav replaced by sticky app-bar)
 window.addEventListener("scroll", () => {
   const nav = document.getElementById("nav");
   if (nav) nav.classList.toggle("scrolled", window.scrollY > 10);
 });
 </script>
 
+
+
 <!-- ── MediaPipe tracking ── -->
-<script type="module">
-import { FaceLandmarker, HandLandmarker, FilesetResolver }
-  from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs";
-import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js";
-import { OrbitControls } from "https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/controls/OrbitControls.js";
+<script>
+let FaceLandmarker = null;
+let HandLandmarker = null;
+let FilesetResolver = null;
+let THREE = null;
+let OrbitControls = null;
+let visionLibPromise = null;
+let threeLibPromise = null;
+
+async function ensureVisionLibs() {
+  if (FaceLandmarker && HandLandmarker && FilesetResolver) return;
+  if (!visionLibPromise) {
+    visionLibPromise = import("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs")
+      .then(mod => {
+        FaceLandmarker = mod.FaceLandmarker;
+        HandLandmarker = mod.HandLandmarker;
+        FilesetResolver = mod.FilesetResolver;
+      });
+  }
+  return visionLibPromise;
+}
+
+async function ensureThreeLibs() {
+  if (THREE && OrbitControls) return;
+  if (!threeLibPromise) {
+    threeLibPromise = Promise.all([
+      import("https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js"),
+      import("https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/controls/OrbitControls.js"),
+    ]).then(([threeMod, controlsMod]) => {
+      THREE = threeMod;
+      OrbitControls = controlsMod.OrbitControls;
+    });
+  }
+  return threeLibPromise;
+}
 
 
 const video        = document.getElementById("video");
@@ -2475,6 +2156,7 @@ function applyBrushSize(sz) {
 function togglePen() {
   penDown = !penDown;
   prevX = null; prevY = null;
+  if (!penDown) currentTrackStroke = null;
   resetStrokeBuffer();
   showToast(penDown ? "✏️ Pen down" : "✋ Pen up", penDown ? "drawing" : "lifted");
   if (serialWriter) movePenZ(penDown ? penDownZ : penUpZ);
@@ -2759,6 +2441,8 @@ function driveMouseFromTracking(sx, sy) {
 clearBtn.addEventListener("click", () => {
   clearDrawCanvas();
   prevX = null; prevY = null;
+  currentTrackStroke = null;
+  trackPolylines = [];
 });
 saveBtn.addEventListener("click", () => {
   const a = document.createElement("a");
@@ -2834,6 +2518,7 @@ async function start() {
 }
 
 async function loadModels() {
+  await ensureVisionLibs();
   const vision = await FilesetResolver.forVisionTasks(
     "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm"
   );
@@ -2936,9 +2621,18 @@ function loop() {
         dctx.lineWidth   = brushSize;
         dctx.lineCap = "round"; dctx.lineJoin = "round";
         dctx.stroke();
+        if (!currentTrackStroke) {
+          currentTrackStroke = [{ x: prevX, y: prevY }];
+          trackPolylines.push(currentTrackStroke);
+        }
+        currentTrackStroke.push({ x: smoothX, y: smoothY });
+      } else if (penDown) {
+        currentTrackStroke = [{ x: smoothX, y: smoothY }];
+        trackPolylines.push(currentTrackStroke);
       }
       prevX = penDown ? smoothX : null;
       prevY = penDown ? smoothY : null;
+      if (!penDown) currentTrackStroke = null;
       // cursor ring — dashed when pen is up
       octx.save();
       if (!penDown) octx.setLineDash([4, 4]);
@@ -2967,6 +2661,7 @@ function loop() {
     }
   } else {
     prevX = null; prevY = null;
+    currentTrackStroke = null;
   }
 
   requestAnimationFrame(loop);
@@ -3026,21 +2721,27 @@ let boundBL   = { x: 0,   y: 0   };
 let boundTR   = { x: 220, y: 220 };
 let jogPos    = { x: 110, y: 110 };  // current known head position in mm
 let svgPaths  = null;                // parsed SVG polylines [[{x,y},...],...]
+let trackPolylines = [];
+let currentTrackStroke = null;
+let activeDesignName = "No design";
+let activeDesignSource = "patterns";
 
 // panel element refs (only wired after DOM ready, but panel is hidden until connected)
 const printerPanel  = document.getElementById("printerPanel");
 const liveZLabel    = document.getElementById("liveZLabel");
 const penUpZEl      = document.getElementById("penUpZ");
 const penDownZEl    = document.getElementById("penDownZ");
+const penUpZMachineEl   = document.getElementById("penUpZMachine");
+const penDownZMachineEl = document.getElementById("penDownZMachine");
 const liftBtn       = document.getElementById("liftBtn");
 const dropBtn       = document.getElementById("dropBtn");
 const svgFileEl     = document.getElementById("svgFile");
 const svgFileNameEl = document.getElementById("svgFileName");
-const svgScaleEl    = document.getElementById("svgScale");
+const svgScaleEl    = document.getElementById("svgScale") || document.getElementById("svgScale2");
 const plotSvgBtn    = document.getElementById("plotSvgBtn");
 const clearSvgBtn   = document.getElementById("clearSvgBtn");
-const svgHintEl     = document.getElementById("svgHint");
-const xySpeedEl     = document.getElementById("xySpeed");
+const svgHintEl     = document.getElementById("svgHint") || document.getElementById("svgHintDisp");
+const xySpeedEl     = document.getElementById("xySpeed") || document.getElementById("xySpeed2");
 const turboBtnEl    = document.getElementById("turboBtn");
 const applyMotionEl = document.getElementById("applyMotionBtn");
 const maxSpeedEl    = document.getElementById("maxSpeed");
@@ -3050,20 +2751,68 @@ const speedTestBtnEl = document.getElementById("speedTestBtn");
 const speedTestHintEl = document.getElementById("speedTestHint");
 const jogStepEl     = document.getElementById("jogStep");
 const boundsHintEl  = document.getElementById("boundsHint");
+const penPresetEl   = document.getElementById("penPreset");
+const penNibLabelEl = document.getElementById("penNibLabel");
 
 // ── Pen heights ──
 const zLiveSlider = document.getElementById("zLiveSlider");
+const zLiveSliderMachine = document.getElementById("zLiveSliderMachine");
+const liveZLabelMachine = document.getElementById("liveZLabelMachine");
+
+const PEN_PRESETS = {
+  ultrafine: { label: "0.2 mm Fineliner", nib: 0.2 },
+  fine:      { label: "0.4 mm Fineliner", nib: 0.4 },
+  gel:       { label: "0.6 mm Gel Pen", nib: 0.6 },
+  marker:    { label: "1.0 mm Marker", nib: 1.0 },
+};
+let penNibMm = PEN_PRESETS[penPresetEl?.value || "fine"]?.nib || 0.4;
+
+function syncPenPreset() {
+  const preset = PEN_PRESETS[penPresetEl?.value || "fine"] || PEN_PRESETS.fine;
+  penNibMm = preset.nib;
+  if (penNibLabelEl) penNibLabelEl.textContent = `${penNibMm.toFixed(2)} mm`;
+}
+penPresetEl?.addEventListener("change", syncPenPreset);
+syncPenPreset();
+
+function syncMachinePenControls(z = currentZ ?? penUpZ) {
+  if (penUpZMachineEl) penUpZMachineEl.value = penUpZ;
+  if (penDownZMachineEl) penDownZMachineEl.value = penDownZ;
+  if (zLiveSliderMachine) zLiveSliderMachine.value = z;
+  if (liveZLabelMachine) {
+    liveZLabelMachine.textContent = currentZ == null ? "Live Z —" : `Live Z ${parseFloat(z).toFixed(1)} mm`;
+  }
+}
 
 // Live slider — drop-skips intermediate values so dragging feels instant
 zLiveSlider.addEventListener("input", () => {
   const z = parseFloat(zLiveSlider.value);
   currentZ = z;
   liveZLabel.textContent = `Live Z ${z.toFixed(1)} mm`;
+  syncMachinePenControls(z);
   sendZLive(z);
 });
 
-penUpZEl.addEventListener("change",   () => { penUpZ   = parseFloat(penUpZEl.value)   || 8; });
-penDownZEl.addEventListener("change", () => { penDownZ = parseFloat(penDownZEl.value) || 2; });
+penUpZEl.addEventListener("change",   () => {
+  penUpZ = parseFloat(penUpZEl.value) || 8;
+  syncMachinePenControls();
+});
+penDownZEl.addEventListener("change", () => {
+  penDownZ = parseFloat(penDownZEl.value) || 2;
+  syncMachinePenControls();
+});
+penUpZMachineEl?.addEventListener("change", () => {
+  penUpZEl.value = penUpZMachineEl.value;
+  penUpZEl.dispatchEvent(new Event("change"));
+});
+penDownZMachineEl?.addEventListener("change", () => {
+  penDownZEl.value = penDownZMachineEl.value;
+  penDownZEl.dispatchEvent(new Event("change"));
+});
+zLiveSliderMachine?.addEventListener("input", () => {
+  zLiveSlider.value = zLiveSliderMachine.value;
+  zLiveSlider.dispatchEvent(new Event("input"));
+});
 
 // Z step buttons
 function zStep(delta) {
@@ -3088,6 +2837,8 @@ function holdStep(btnId, delta) {
 }
 holdStep("zStepUp",   0.5);
 holdStep("zStepDown", -0.5);
+holdStep("zStepUpMachine",   0.5);
+holdStep("zStepDownMachine", -0.5);
 
 // Lift/Drop: jump to preset value and sync slider
 liftBtn.addEventListener("click", () => {
@@ -3105,8 +2856,11 @@ async function movePenZ(z) {
   currentZ = z;
   zLiveSlider.value = z;
   liveZLabel.textContent = `Live Z ${parseFloat(z).toFixed(1)} mm`;
+  syncMachinePenControls(z);
   await sendGcode(`G1 Z${parseFloat(z).toFixed(2)} F3000\n`);
 }
+
+syncMachinePenControls(penUpZ);
 
 // Override penDown toggle to also move Z
 const _origTogglePen = togglePen;
@@ -3118,7 +2872,7 @@ window._penToggleHook = () => {
 };
 
 // ── SVG import ──
-svgFileEl.addEventListener("change", e => {
+svgFileEl?.addEventListener("change", e => {
   const file = e.target.files[0];
   if (!file) return;
   svgFileNameEl.textContent = file.name;
@@ -3126,32 +2880,34 @@ svgFileEl.addEventListener("change", e => {
   reader.onload = ev => {
     svgPaths = parseSVG(ev.target.result);
     if (svgPaths && svgPaths.length) {
-      svgHintEl.textContent = `${svgPaths.length} path(s) loaded. Click "Plot SVG" to draw.`;
-      plotSvgBtn.disabled = false;
+      activeDesignName = file.name;
+      activeDesignSource = "svg";
+      if (svgHintEl) svgHintEl.textContent = `${svgPaths.length} path(s) loaded. Click "Plot SVG" to draw.`;
+      if (plotSvgBtn) plotSvgBtn.disabled = false;
       // preview on canvas
       previewSVG(svgPaths, parseFloat(svgScaleEl.value) / 100);
     } else {
-      svgHintEl.textContent = "Could not parse SVG paths.";
+      if (svgHintEl) svgHintEl.textContent = "Could not parse SVG paths.";
     }
   };
   reader.readAsText(file);
 });
 
-svgScaleEl.addEventListener("change", () => {
+svgScaleEl?.addEventListener("change", () => {
   if (svgPaths) previewSVG(svgPaths, parseFloat(svgScaleEl.value) / 100);
 });
 
-clearSvgBtn.addEventListener("click", () => {
+clearSvgBtn?.addEventListener("click", () => {
   svgPaths = null;
-  svgFileEl.value = "";
-  svgFileNameEl.textContent = "No file chosen";
-  svgHintEl.textContent = "No SVG loaded. SVGs auto-fit to the active boundary box.";
-  plotSvgBtn.disabled = true;
+  if (svgFileEl) svgFileEl.value = "";
+  if (svgFileNameEl) svgFileNameEl.textContent = "No file chosen";
+  if (svgHintEl) svgHintEl.textContent = "No SVG loaded. SVGs auto-fit to the active boundary box.";
+  if (plotSvgBtn) plotSvgBtn.disabled = true;
   clearDrawCanvas();
   prevX = null; prevY = null;
 });
 
-plotSvgBtn.addEventListener("click", async () => {
+plotSvgBtn?.addEventListener("click", async () => {
   if (!svgPaths || !serialWriter) return;
   plotSvgBtn.disabled = true;
   plotSvgBtn.textContent = "Plotting…";
@@ -3253,38 +3009,10 @@ function samplePathD(d) {
   } catch(_) { return []; }
 }
 
-function fitNormalizedPathsToBounds(paths, scale = 1) {
-  if (!paths?.length) return [];
-  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-  paths.forEach(pts => pts.forEach(p => {
-    if (!Number.isFinite(p.x) || !Number.isFinite(p.y)) return;
-    minX = Math.min(minX, p.x);
-    minY = Math.min(minY, p.y);
-    maxX = Math.max(maxX, p.x);
-    maxY = Math.max(maxY, p.y);
-  }));
-  if (!Number.isFinite(minX) || !Number.isFinite(minY)) return [];
-
-  const srcW = Math.max(maxX - minX, 1e-6);
-  const srcH = Math.max(maxY - minY, 1e-6);
-  const boundW = Math.max(boundTR.x - boundBL.x, 1);
-  const boundH = Math.max(boundTR.y - boundBL.y, 1);
-  const fit = Math.min(boundW / srcW, boundH / srcH) * Math.max(scale || 1, 0.01);
-  const drawW = srcW * fit;
-  const drawH = srcH * fit;
-  const offX = boundBL.x + (boundW - drawW) / 2 - minX * fit;
-  const offY = boundBL.y + (boundH - drawH) / 2 - minY * fit;
-
-  return paths.map(pts => pts.map(p => ({
-    x: Math.max(0, Math.min(220, offX + p.x * fit)),
-    y: Math.max(0, Math.min(220, offY + p.y * fit)),
-  })));
-}
-
 // Preview SVG paths on draw canvas
 function previewSVG(paths, scale) {
   clearDrawCanvas();
-  const fitted = fitNormalizedPathsToBounds(paths, scale);
+  const fitted = fitNormalizedPathsToPaper(paths, scale);
   dctx.strokeStyle = brushColor; dctx.lineWidth = 1.5;
   dctx.lineCap = "round"; dctx.lineJoin = "round";
   fitted.forEach(pts => {
@@ -3301,22 +3029,22 @@ function previewSVG(paths, scale) {
 
 // Send SVG paths to printer as G-code
 async function plotSVGPaths(paths, scale) {
-  const fitted = fitNormalizedPathsToBounds(paths, scale);
+  const fitted = fitNormalizedPathsToPaper(paths, scale);
   const passes = parseInt(document.getElementById("linePasses")?.value || "1", 10);
   const spd = parseFloat(xySpeedEl.value);
   await movePenZ(penUpZ);
   for (const pts of fitted) {
     if (!pts.length) continue;
     const gcPts = pts.map(p => ({
-      gx: p.x.toFixed(2),
-      gy: p.y.toFixed(2)
+      gx: mapPaperToRun(p.x, p.y).gx.toFixed(2),
+      gy: mapPaperToRun(p.x, p.y).gy.toFixed(2)
     }));
     // Travel to path start
     await sendGcode(`G1 X${gcPts[0].gx} Y${gcPts[0].gy} F${TRAVEL_FEED}\n`);
     await movePenZ(penDownZ);
     // Draw with parallel offset passes for thick lines
     for (let i = 0; i < passes; i++) {
-      const offset = -((passes - 1) / 2) * PEN_NIB_MM + i * PEN_NIB_MM;
+      const offset = -((passes - 1) / 2) * penNibMm + i * penNibMm;
       const dir = i % 2 === 0 ? gcPts : [...gcPts].reverse();
       // Travel to start of this pass
       const sp = dir[0];
@@ -3443,11 +3171,11 @@ async function jogCenter() {
   await sendGcode(`G1 X${jogPos.x.toFixed(2)} Y${jogPos.y.toFixed(2)} F${TRAVEL_FEED}\n`);
 }
 
-document.getElementById("jogUp").addEventListener("click",     () => jogBy(0,  -parseFloat(jogStepEl.value)));
-document.getElementById("jogDown").addEventListener("click",   () => jogBy(0,   parseFloat(jogStepEl.value)));
-document.getElementById("jogLeft").addEventListener("click",   () => jogBy(-parseFloat(jogStepEl.value), 0));
-document.getElementById("jogRight").addEventListener("click",  () => jogBy( parseFloat(jogStepEl.value), 0));
-document.getElementById("jogCenter").addEventListener("click", () => jogCenter());
+document.getElementById("jogYp")?.addEventListener("click",    () => jogBy(0,   parseFloat(jogStepEl.value)));
+document.getElementById("jogYm")?.addEventListener("click",    () => jogBy(0,  -parseFloat(jogStepEl.value)));
+document.getElementById("jogXm")?.addEventListener("click",    () => jogBy(-parseFloat(jogStepEl.value), 0));
+document.getElementById("jogXp")?.addEventListener("click",    () => jogBy( parseFloat(jogStepEl.value), 0));
+document.getElementById("jogCenterM")?.addEventListener("click", () => jogCenter());
 
 document.getElementById("setBL").addEventListener("click", () => {
   boundBL = { x: +jogPos.x.toFixed(2), y: +jogPos.y.toFixed(2) };
@@ -3466,9 +3194,9 @@ document.getElementById("setTR").addEventListener("click", () => {
   updateBoundsHint(); showToast("📌 Top-right set", `X${boundTR.x} Y${boundTR.y}`);
 });
 
-// Arrow key jog when printer panel is visible
+// Arrow key jog when Machine or Run tab is active
 window.addEventListener("keydown", e => {
-  if (!serialWriter || !printerPanel || printerPanel.style.display === "none") return;
+  if (!serialWriter || !["machine","run"].includes(activeTab)) return;
   // don't steal keys from inputs
   if (["INPUT","TEXTAREA","SELECT"].includes(document.activeElement.tagName)) return;
   const step = parseFloat(jogStepEl.value);
@@ -3500,7 +3228,7 @@ let speedTestRunning = false;
 function updatePrinterUI(connected, message = "") {
   printerBtn.classList.toggle("connected", connected);
   printerLabel.textContent = connected ? "Disconnect" : "Connect Plotter";
-  printerPanel.style.display = connected ? "block" : "none";
+  if (printerPanel) printerPanel.style.display = "none"; // hidden compat div, not used for layout
   setStatus(message || (connected ? "Printer connected" : "Printer disconnected"), connected ? "on" : "idle");
   const textHint = document.getElementById("textHint");
   if (textHint) textHint.textContent = connected ? "Type text and click Plot Text." : "Connect plotter.";
@@ -3620,8 +3348,6 @@ function sendZLive(z) {
 // to the direction of travel, filling in a solid band of ink.
 // e.g. passes=5, nib=0.4mm → 5 lines covering a 1.6mm wide stroke.
 
-const PEN_NIB_MM = 0.4; // pen tip width in mm — adjust for your pen
-
 // Previous printer position in mm (for perpendicular offset calculation)
 let prevGx = null, prevGy = null;
 
@@ -3661,11 +3387,11 @@ function maybeSendToprinter(canvasX, canvasY) {
   const px = -dy / len, py = dx / len;
 
   // Total width to fill = (passes-1) * nib, centred on the line
-  const half = ((passes - 1) / 2) * PEN_NIB_MM;
+  const half = ((passes - 1) / 2) * penNibMm;
 
   // Send each parallel pass: alternate direction to avoid travel moves
   for (let i = 0; i < passes; i++) {
-    const offset = -half + i * PEN_NIB_MM;
+    const offset = -half + i * penNibMm;
     const fromX = (prevGx + px * offset);
     const fromY = (prevGy + py * offset);
     const toX   = (gx    + px * offset);
@@ -3784,11 +3510,33 @@ function canvasToBed(cx, cy) {
   };
 }
 
+function buildTextPolylines(text, sizeMM) {
+  const scale = sizeMM / CHAR_H;
+  const { strokes, totalWidth: totalMM } = buildTextStrokes(text, scale);
+  const margin = getMargin();
+  const usableW = Math.max(PW - margin * 2, 1);
+  const usableH = Math.max(PH - margin * 2, 1);
+  let originX;
+  if (textAlign === "left") originX = margin;
+  else if (textAlign === "right") originX = PW - margin - totalMM;
+  else originX = margin + (usableW - totalMM) / 2;
+  const originY = margin + (usableH - sizeMM) / 2;
+
+  return strokes.map(({ offX, scale: sc, pts }) =>
+    pts.map(([sx, sy]) => ({
+      x: originX + offX + sx * sc,
+      y: originY + (CHAR_H - sy) * sc,
+    }))
+  ).filter(pl => pl.length > 1);
+}
+
 let textAlign = "center"; // "left" | "center" | "right"
 
 // Preview text on draw canvas
 function previewTextOnCanvas() {
   const txt  = plotTextEl.value.trim();
+  activeDesignName = `Text: ${txt.slice(0, 24)}${txt.length > 24 ? "..." : ""}`;
+  activeDesignSource = "text";
   const sizePx = (parseFloat(textSizeEl.value) || 15) / 220 * W * 2.2; // mm→canvas px approx
   if (!txt) return;
 
@@ -3978,73 +3726,122 @@ dictateBtn.addEventListener("click", () => {
 // ═══════════════════════════════════════════════════════════════════════════
 
 // ══════════════════════════════════════════════════════════════════════════
-//  4-TAB NAVIGATION  (Machine | Create | Run | Settings)
+//  NAVIGATION — matches the new HTML which uses data-tab and id="tabXxx"
 // ══════════════════════════════════════════════════════════════════════════
 
-const PANELS = {
-  machine:  document.getElementById("panelMachine"),
-  create:   document.getElementById("panelCreate"),
-  run:      document.getElementById("panelPlot"),      // panelPlot is the Run tab
-  settings: document.getElementById("panelSettings"),
+// Map tab name → panel element ID
+const TAB_PANELS = {
+  design:   "tabDesign",
+  machine:  "tabMachine",
+  run:      "tabRun",
+  settings: "tabSettings",
 };
+// Also map old names used elsewhere in the code
+const LEGACY_ALIAS = { create:"design", plot:"run", designs:"design", draw:"design" };
 
-// The Create tab contains sub-panels (Patterns, Camera, SVG, Text).
-// We move the existing panelDesigns/panelDraw content INTO the Create sub-panels on first show.
-let createPanelsMounted = false;
-function mountCreateSubpanels() {
-  if (createPanelsMounted) return;
-  createPanelsMounted = true;
-  const patternsSlot = document.getElementById("createPatterns");
-  const cameraSlot   = document.getElementById("createCamera");
-  const designsPanel = document.getElementById("panelDesigns");
-  const drawPanel    = document.getElementById("panelDraw");
-  if (patternsSlot && designsPanel) {
-    // Move designs panel content (toolbar + body) into the Patterns slot
-    while (designsPanel.firstChild) patternsSlot.appendChild(designsPanel.firstChild);
-    designsPanel.style.display = "none";
-  }
-  if (cameraSlot && drawPanel) {
-    while (drawPanel.firstChild) cameraSlot.appendChild(drawPanel.firstChild);
-    drawPanel.style.display = "none";
-  }
-}
-
-let activeCreateMode = "patterns";
-function showCreateMode(mode) {
-  activeCreateMode = mode;
-  ["createPatterns","createCamera","createSVG","createText"].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.style.display = id === "create" + mode.charAt(0).toUpperCase() + mode.slice(1) ? "flex" : "none";
-  });
-  document.querySelectorAll(".create-mode-btn").forEach(b =>
-    b.classList.toggle("active", b.dataset.mode === mode));
-  if (mode === "patterns") { requestAnimationFrame(() => { dtFitZoom(); renderDesign(); }); }
-}
-
-document.querySelectorAll(".create-mode-btn").forEach(btn =>
-  btn.addEventListener("click", () => showCreateMode(btn.dataset.mode)));
+let activeTab = "design";
 
 function showPanel(name) {
-  document.querySelectorAll(".nav-item[data-panel]").forEach(b =>
-    b.classList.toggle("active", b.dataset.panel === name));
-  Object.entries(PANELS).forEach(([k, el]) => {
+  const resolved = LEGACY_ALIAS[name] || name;
+  activeTab = resolved;
+
+  // Update nav buttons (data-tab attribute)
+  document.querySelectorAll(".nav-item[data-tab]").forEach(b =>
+    b.classList.toggle("active", b.dataset.tab === resolved));
+
+  // Show/hide tab panels
+  Object.entries(TAB_PANELS).forEach(([tab, panelId]) => {
+    const el = document.getElementById(panelId);
     if (!el) return;
-    el.style.display = k === name ? "flex" : "none";
+    el.style.display = tab === resolved ? "flex" : "none";
   });
-  if (name === "create") {
-    mountCreateSubpanels();
-    showCreateMode(activeCreateMode);
-    updateCanvasInfo();
-  }
-  if (name === "run")      requestAnimationFrame(() => updatePlotBed());
-  if (name === "machine")  updateMachinePanel();
+
+  // Per-tab init (deferred so panel is painted first)
+  requestAnimationFrame(() => {
+    if (resolved === "design") { updateCanvasInfo(); dtFitZoom(); renderDesign(); }
+    if (resolved === "run")    { updatePlotBed(); if (!viz3) init3D(); else { viz3.onResize(); viz3.refreshPreview(); } }
+  });
 }
 
-document.querySelectorAll(".nav-item[data-panel]").forEach(btn =>
-  btn.addEventListener("click", () => showPanel(btn.dataset.panel)));
+// Wire nav buttons
+document.querySelectorAll(".nav-item[data-tab]").forEach(btn =>
+  btn.addEventListener("click", () => showPanel(btn.dataset.tab)));
 
-// Start on Create → Patterns
-showPanel("create");
+// Design tab mode switcher
+let activeMode = "patterns";
+
+function currentModeHasRunnableDesign() {
+  if (activeMode === "patterns") return !!activePolylines?.length;
+  if (activeMode === "svg") return !!svgPaths?.length;
+  if (activeMode === "text") return !!plotTextEl?.value.trim();
+  if (activeMode === "track") return trackPolylines.some(pl => pl.length > 1);
+  return false;
+}
+
+function buildRunPayloadFromCurrentMode() {
+  if (activeMode === "patterns") {
+    return activePolylines?.length ? {
+      polylines: activePolylines,
+      name: activePreset?.name || "Pattern",
+      source: "patterns",
+    } : null;
+  }
+  if (activeMode === "svg") {
+    return svgPaths?.length ? {
+      polylines: fitNormalizedPathsToPaper(svgPaths, parseFloat(svgScaleEl?.value || "100") / 100),
+      name: svgFileNameEl?.textContent && svgFileNameEl.textContent !== "No file chosen" ? svgFileNameEl.textContent : "SVG Import",
+      source: "svg",
+    } : null;
+  }
+  if (activeMode === "text") {
+    const text = plotTextEl?.value.trim();
+    return text ? {
+      polylines: buildTextPolylines(text, parseFloat(textSizeEl?.value || "15") || 15),
+      name: `Text: ${text.slice(0, 24)}${text.length > 24 ? "..." : ""}`,
+      source: "text",
+    } : null;
+  }
+  if (activeMode === "track") {
+    const strokes = trackPolylines.filter(pl => pl.length > 1);
+    return strokes.length ? {
+      polylines: fitCanvasPolylinesToPaper(strokes),
+      name: "Tracked Drawing",
+      source: "track",
+    } : null;
+  }
+  return null;
+}
+
+function setRunDesign(payload) {
+  if (!payload?.polylines?.length) return false;
+  activePolylines = payload.polylines;
+  activeDesignName = payload.name || "Design";
+  activeDesignSource = payload.source || "custom";
+  const designNameEl = document.getElementById("plotDesignName");
+  if (designNameEl) designNameEl.textContent = activeDesignName;
+  updatePlotBed();
+  viz3?.refreshPreview();
+  return true;
+}
+
+function showMode(mode) {
+  activeMode = mode;
+  ["patterns","track","svg","text"].forEach(m => {
+    const el =
+      document.getElementById("mode" + m.charAt(0).toUpperCase() + m.slice(1)) ||
+      document.getElementById("mode" + m.toUpperCase());
+    if (el) el.style.display = m === mode ? "flex" : "none";
+  });
+  document.querySelectorAll(".mode-btn[data-mode]").forEach(b =>
+    b.classList.toggle("active", b.dataset.mode === mode));
+  if (mode === "patterns") requestAnimationFrame(() => { dtFitZoom(); renderDesign(); });
+}
+document.querySelectorAll(".mode-btn[data-mode]").forEach(b =>
+  b.addEventListener("click", () => showMode(b.dataset.mode)));
+
+// Start on Design → Patterns
+showPanel("design");
+showMode("patterns");
 
 // ── Canvas dimensions (mm) ────────────────────────────────────────────────
 let PW = 228.6, PH = 279.4;   // default 9×11
@@ -4091,6 +3888,63 @@ document.getElementById("dtShowTravel").addEventListener("change", () => renderD
 document.getElementById("dtShowDots"  ).addEventListener("change", () => renderDesign());
 
 function getMargin() { return parseFloat(document.getElementById("dtMargin").value) || 12; }
+
+function getRunBounds() {
+  const x0 = Math.max(BED_MIN_MM, Math.min(BED_MAX_MM, Math.min(boundBL.x, boundTR.x)));
+  const y0 = Math.max(BED_MIN_MM, Math.min(BED_MAX_MM, Math.min(boundBL.y, boundTR.y)));
+  const x1 = Math.max(x0 + 1, Math.max(BED_MIN_MM, Math.min(BED_MAX_MM, Math.max(boundBL.x, boundTR.x))));
+  const y1 = Math.max(y0 + 1, Math.max(BED_MIN_MM, Math.min(BED_MAX_MM, Math.max(boundBL.y, boundTR.y))));
+  return { x0, y0, x1, y1, width: x1 - x0, height: y1 - y0 };
+}
+
+function mapPaperToRun(mmX, mmY) {
+  const { x0, y0, width, height } = getRunBounds();
+  const sc = Math.min(width / PW, height / PH);
+  const oX = x0 + (width - PW * sc) / 2;
+  const oY = y0 + (height - PH * sc) / 2;
+  return { gx: oX + mmX * sc, gy: oY + mmY * sc, scale: sc, originX: oX, originY: oY };
+}
+
+function fitCanvasPolylinesToPaper(polylines, margin = getMargin()) {
+  if (!polylines?.length) return [];
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  polylines.forEach(pl => pl.forEach(p => {
+    minX = Math.min(minX, p.x);
+    minY = Math.min(minY, p.y);
+    maxX = Math.max(maxX, p.x);
+    maxY = Math.max(maxY, p.y);
+  }));
+  if (!Number.isFinite(minX) || !Number.isFinite(minY)) return [];
+  const srcW = Math.max(maxX - minX, 1);
+  const srcH = Math.max(maxY - minY, 1);
+  const fitW = Math.max(PW - margin * 2, 1);
+  const fitH = Math.max(PH - margin * 2, 1);
+  const sc = Math.min(fitW / srcW, fitH / srcH);
+  const offX = margin + (fitW - srcW * sc) / 2 - minX * sc;
+  const offY = margin + (fitH - srcH * sc) / 2 - minY * sc;
+  return polylines.map(pl => pl.map(p => ({ x: offX + p.x * sc, y: offY + p.y * sc })));
+}
+
+function fitNormalizedPathsToPaper(paths, scale = 1, margin = getMargin()) {
+  if (!paths?.length) return [];
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  paths.forEach(pts => pts.forEach(p => {
+    if (!Number.isFinite(p.x) || !Number.isFinite(p.y)) return;
+    minX = Math.min(minX, p.x);
+    minY = Math.min(minY, p.y);
+    maxX = Math.max(maxX, p.x);
+    maxY = Math.max(maxY, p.y);
+  }));
+  if (!Number.isFinite(minX) || !Number.isFinite(minY)) return [];
+  const srcW = Math.max(maxX - minX, 1e-6);
+  const srcH = Math.max(maxY - minY, 1e-6);
+  const fitW = Math.max(PW - margin * 2, 1);
+  const fitH = Math.max(PH - margin * 2, 1);
+  const fit = Math.min(fitW / srcW, fitH / srcH) * Math.max(scale || 1, 0.01);
+  const offX = margin + (fitW - srcW * fit) / 2 - minX * fit;
+  const offY = margin + (fitH - srcH * fit) / 2 - minY * fit;
+  return paths.map(pts => pts.map(p => ({ x: offX + p.x * fit, y: offY + p.y * fit })));
+}
 function updateCanvasInfo() {
   const m = getMargin();
   // Design tab properties panel
@@ -4106,7 +3960,7 @@ function updateCanvasInfo() {
   const pm2 = document.getElementById("plotPaperM");  if (pm2) pm2.textContent = m;
 
   // Re-render the bed visualization if plot panel is open
-  if (document.getElementById("panelPlot")?.style.display !== "none") {
+  if (document.getElementById("tabRun")?.style.display !== "none") {
     requestAnimationFrame(() => renderPlotBed());
   }
 }
@@ -4128,7 +3982,7 @@ function dtFitZoom() {
 document.getElementById("dtZoomIn" ).addEventListener("click", () => { dtZoom = Math.min(dtZoom * 1.2, 4); document.getElementById("dtZoomLabel").textContent = Math.round(dtZoom*100)+"%"; renderDesign(); });
 document.getElementById("dtZoomOut").addEventListener("click", () => { dtZoom = Math.max(dtZoom / 1.2, .05); document.getElementById("dtZoomLabel").textContent = Math.round(dtZoom*100)+"%"; renderDesign(); });
 document.getElementById("dtZoomFit").addEventListener("click", () => { dtFitZoom(); renderDesign(); });
-window.addEventListener("resize", () => { if (document.getElementById("panelDesigns").style.display !== "none") { dtFitZoom(); renderDesign(); } });
+window.addEventListener("resize", () => { if (document.getElementById("tabDesign").style.display !== "none") { dtFitZoom(); renderDesign(); } });
 
 // ── Line clipping (Liang-Barsky) ──────────────────────────────────────────
 function clipLine(x0,y0,x1,y1, xn,yn,xx,yx) {
@@ -4678,6 +4532,8 @@ document.querySelectorAll(".dt-cat").forEach(btn =>
 // ── Select preset ─────────────────────────────────────────────────────────
 function selectPreset(idx) {
   activePreset = PRESETS[idx];
+  activeDesignName = activePreset.name;
+  activeDesignSource = "patterns";
   paramValues = {};
   activePreset.params.forEach(p => paramValues[p.k] = p.def);
   dtDesignSelect.value = idx;
@@ -4910,8 +4766,8 @@ function updateMachinePanel() {
 
 // ── Machine jog buttons ───────────────────────────────────────────────────
 function machJog(dx, dy) {
-  const step = parseFloat(document.getElementById("machJogStep")?.value || "5");
-  const feed = parseFloat(document.getElementById("machFeed")?.value || "3000");
+  const step = parseFloat(document.getElementById("jogStep")?.value || "5");
+  const feed = parseFloat(document.getElementById("jogFeedM")?.value || "3000");
   if (dx !== 0) { jogPos.x = Math.max(0, Math.min(220, jogPos.x + dx*step)); }
   if (dy !== 0) { jogPos.y = Math.max(0, Math.min(220, jogPos.y + dy*step)); }
   sendGcode(`G1 X${jogPos.x.toFixed(2)} Y${jogPos.y.toFixed(2)} F${feed}\n`);
@@ -4939,7 +4795,7 @@ document.getElementById("machZero")?.addEventListener("click", () => {
   updateMachinePanel();
 });
 document.getElementById("machPark")?.addEventListener("click", () => {
-  const f = parseFloat(document.getElementById("machFeed")?.value||3000);
+  const f = parseFloat(document.getElementById("jogFeedM")?.value||3000);
   sendGcode(`G1 X0 Y0 F${f}\n`);
   jogPos.x=0; jogPos.y=0; updateMachinePanel();
 });
@@ -4950,7 +4806,14 @@ document.getElementById("machConnectBtn")?.addEventListener("click", () =>
   document.getElementById("printerBtn")?.click());
 
 // ── Send to Run button (in Create toolbar) ─────────────────────────────────
-document.getElementById("sendToRunBtn")?.addEventListener("click", () => showPanel("run"));
+document.getElementById("sendToRunBtn")?.addEventListener("click", () => {
+  const payload = buildRunPayloadFromCurrentMode();
+  if (!payload || !setRunDesign(payload)) {
+    showToast("Nothing to send", "Create or preview a design first");
+    return;
+  }
+  showPanel("run");
+});
 
 // ══════════════════════════════════════════════════════════════════════════
 //  SETTINGS PANEL
@@ -5031,7 +4894,7 @@ if (!_origConnectFn) {
     // Log to console when connecting
     updateMachinePanel();
     const b = document.getElementById("sendToRunBtn");
-    if (b) b.disabled = !activePolylines?.length;
+    if (b) b.disabled = !currentModeHasRunnableDesign();
   }, 800);
 }
 
@@ -5426,6 +5289,8 @@ function updatePlotCoords(x, y, penIsDown) {
   if(yEl) yEl.textContent=y.toFixed(1)+" mm";
   if(lbl) lbl.textContent=`X ${x.toFixed(1)} · Y ${y.toFixed(1)}`;
   if(pen) pen.textContent=penIsDown?"Down (drawing)":"Up (travel)";
+  const run = mapPaperToRun(x, y);
+  viz3?.moveTo(run.gx, run.gy, penIsDown);
   renderPlotBed();
 }
 
@@ -5448,7 +5313,8 @@ function updatePlotBed() {
   const W=wrap.clientWidth||500, H=wrap.clientHeight||400;
   canvas.width=W; canvas.height=H;
   renderPlotBed();
-  document.getElementById("plotBedInfo").textContent=`${PW.toFixed(0)} × ${PH.toFixed(0)} mm paper`;
+  const { width, height } = getRunBounds();
+  document.getElementById("plotBedInfo").textContent=`${PW.toFixed(0)} × ${PH.toFixed(0)} mm paper · bounds ${width.toFixed(0)} × ${height.toFixed(0)} mm`;
 }
 
 function renderPlotBed() {
@@ -5463,6 +5329,12 @@ function renderPlotBed() {
   const ox=(W-PW*sc)/2, oy=(H-PH*sc)/2;
   ctx.fillStyle="#fff"; ctx.fillRect(ox,oy,PW*sc,PH*sc);
   ctx.strokeStyle="#333"; ctx.lineWidth=1; ctx.strokeRect(ox,oy,PW*sc,PH*sc);
+  const bounds = getRunBounds();
+  const boundScale = Math.min(bounds.width / PW, bounds.height / PH);
+  const bx = ox + (PW * sc - PW * boundScale * sc) / 2;
+  const by = oy + (PH * sc - PH * boundScale * sc) / 2;
+  ctx.strokeStyle = "rgba(74,158,255,.28)";
+  ctx.strokeRect(bx, by, PW * boundScale * sc, PH * boundScale * sc);
 
   const toX=mm=>ox+mm*sc, toY=mm=>oy+mm*sc;
 
@@ -5511,7 +5383,7 @@ function renderPlotBed() {
 document.getElementById("plotStartBtn")?.addEventListener("click", async () => {
   if(!serialWriter||!activePolylines.length) return;
   showPanel("plot");
-  document.getElementById("plotDesignName").textContent = activePreset?.name || "Design";
+  document.getElementById("plotDesignName").textContent = activeDesignName || activePreset?.name || "Design";
   const startBtn=document.getElementById("plotStartBtn");
   const stopBtn=document.getElementById("plotStopBtn");
   const pauseBtn=document.getElementById("plotPauseBtn");
@@ -5529,9 +5401,7 @@ document.getElementById("plotStartBtn")?.addEventListener("click", async () => {
   const pUp=parseFloat(document.getElementById("penUpZ2")?.value||document.getElementById("penUpZ")?.value||8);
   const pDn=parseFloat(document.getElementById("penDownZ2")?.value||document.getElementById("penDownZ")?.value||2);
   const feed=parseFloat(document.getElementById("xySpeed2")?.value||document.getElementById("xySpeed")?.value||12000);
-  const scX=(bedX1-bedX0)/PW, scY=(bedY1-bedY0)/PH, sc=Math.min(scX,scY);
-  const oX=bedX0+((bedX1-bedX0)-PW*sc)/2, oY=bedY0+((bedY1-bedY0)-PH*sc)/2;
-  const toGX=mm=>oX+mm*sc, toGY=mm=>oY+mm*sc;
+  const toGX=mm=>mapPaperToRun(mm, 0).gx, toGY=mm=>mapPaperToRun(0, mm).gy;
 
   try {
     await sendGcode(`G1 Z${pUp.toFixed(2)} F3000\n`);
@@ -5575,8 +5445,10 @@ document.getElementById("plotStopBtn")?.addEventListener("click",()=>{
 
 // "Plot This" always opens the plot panel (start button remains disabled until connected)
 document.getElementById("plotDesignBtn")?.addEventListener("click",()=>{
+  const payload = buildRunPayloadFromCurrentMode();
+  if (payload) setRunDesign(payload);
   showPanel("plot");
-  document.getElementById("plotDesignName").textContent = activePreset?.name || "No design";
+  document.getElementById("plotDesignName").textContent = activeDesignName || activePreset?.name || "No design";
   requestAnimationFrame(() => updatePlotBed());
 });
 
@@ -5591,8 +5463,8 @@ setInterval(()=>{
 },800);
 
 window.addEventListener("resize",()=>{
-  if(document.getElementById("panelPlot")?.style.display!=="none") updatePlotBed();
-  if(document.getElementById("panelDesigns")?.style.display!=="none"){dtFitZoom();renderDesign();}
+  if(document.getElementById("tabRun")?.style.display!=="none") updatePlotBed();
+  if(document.getElementById("tabDesign")?.style.display!=="none"){dtFitZoom();renderDesign();}
 });
 
 // ══════════════════════════════════════════════════════════════════════════
@@ -5667,13 +5539,8 @@ requestAnimationFrame(() => requestAnimationFrame(() => {
 
 function generateGcode() {
   if (!activePolylines || !activePolylines.length) return null;
-
-  const scX = (bedX1 - bedX0) / PW, scY = (bedY1 - bedY0) / PH;
-  const sc  = Math.min(scX, scY);
-  const oX  = bedX0 + ((bedX1 - bedX0) - PW * sc) / 2;
-  const oY  = bedY0 + ((bedY1 - bedY0) - PH * sc) / 2;
-  const toGX = mm => (oX + mm * sc).toFixed(3);
-  const toGY = mm => (oY + mm * sc).toFixed(3);
+  const toGX = mm => mapPaperToRun(mm, 0).gx.toFixed(3);
+  const toGY = mm => mapPaperToRun(0, mm).gy.toFixed(3);
 
   const pUp  = parseFloat(document.getElementById("penUpZ2")?.value  || document.getElementById("penUpZ")?.value  || 8);
   const pDn  = parseFloat(document.getElementById("penDownZ2")?.value|| document.getElementById("penDownZ")?.value|| 2);
@@ -5681,7 +5548,7 @@ function generateGcode() {
   const margin = parseFloat(document.getElementById("dtMargin")?.value || 12);
 
   const lines = [
-    `; PenPlotter G-code — ${activePreset?.name || "custom"}`,
+    `; PenPlotter G-code — ${activeDesignName || activePreset?.name || "custom"}`,
     `; Paper: ${PW.toFixed(1)} x ${PH.toFixed(1)} mm, margin ${margin} mm`,
     `; Generated: ${new Date().toISOString()}`,
     "; ─────────────────────────────────",
@@ -5802,239 +5669,349 @@ setInterval(() => {
 }, 800);
 
 // ══════════════════════════════════════════════════════════════════════════
-//  3D VISUALIZER  (Three.js — Ender-3 pen plotter model)
+//  3D VISUALIZER  — Realistic XY Gantry Pen Plotter
+//
+//  Features:
+//  • Full Ender-3 frame with V-slot aluminum extrusion profiles
+//  • Heated bed with glass plate, binder-clip paper holder
+//  • GT2 timing belts (X and Y axes)
+//  • Smooth steel rods for Y axis
+//  • X-axis linear rail on gantry
+//  • Detailed pen carriage with servo mount
+//  • Clickable orbit, zoom and pan with OrbitControls
+//  • Real-time tool head animation during plotting
+//  • Design preview path rendered on paper
+//  • Drawn path accumulates in ink-blue as plotting progresses
 // ══════════════════════════════════════════════════════════════════════════
 
-let viz3 = null; // namespace for all 3D state
+let viz3 = null;
 
-function init3D() {
+async function init3D() {
+  if (viz3) return;
   const canvas = document.getElementById("canvas3D");
-  if (!canvas || viz3) return;
+  if (!canvas) return;
 
-  const w = canvas.offsetWidth || 600;
-  const h = canvas.offsetHeight || 400;
+  // Dynamic import Three.js + OrbitControls
+  let THREE_m, OC_m;
+  try {
+    THREE_m = await import("https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js");
+    OC_m    = await import("https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/controls/OrbitControls.js");
+  } catch(e) { console.warn("Three.js CDN failed:", e); return; }
 
-  const scene    = new THREE.Scene();
-  scene.background = new THREE.Color(0x1a1a1a);
-  scene.fog = new THREE.FogExp2(0x1a1a1a, 0.0018);
+  const THREE         = THREE_m;
+  const OrbitControls = OC_m.OrbitControls;
 
-  const camera = new THREE.PerspectiveCamera(42, w / h, 1, 2000);
-  camera.position.set(340, 240, 400);
-
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-  renderer.setSize(w, h);
+  // ── Renderer ──────────────────────────────────────────────────────────
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.1;
+  renderer.toneMappingExposure = 1.15;
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
 
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x1c1c1e);
+  scene.fog = new THREE.Fog(0x1c1c1e, 600, 900);
+
+  // ── Camera ────────────────────────────────────────────────────────────
+  const camera = new THREE.PerspectiveCamera(38, 1, 1, 2000);
+  camera.position.set(360, 300, 440);
+
+  // ── Orbit Controls ────────────────────────────────────────────────────
   const controls = new OrbitControls(camera, renderer.domElement);
-  controls.target.set(110, 15, 110);
-  controls.enableDamping = true;
-  controls.dampingFactor = 0.07;
-  controls.minDistance = 80;
-  controls.maxDistance = 700;
-  controls.maxPolarAngle = Math.PI * 0.48;
+  controls.target.set(110, 40, 110);
+  controls.enableDamping  = true;
+  controls.dampingFactor  = 0.06;
+  controls.minDistance    = 60;
+  controls.maxDistance    = 800;
+  controls.maxPolarAngle  = Math.PI * 0.52;
   controls.update();
 
-  // ── Lighting ─────────────────────────────────────────────────────────
-  scene.add(new THREE.AmbientLight(0x606080, 0.6));
-  const sun = new THREE.DirectionalLight(0xfff5e0, 1.0);
-  sun.position.set(200, 350, 150);
-  sun.castShadow = true;
-  sun.shadow.camera.near = 10;
-  sun.shadow.camera.far  = 800;
-  sun.shadow.camera.left = sun.shadow.camera.bottom = -200;
-  sun.shadow.camera.right = sun.shadow.camera.top   =  400;
-  sun.shadow.mapSize.set(2048, 2048);
-  scene.add(sun);
-  scene.add(new THREE.PointLight(0x4a9eff, 0.3, 300).translateY(80));
+  // ── Lights ────────────────────────────────────────────────────────────
+  scene.add(new THREE.AmbientLight(0x8090a0, 0.55));
 
-  // ── Materials ─────────────────────────────────────────────────────────
-  const mat = {
-    frame:    new THREE.MeshStandardMaterial({ color: 0x444444, metalness: 0.7, roughness: 0.4 }),
-    bed:      new THREE.MeshStandardMaterial({ color: 0x222222, metalness: 0.3, roughness: 0.8 }),
-    spring:   new THREE.MeshStandardMaterial({ color: 0x888888, metalness: 0.9, roughness: 0.2 }),
-    paper:    new THREE.MeshStandardMaterial({ color: 0xf5f0e8, roughness: 0.95 }),
-    carriage: new THREE.MeshStandardMaterial({ color: 0x3a3a3a, metalness: 0.5, roughness: 0.5 }),
-    pen:      new THREE.MeshStandardMaterial({ color: 0x2266cc, metalness: 0.2, roughness: 0.6 }),
-    penTip:   new THREE.MeshStandardMaterial({ color: 0x111111 }),
-    rail:     new THREE.MeshStandardMaterial({ color: 0x999999, metalness: 0.9, roughness: 0.1 }),
-    glow:     new THREE.MeshBasicMaterial({ color: 0x4a9eff, transparent: true, opacity: 0.7 }),
+  const keyLight = new THREE.DirectionalLight(0xfff8f0, 1.1);
+  keyLight.position.set(250, 400, 180);
+  keyLight.castShadow = true;
+  keyLight.shadow.mapSize.set(2048, 2048);
+  keyLight.shadow.camera.near   = 10;
+  keyLight.shadow.camera.far    = 800;
+  keyLight.shadow.camera.left   = -250;
+  keyLight.shadow.camera.right  =  350;
+  keyLight.shadow.camera.top    =  350;
+  keyLight.shadow.camera.bottom = -100;
+  keyLight.shadow.bias = -0.0003;
+  scene.add(keyLight);
+
+  const fillLight = new THREE.DirectionalLight(0x6080c0, 0.3);
+  fillLight.position.set(-200, 150, 300);
+  scene.add(fillLight);
+
+  const rimLight = new THREE.DirectionalLight(0xffffff, 0.15);
+  rimLight.position.set(0, -50, -200);
+  scene.add(rimLight);
+
+  // Soft point light near tool head (moves with it)
+  const toolLight = new THREE.PointLight(0x4a9eff, 0.5, 120);
+  scene.add(toolLight);
+
+  // ── Materials palette ─────────────────────────────────────────────────
+  function stdMat(hex, metal=0, rough=0.7) {
+    return new THREE.MeshStandardMaterial({ color: hex, metalness: metal, roughness: rough });
+  }
+  const M = {
+    extrusion: stdMat(0x3a3a3c, 0.6, 0.5),   // anodized aluminum
+    darkMetal : stdMat(0x252527, 0.7, 0.4),   // steel/dark metal
+    chrome    : stdMat(0xcccccc, 0.95, 0.15), // polished rod
+    bed       : stdMat(0x2a2a2c, 0.3, 0.9),   // PCB/bed
+    glass     : new THREE.MeshStandardMaterial({ color: 0xbbd0e8, metalness: 0, roughness: 0.05, transparent: true, opacity: 0.55, side: THREE.DoubleSide }),
+    paper     : new THREE.MeshStandardMaterial({ color: 0xf5f0e8, roughness: 0.95, metalness: 0 }),
+    paperEdge : stdMat(0xe8e0d0, 0, 0.9),
+    belt      : stdMat(0x111111, 0, 0.95),
+    carriage  : stdMat(0x353538, 0.5, 0.6),
+    penBody   : stdMat(0x1e3a6e, 0.1, 0.6),   // pen body: dark blue
+    penClip   : stdMat(0xc8a800, 0.8, 0.3),   // gold clip
+    penTip    : stdMat(0x111111, 0, 0.7),
+    rubber    : stdMat(0x1a1a1a, 0, 0.95),
+    spring    : stdMat(0xaaaaaa, 0.9, 0.25),
+    pcbGreen  : stdMat(0x1a4a1a, 0, 0.85),
+    clip      : stdMat(0x888888, 0.8, 0.4),
   };
 
-  // ── Helper: extrusion profile box ─────────────────────────────────────
-  function profile(w, h, d, mat) {
-    return new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
-  }
-  function rod(r, len, mat) {
-    const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, len, 12), mat);
+  // ── Geometry helpers ──────────────────────────────────────────────────
+  const box   = (w,h,d) => new THREE.BoxGeometry(w,h,d);
+  const cyl   = (r,h,s=12) => new THREE.CylinderGeometry(r,r,h,s);
+  const cone  = (rb,rt,h,s=12) => new THREE.CylinderGeometry(rt,rb,h,s);
+  function mesh(geo, mat, rx=0,ry=0,rz=0, cx=0,cy=0,cz=0) {
+    const m = new THREE.Mesh(geo, mat);
+    m.rotation.set(rx, ry, rz);
+    m.position.set(cx, cy, cz);
+    m.castShadow = m.receiveShadow = true;
     return m;
   }
+  function add(...items) { items.forEach(i => scene.add(i)); return items[0]; }
 
-  // ── Base frame ────────────────────────────────────────────────────────
-  const frame = new THREE.Group();
-  scene.add(frame);
-
-  // Bottom horizontal rails
-  function addBar(x, y, z, rx, ry, rz, w, h, d) {
-    const b = profile(w, h, d, mat.frame);
-    b.position.set(x, y, z);
-    b.rotation.set(rx, ry, rz);
-    b.castShadow = true;
-    frame.add(b);
-    return b;
+  // V-slot profile: aluminum extrusion (rough box with beveled look via separate pieces)
+  function vslot(length, axis='x', x=0, y=0, z=0) {
+    const g = new THREE.Group();
+    // Main bar
+    const bar = mesh(axis === 'x' ? box(length, 20, 20) : box(20, length, 20), M.extrusion);
+    if (axis === 'z') bar.geometry = box(20, 20, length);
+    bar.castShadow = bar.receiveShadow = true;
+    g.add(bar);
+    g.position.set(x, y, z);
+    scene.add(g);
+    return g;
   }
-  addBar(110, -8, -10, 0, 0, 0, 250, 12, 12); // front X base
-  addBar(110, -8, 230, 0, 0, 0, 250, 12, 12); // back X base
-  addBar(-10, -8, 110, 0, 0, 0, 12, 12, 240); // left Z base
-  addBar(230, -8, 110, 0, 0, 0, 12, 12, 240); // right Z base
 
-  // Vertical uprights (Z frame)
-  addBar(-10, 120, -10, 0, 0, 0, 12, 250, 12);
-  addBar(230, 120, -10, 0, 0, 0, 12, 250, 12);
-  addBar(-10,  60, 230, 0, 0, 0, 12, 120, 12);
-  addBar(230,  60, 230, 0, 0, 0, 12, 120, 12);
+  // ── FRAME — Ender-3 like structure ─────────────────────────────────
+  // Base: two horizontal bars along X
+  vslot(260, 'x',  0, -4, -10);   // front base
+  vslot(260, 'x',  0, -4, 230);   // back base
+  // Base: two bars along Z  
+  vslot(260, 'z', -10, -4, 110);  // left base
+  vslot(260, 'z', 230, -4, 110);  // right base
 
-  // Top cross bar (X-axis motor mount)
-  addBar(110, 245, -10, 0, 0, 0, 250, 12, 12);
+  // Vertical uprights (Z-frame side)
+  vslot(280, 'z', -10, 120, -10); // front-left upright
+  vslot(280, 'z', 230, 120, -10); // front-right upright
+  vslot(160, 'z', -10,  60, 230); // back-left upright (shorter, just bed support)
+  vslot(160, 'z', 230,  60, 230); // back-right upright
 
-  // ── Heated bed ───────────────────────────────────────────────────────
+  // Top horizontal cross-bar (X axis motor mount)
+  vslot(260, 'x',  0, 250, -10);
+
+  // ── HEATED BED ASSEMBLY ──────────────────────────────────────────────
   const bedGroup = new THREE.Group();
   scene.add(bedGroup);
-  const bedPlate = profile(230, 5, 230, mat.bed);
-  bedPlate.receiveShadow = true;
-  bedGroup.add(bedPlate);
-  bedGroup.position.set(110, 2, 110);
+  bedGroup.position.set(110, 5, 110);
 
-  // Paper on bed
-  const paperMesh = new THREE.Mesh(
-    new THREE.PlaneGeometry(PW, PH),
-    mat.paper
-  );
-  paperMesh.rotation.x = -Math.PI / 2;
-  paperMesh.position.set(0, 3.2, 0);
+  // Bed PCB/aluminium plate
+  bedGroup.add(mesh(box(235, 4, 235), M.bed));
+  // Glass plate on top
+  bedGroup.add(mesh(box(220, 2, 220), M.glass, 0,0,0, 0, 3, 0));
+  // Paper on glass
+  const paperMesh = mesh(new THREE.PlaneGeometry(PW, PH), M.paper, -Math.PI/2, 0, 0, 0, 4.3, 0);
   paperMesh.receiveShadow = true;
   bedGroup.add(paperMesh);
 
-  // Paper margin dashes
-  const marginGeo = new THREE.EdgesGeometry(new THREE.BoxGeometry(PW - 24, 0.1, PH - 24));
-  bedGroup.add(new THREE.LineSegments(marginGeo, new THREE.LineBasicMaterial({ color: 0xaaaaaa, transparent: true, opacity: 0.3 })));
+  // Paper edge (slight thickness)
+  bedGroup.add(mesh(box(PW+0.5, 0.3, PH+0.5), M.paperEdge, 0,0,0, 0, 4.45, 0));
 
-  // ── Y-axis smooth rods ────────────────────────────────────────────────
-  [-10, 230].forEach(xPos => {
-    const r = rod(4, 240, mat.rail);
-    r.rotation.x = Math.PI / 2;
-    r.position.set(xPos, 35, 110);
-    r.castShadow = true;
-    frame.add(r);
+  // Binder clips holding paper
+  [-PW/2, PW/2].forEach(xOff => {
+    const clip = new THREE.Group();
+    clip.add(mesh(box(8, 12, 3), M.clip, 0,0,0, 0, 0, 0));
+    clip.position.set(xOff, 4.5, 0);
+    bedGroup.add(clip);
   });
 
-  // ── X-axis gantry (moves in Y/Z plotter direction) ────────────────────
+  // Bed leveling springs (4 corners)
+  [[-90,-90],[90,-90],[-90,90],[90,90]].forEach(([x,z]) => {
+    const spring = mesh(cyl(3.5, 14, 8), M.spring, 0,0,0, x, -11, z);
+    bedGroup.add(spring);
+    // Leveling knob
+    const knob = mesh(cyl(6, 6, 6), M.darkMetal, 0,0,0, x, -20, z);
+    bedGroup.add(knob);
+  });
+
+  // ── Y-AXIS SMOOTH RODS ───────────────────────────────────────────────
+  [-12, 232].forEach(xPos => {
+    const rod = mesh(cyl(4, 255, 16), M.chrome, Math.PI/2, 0, 0, xPos, 38, 110);
+    rod.castShadow = true;
+    scene.add(rod);
+  });
+
+  // Y-axis GT2 belt (simplified flat strip)
+  const beltGeom = new THREE.BoxGeometry(4, 1.5, 255);
+  scene.add(mesh(beltGeom, M.belt, 0, 0, 0, 110, 28, 110));
+
+  // ── X-AXIS GANTRY ────────────────────────────────────────────────────
   const gantry = new THREE.Group();
   scene.add(gantry);
-  gantry.position.set(0, 40, 0); // default Y=0
+  gantry.position.set(0, 50, 0); // Y position moves during plotting
 
-  // Gantry cross-bar
-  const gantryBar = profile(250, 14, 14, mat.frame);
-  gantryBar.position.set(110, 0, 0);
-  gantryBar.castShadow = true;
+  // Main gantry extrusion
+  const gantryBar = mesh(box(260, 20, 20), M.extrusion, 0,0,0, 110, 0, 0);
   gantry.add(gantryBar);
 
-  // Smooth X rod
-  const xRod = rod(4, 250, mat.rail);
-  xRod.rotation.z = Math.PI / 2;
-  xRod.position.set(110, -6, 0);
-  gantry.add(xRod);
-
-  // Gantry end blocks (slide on Y rods)
-  [-10, 230].forEach(xPos => {
-    const block = profile(20, 30, 20, mat.carriage);
-    block.position.set(xPos, 0, 0);
-    block.castShadow = true;
+  // End blocks that slide on Y rods
+  [-12, 232].forEach(xPos => {
+    const block = mesh(box(22, 32, 28), M.carriage, 0,0,0, xPos, 0, 0);
     gantry.add(block);
+    // Rod clamp details
+    const clamp = mesh(cyl(4.5, 8, 8), M.darkMetal, Math.PI/2, 0, 0, xPos, -6, 0);
+    gantry.add(clamp);
   });
 
-  // ── Tool head carriage ────────────────────────────────────────────────
-  const toolGroup = new THREE.Group();
-  gantry.add(toolGroup);
-  toolGroup.position.set(110, 0, 0); // default X=110 (center)
+  // X-axis linear rod (on gantry)
+  const xRod = mesh(cyl(3.5, 252, 16), M.chrome, 0, 0, Math.PI/2, 110, -5, 0);
+  gantry.add(xRod);
 
-  // Carriage body
-  const carriageBody = profile(34, 36, 24, mat.carriage);
-  carriageBody.castShadow = true;
-  toolGroup.add(carriageBody);
+  // X-axis GT2 belt
+  gantry.add(mesh(box(250, 1.5, 3), M.belt, 0,0,0, 110, -12, 6));
 
-  // Pen holder (vertical cylinder)
-  const holderGeo = new THREE.CylinderGeometry(6, 6, 40, 12);
-  const holder = new THREE.Mesh(holderGeo, mat.carriage);
-  holder.position.set(0, -32, 0);
-  holder.castShadow = true;
-  toolGroup.add(holder);
+  // Stepper motor (X)
+  const xMotor = mesh(box(42, 42, 38), M.darkMetal, 0,0,0, 238, 2, 0);
+  gantry.add(xMotor);
+  // Motor shaft
+  gantry.add(mesh(cyl(4, 14, 8), M.chrome, 0,0,Math.PI/2, 248, 2, 0));
 
-  // Pen body
-  const penBodyGeo = new THREE.CylinderGeometry(4.5, 4.5, 28, 12);
-  const penBody = new THREE.Mesh(penBodyGeo, mat.pen);
-  penBody.position.set(0, -58, 0);
-  penBody.castShadow = true;
-  toolGroup.add(penBody);
+  // ── PEN CARRIAGE ─────────────────────────────────────────────────────
+  const carriage = new THREE.Group();
+  gantry.add(carriage);
+  carriage.position.set(110, 0, 0); // X position slides
 
-  // Pen tip (cone)
-  const penTipGeo = new THREE.ConeGeometry(4, 10, 12);
-  const penTip = new THREE.Mesh(penTipGeo, mat.penTip);
-  penTip.position.set(0, -77, 0);
-  toolGroup.add(penTip);
+  // Main carriage body
+  const carriageBody = mesh(box(42, 46, 30), M.carriage, 0,0,0, 0, 0, 0);
+  carriage.add(carriageBody);
 
-  // Contact glow dot (shows on paper when pen is down)
-  const glowDot = new THREE.Mesh(new THREE.CircleGeometry(5, 16), mat.glow);
-  glowDot.rotation.x = -Math.PI / 2;
-  glowDot.position.set(0, -39, 0); // paper level from gantry
-  glowDot.visible = false;
-  toolGroup.add(glowDot);
+  // Linear bearing blocks (2)
+  [-10, 10].forEach(zOff => {
+    carriage.add(mesh(box(16, 18, 14), M.darkMetal, 0,0,0, 0, -5, zOff));
+  });
 
-  // ── Drawn path geometry ───────────────────────────────────────────────
-  // Drawn strokes (blue)
-  const drawnPositions = new Float32Array(300000 * 3);
-  const drawnGeo = new THREE.BufferGeometry();
-  drawnGeo.setAttribute("position", new THREE.BufferAttribute(drawnPositions, 3));
-  drawnGeo.setDrawRange(0, 0);
-  const drawnLine = new THREE.LineSegments(
-    drawnGeo,
-    new THREE.LineBasicMaterial({ color: 0x1a50c0, linewidth: 1 })
+  // Belt clamp
+  carriage.add(mesh(box(28, 5, 8), M.darkMetal, 0,0,0, 0, -15, 5));
+
+  // Pen holder tube (servo mount)
+  const penHolder = mesh(cyl(8, 38, 12), M.darkMetal, 0,0,0, 0, -36, 0);
+  carriage.add(penHolder);
+
+  // Servo (lifts pen)
+  carriage.add(mesh(box(24, 20, 12), M.carriage, 0,0,0, 18, -28, 0));
+  // Servo horn
+  carriage.add(mesh(box(16, 2, 4), M.pcbGreen, 0,0,0, 22, -20, 0));
+
+  // ── PEN ──────────────────────────────────────────────────────────────
+  const penGroup = new THREE.Group();
+  carriage.add(penGroup);
+  penGroup.position.set(0, -36, 0); // default pen-up position
+
+  // Pen body (chunky felt-tip marker look)
+  penGroup.add(mesh(cyl(5.5, 30, 12), M.penBody, 0,0,0, 0, -22, 0));
+  // Pen label band (gold ring)
+  penGroup.add(mesh(cyl(5.7, 3, 12), M.penClip, 0,0,0, 0, -10, 0));
+  // Pen cap/top  
+  penGroup.add(mesh(cone(5.5, 3.5, 6, 10), M.penBody, 0,0,0, 0, -4, 0));
+  // Pen tip  
+  penGroup.add(mesh(cone(2.5, 0.8, 10, 8), M.penTip, 0,0,0, 0, -38, 0));
+  // Rubber grip section
+  penGroup.add(mesh(cyl(4.5, 10, 10), M.rubber, 0,0,0, 0, -32, 0));
+
+  // Pen tip glow (contact indicator)
+  const tipGlow = new THREE.Mesh(
+    new THREE.SphereGeometry(2.5, 8, 6),
+    new THREE.MeshBasicMaterial({ color: 0x4a9eff, transparent: true, opacity: 0 })
   );
+  tipGlow.position.set(0, -43.5, 0);
+  penGroup.add(tipGlow);
+
+  // ── FLOOR / SHADOW CATCHER ───────────────────────────────────────────
+  const floor = new THREE.Mesh(
+    new THREE.PlaneGeometry(600, 600),
+    new THREE.ShadowMaterial({ opacity: 0.25 })
+  );
+  floor.rotation.x = -Math.PI / 2;
+  floor.position.set(110, -16, 110);
+  floor.receiveShadow = true;
+  scene.add(floor);
+
+  // Subtle grid on floor
+  const grid = new THREE.GridHelper(500, 20, 0x2a2a2a, 0x222222);
+  grid.position.set(110, -16.5, 110);
+  scene.add(grid);
+
+  // ── DRAWN PATH GEOMETRY ───────────────────────────────────────────────
+  const MAX_PTS = 600000;
+  const drawnArr = new Float32Array(MAX_PTS * 3);
+  const drawnGeo = new THREE.BufferGeometry();
+  drawnGeo.setAttribute("position", new THREE.BufferAttribute(drawnArr, 3));
+  drawnGeo.setDrawRange(0, 0);
+  const drawnLine = new THREE.Line(drawnGeo, new THREE.LineBasicMaterial({
+    color: 0x1a3a8a, linewidth: 1
+  }));
   drawnLine.frustumCulled = false;
   scene.add(drawnLine);
 
-  // Preview path (upcoming strokes, very faint)
+  // Preview path
   let previewLine = null;
 
-  // ── State ─────────────────────────────────────────────────────────────
-  let drawnCount = 0;    // vertices added to drawnGeo
-  let prevPos    = null; // last pen position while drawing
-  let isPenDown  = false;
+  // ── STATE ─────────────────────────────────────────────────────────────
+  let drawnPts  = 0;
+  let prevPt    = null;
+  let penIsDown = false;
+  let plotStarted = false;
 
-  // ── Resize handler ────────────────────────────────────────────────────
-  function onResize() {
-    if (!canvas.offsetParent) return;
-    const w = canvas.offsetWidth, h = canvas.offsetHeight;
-    if (w < 10 || h < 10) return;
+  // ── RESIZE ────────────────────────────────────────────────────────────
+  function resize() {
+    const wrap = document.getElementById("plotBedWrap");
+    if (!wrap || !wrap.offsetWidth) return;
+    const w = wrap.offsetWidth, h = wrap.offsetHeight;
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
     renderer.setSize(w, h);
   }
-  window.addEventListener("resize", onResize);
+  window.addEventListener("resize", resize);
+  resize();
 
-  // ── Animation loop ────────────────────────────────────────────────────
+  // ── ANIMATION LOOP ────────────────────────────────────────────────────
   let raf;
   function animate() {
     raf = requestAnimationFrame(animate);
     controls.update();
+
+    // Update tool light to follow carriage
+    const worldPos = new THREE.Vector3();
+    penGroup.getWorldPosition(worldPos);
+    toolLight.position.copy(worldPos).add(new THREE.Vector3(0, 30, 0));
+
     renderer.render(scene, camera);
   }
   animate();
 
-  // ── Build preview path from design polylines ──────────────────────────
+  // ── BUILD PREVIEW PATH ────────────────────────────────────────────────
   function buildPreview() {
     if (previewLine) { scene.remove(previewLine); previewLine.geometry.dispose(); previewLine = null; }
     if (!activePolylines?.length) return;
@@ -6049,142 +6026,83 @@ function init3D() {
     const pts = [];
     activePolylines.forEach(pl => {
       for (let i = 1; i < pl.length; i++) {
-        pts.push(toGX(pl[i-1].x), 4.5, toGY(pl[i-1].y));
-        pts.push(toGX(pl[i].x),   4.5, toGY(pl[i].y));
+        pts.push(toGX(pl[i-1].x), 7.5, toGY(pl[i-1].y));
+        pts.push(toGX(pl[i].x),   7.5, toGY(pl[i].y));
       }
     });
+    if (!pts.length) return;
 
     const geo = new THREE.BufferGeometry();
     geo.setAttribute("position", new THREE.Float32BufferAttribute(pts, 3));
-    previewLine = new THREE.LineSegments(geo, new THREE.LineBasicMaterial({
-      color: 0x2a4a80, transparent: true, opacity: 0.25
+    previewLine = new THREE.Line(geo, new THREE.LineBasicMaterial({
+      color: 0x3a5a9a, transparent: true, opacity: 0.22, linewidth: 1
     }));
     previewLine.frustumCulled = false;
     scene.add(previewLine);
   }
 
-  // ── Exported API ──────────────────────────────────────────────────────
+  // ── VIZ3 API ──────────────────────────────────────────────────────────
   viz3 = {
-    // Move tool head to printer position (mm)
-    moveTo(px, py, penDown) {
-      // Map printer coords → 3D scene
-      // Printer X (0-220) → scene X (0-220), gantry stays at X=0 base, toolGroup slides
-      // Printer Y (0-220) → gantry Z (0-220)
-      // Paper: bedGroup at y=2, paper surface at y=4.5 in world space
-      // Gantry is at y=40 world → tool tip at world y = 40 - 77 + paperY
-      toolGroup.position.x = px;          // slides along gantry (X axis)
-      gantry.position.z    = py;          // gantry slides along Y rods
+    moveTo(px, py, down) {
+      // Gantry slides along Y rods (printer Y = scene Z)
+      gantry.position.z = py;
+      // Carriage slides along X rod
+      carriage.position.x = px - 110;
 
-      // Pen up/down: smoothly animate tool Z offset
-      const targetY = penDown ? -2 : 12;  // how many units gantry raises pen
-      toolGroup.position.y += (targetY - toolGroup.position.y) * 0.18;
+      // Pen height animation
+      const targetY = down ? -10 : 5;
+      penGroup.position.y += (targetY - penGroup.position.y) * 0.2;
 
-      glowDot.visible = penDown;
+      // Glow when pen down
+      tipGlow.material.opacity = down ? 0.85 : 0;
+      tipGlow.material.color.setHex(down ? 0x1a50c0 : 0x4a9eff);
 
       // Accumulate drawn path
-      if (penDown) {
-        const worldX = px, worldY = 4.6, worldZ = py;
-        if (prevPos && isPenDown) {
-          if (drawnCount + 6 < drawnPositions.length) {
-            drawnPositions[drawnCount++] = prevPos[0];
-            drawnPositions[drawnCount++] = prevPos[1];
-            drawnPositions[drawnCount++] = prevPos[2];
-            drawnPositions[drawnCount++] = worldX;
-            drawnPositions[drawnCount++] = worldY;
-            drawnPositions[drawnCount++] = worldZ;
+      if (down) {
+        const wx = px, wy = 7.8, wz = py;
+        if (prevPt && penIsDown) {
+          if (drawnPts + 6 < MAX_PTS) {
+            drawnArr.set([prevPt[0], prevPt[1], prevPt[2]], drawnPts);
+            drawnArr.set([wx, wy, wz], drawnPts + 3);
+            drawnPts += 6;
             drawnGeo.attributes.position.needsUpdate = true;
-            drawnGeo.setDrawRange(0, drawnCount / 3);
+            drawnGeo.setDrawRange(0, drawnPts / 3);
           }
         }
-        prevPos   = [worldX, worldY, worldZ];
-        isPenDown = true;
+        prevPt = [wx, wy, wz];
+        penIsDown = true;
       } else {
-        isPenDown = false;
-        prevPos   = [px, 4.6, py];
+        penIsDown = false;
+        prevPt = [px, 7.8, py];
       }
     },
 
-    // Clear drawn path
     clearPath() {
-      drawnCount = 0;
+      drawnPts = 0;
       drawnGeo.setDrawRange(0, 0);
       drawnGeo.attributes.position.needsUpdate = true;
-      prevPos = null; isPenDown = false;
+      prevPt = null; penIsDown = false;
     },
 
-    // Rebuild the preview path when design changes
     refreshPreview() { buildPreview(); },
 
-    // Reset camera to default view
     resetCamera() {
-      camera.position.set(340, 240, 400);
-      controls.target.set(110, 15, 110);
+      camera.position.set(360, 300, 440);
+      controls.target.set(110, 40, 110);
       controls.update();
     },
 
-    // Update paper size when canvas dimensions change
-    updatePaper() {
-      paperMesh.scale.set(PW / 220, 1, PH / 220);
-    },
+    onResize() { resize(); },
 
-    onResize,
-
-    destroy() { cancelAnimationFrame(raf); window.removeEventListener("resize", onResize); viz3 = null; }
+    destroy() {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("resize", resize);
+      viz3 = null;
+    }
   };
 
-  // Build initial preview
   buildPreview();
-  onResize();
 }
-
-// ── View toggle buttons ───────────────────────────────────────────────────
-function setView3D(use3D) {
-  const c3d = document.getElementById("canvas3D");
-  const c2d = document.getElementById("plotBedCanvas");
-  const b3d = document.getElementById("view3DBtn");
-  const b2d = document.getElementById("view2DBtn");
-  if (!c3d || !c2d) return;
-  c3d.style.display = use3D ? "block" : "none";
-  c2d.style.display = use3D ? "none"  : "block";
-  b3d.style.background = use3D ? "#1a3050" : "";
-  b3d.style.color      = use3D ? "#4a9eff" : "";
-  b3d.style.borderColor= use3D ? "#2d5a9e" : "";
-  b2d.style.background = use3D ? "" : "#1a3050";
-  b2d.style.color      = use3D ? "" : "#4a9eff";
-  if (use3D) { if (!viz3) init3D(); else viz3.onResize(); }
-  else updatePlotBed();
-}
-
-document.getElementById("view3DBtn")?.addEventListener("click",  () => setView3D(true));
-document.getElementById("view2DBtn")?.addEventListener("click",  () => setView3D(false));
-document.getElementById("viewResetBtn")?.addEventListener("click", () => viz3?.resetCamera());
-
-// Patch updatePlotCoords to drive the 3D visualizer in real-time
-const _origUpdateCoords = updatePlotCoords;
-window.updatePlotCoords = function(x, y, penIsDown) {
-  _origUpdateCoords?.(x, y, penIsDown);
-  if (viz3) viz3.moveTo(x, y, penIsDown);
-  document.getElementById("machXBig") && (document.getElementById("machXBig").textContent = x.toFixed(1) + " mm");
-  document.getElementById("machYBig") && (document.getElementById("machYBig").textContent = y.toFixed(1) + " mm");
-};
-
-// Init 3D when Run tab is first shown (lazy)
-const _origShowPanel = showPanel;
-window.showPanel = function(name) {
-  _origShowPanel(name);
-  if (name === "run") {
-    requestAnimationFrame(() => {
-      if (!viz3) init3D();
-      else { viz3.onResize(); viz3.refreshPreview(); }
-    });
-  }
-};
-
-// Refresh preview whenever design changes
-setInterval(() => {
-  if (viz3 && document.getElementById("panelPlot")?.style.display !== "none")
-    viz3.refreshPreview();
-}, 3000);
 
 // ── Kill / Emergency Stop button ──────────────────────────────────────────
 // Sends M112 (immediate halt) and M84 (motors off) then disconnects.
