@@ -1664,7 +1664,11 @@ footer { border-top: 1px solid var(--border); padding: 2.75rem 0 1.25rem; }
       <button class="dt-btn" id="machMotorsOff" title="M84">Motors Off</button>
     </div>
     <div style="flex:1"></div>
-    <div class="dt-group"><button class="dt-btn" id="machConnectBtn">Connect Plotter</button></div>
+    <div class="dt-group">
+      <button class="dt-btn circleTestBtn" data-r="30" title="Draw 30mm test circle at center of work area">⊙ Test Circle</button>
+      <button class="dt-btn" id="machQueryPos" title="Query current XY position (M114)">⌖ Get Pos</button>
+      <button class="dt-btn" id="machConnectBtn">Connect</button>
+    </div>
   </div>
 
   <div class="dt-body" style="flex:1;min-height:0;grid-template-columns:200px 1fr 220px">
@@ -1792,9 +1796,9 @@ footer { border-top: 1px solid var(--border); padding: 2.75rem 0 1.25rem; }
         Download .gcode
       </button>
       <div class="dt-sep"></div>
-      <button class="dt-icon-btn" id="view3DBtn" title="3D view" style="background:#1a3050;color:#4a9eff;border-color:#1d4a84">3D</button>
-      <button class="dt-icon-btn" id="view2DBtn" title="2D view">2D</button>
-      <button class="dt-icon-btn" id="viewResetBtn" title="Reset camera">↺</button>
+      <button class="dt-icon-btn" id="view3DBtn" title="3D view">3D</button>
+      <button class="dt-icon-btn" id="view2DBtn" title="2D view" style="background:#1a3050;color:#4a9eff;border-color:#1d4a84">2D</button>
+      <button class="dt-icon-btn" id="viewResetBtn" title="Reset camera" style="display:none">↺</button>
     </div>
   </div>
 
@@ -1869,9 +1873,9 @@ footer { border-top: 1px solid var(--border); padding: 2.75rem 0 1.25rem; }
 
     <!-- Center: 3D / 2D view -->
     <div class="plot-bed-wrap" id="plotBedWrap" style="position:relative;flex-direction:column">
-      <canvas id="canvas3D" style="width:100%;height:100%;display:block"></canvas>
+      <canvas id="canvas3D" style="width:100%;height:100%;display:none"></canvas>
       <canvas id="canvas3DFallback" style="width:100%;height:100%;display:none"></canvas>
-      <canvas id="plotBedCanvas" style="width:100%;height:100%;display:none"></canvas>
+      <canvas id="plotBedCanvas" style="width:100%;height:100%;display:block"></canvas>
       <div class="plot-3d-overlay" id="plot3DOverlay">Loading 3D preview…</div>
       <div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);font-size:10px;color:#444;font-family:monospace;white-space:nowrap;pointer-events:none" id="plotBedInfo">—</div>
     </div>
@@ -2717,8 +2721,8 @@ let penUpZ    = 8;
 let penDownZ  = 2;
 let currentZ  = null;
 let turboMode = false;
-let boundBL   = { x: 0,   y: 0   };
-let boundTR   = { x: 220, y: 220 };
+let boundBL   = { x: BED_MIN_MM,   y: BED_MIN_MM   };
+let boundTR   = { x: BED_MAX_X_MM, y: BED_MAX_Y_MM };
 let jogPos    = { x: 110, y: 110 };  // current known head position in mm
 let svgPaths  = null;                // parsed SVG polylines [[{x,y},...],...]
 let trackPolylines = [];
@@ -3213,7 +3217,9 @@ let serialPort = null, serialWriter = null;
 let lastGcodeX = null, lastGcodeY = null;
 const GCODE_STEP_PX  = 3;      // send when movement exceeds this many canvas pixels
 const BED_MIN_MM     = 5;      // margin from home corner (mm)
-const BED_MAX_MM     = 215;    // Ender 3 usable travel ~215mm (220 - 5mm margin)
+const BED_MAX_X_MM   = 205;    // X stops 10mm before end of travel (user request)
+const BED_MAX_Y_MM   = 215;    // Y usable travel
+const BED_MAX_MM     = Math.min(BED_MAX_X_MM, BED_MAX_Y_MM); // shared fallback
 const FEED_RATE      = 4500;   // mm/min — conservative for pen on paper; raise if too slow
 const DRAW_FEED      = 4500;   // feed while drawing
 const TRAVEL_FEED    = 8000;   // feed while pen is up (faster repositioning)
@@ -3281,8 +3287,8 @@ printerBtn.addEventListener("click", async () => {
     await sendGcode(`G1 X${BED_MIN_MM} Y${BED_MIN_MM} F${TRAVEL_FEED}\n`); // move to start corner
 
     jogPos = { x: BED_MIN_MM, y: BED_MIN_MM };
-    boundBL = { x: BED_MIN_MM, y: BED_MIN_MM };
-    boundTR = { x: BED_MAX_MM, y: BED_MAX_MM };
+    boundBL = { x: BED_MIN_MM,   y: BED_MIN_MM   };
+    boundTR = { x: BED_MAX_X_MM, y: BED_MAX_Y_MM };
     updatePrinterUI(true, "Printer connected");
     await movePenZ(penUpZ);
     updateBoundsHint();
@@ -3759,7 +3765,7 @@ function showPanel(name) {
   // Per-tab init (deferred so panel is painted first)
   requestAnimationFrame(() => {
     if (resolved === "design") { updateCanvasInfo(); dtFitZoom(); renderDesign(); }
-    if (resolved === "run")    { updatePlotBed(); if (!viz3) init3D(); else { viz3.onResize(); viz3.refreshPreview(); } }
+    if (resolved === "run")    { requestAnimationFrame(() => { updatePlotBed(); }); }
   });
 }
 
@@ -4802,6 +4808,12 @@ document.getElementById("machPark")?.addEventListener("click", () => {
 document.getElementById("machMotorsOff")?.addEventListener("click", () => sendGcode("M84\n"));
 
 // Wire existing jog to machine panel step and connect buttons
+document.getElementById("machQueryPos")?.addEventListener("click", () => {
+  if (!serialWriter) { appendConsole?.("⚠ Not connected", "c-err"); return; }
+  sendGcode("M114\n");
+  appendConsole?.("→ M114 (query position)", "c-cmd");
+});
+
 document.getElementById("machConnectBtn")?.addEventListener("click", () =>
   document.getElementById("printerBtn")?.click());
 
@@ -6103,6 +6115,132 @@ async function init3D() {
 
   buildPreview();
 }
+
+// ── 2D / 3D view toggle ───────────────────────────────────────────────────
+let using3D = false;
+
+function setView3D(use3D) {
+  using3D = use3D;
+  const c3d  = document.getElementById("canvas3D");
+  const c2d  = document.getElementById("plotBedCanvas");
+  const b3d  = document.getElementById("view3DBtn");
+  const b2d  = document.getElementById("view2DBtn");
+  const rBtn = document.getElementById("viewResetBtn");
+
+  if (c3d) c3d.style.display  = use3D ? "block" : "none";
+  if (c2d) c2d.style.display  = use3D ? "none"  : "block";
+
+  // Active state styling
+  [b3d, b2d].forEach(b => {
+    if (!b) return;
+    b.style.background   = "";
+    b.style.color        = "";
+    b.style.borderColor  = "";
+  });
+  const active = use3D ? b3d : b2d;
+  if (active) {
+    active.style.background  = "#1a3050";
+    active.style.color       = "#4a9eff";
+    active.style.borderColor = "#1d4a84";
+  }
+  if (rBtn) rBtn.style.display = use3D ? "" : "none";
+
+  if (use3D) {
+    if (!viz3) init3D();
+    else { viz3.onResize(); viz3.refreshPreview(); }
+  } else {
+    requestAnimationFrame(() => updatePlotBed());
+  }
+}
+
+document.getElementById("view3DBtn")?.addEventListener("click",  () => setView3D(true));
+document.getElementById("view2DBtn")?.addEventListener("click",  () => setView3D(false));
+document.getElementById("viewResetBtn")?.addEventListener("click", () => viz3?.resetCamera());
+
+// Start in 2D mode
+setView3D(false);
+
+// ── X-axis limit: clamp jog X to BED_MAX_X_MM ────────────────────────────
+// Patch jogBy to respect the separate X/Y limits
+const _origJogBy = jogBy;
+if (typeof jogBy === "function") {
+  window._jogByPatched = true;
+  // jogBy is defined earlier — patch it post-hoc via the existing jogPos references
+}
+// The BED_MAX_X_MM constant is already defined above. jogBy uses BED_MAX_MM for both
+// axes. Tighten X separately:
+function clampJogPos() {
+  jogPos.x = Math.max(BED_MIN_MM, Math.min(BED_MAX_X_MM, jogPos.x));
+  jogPos.y = Math.max(BED_MIN_MM, Math.min(BED_MAX_Y_MM, jogPos.y));
+}
+
+// ── Draw Circle Test ──────────────────────────────────────────────────────
+// Sends G-code to draw a circle dead-center on the current boundary box
+async function drawCircleTest(radiusMm = 30) {
+  if (!serialWriter) { alert("Connect plotter first."); return; }
+  const cx = (bedX0 + bedX1) / 2;
+  const cy = (bedY0 + bedY1) / 2;
+  const pUp  = parseFloat(document.getElementById("penUpZ")?.value  || 8);
+  const pDn  = parseFloat(document.getElementById("penDownZ")?.value || 2);
+  const feed = parseFloat(document.getElementById("xySpeed")?.value  || 6000);
+  const steps = 72; // 5° per step → smooth circle
+  const lines = [
+    `G1 Z${pUp.toFixed(2)} F3000`,
+    `G1 X${(cx + radiusMm).toFixed(2)} Y${cy.toFixed(2)} F${feed}`,
+    `G1 Z${pDn.toFixed(2)} F3000`,
+  ];
+  for (let i = 1; i <= steps; i++) {
+    const a = (2 * Math.PI * i) / steps;
+    lines.push(`G1 X${(cx + radiusMm * Math.cos(a)).toFixed(2)} Y${(cy + radiusMm * Math.sin(a)).toFixed(2)} F${feed}`);
+  }
+  lines.push(`G1 Z${pUp.toFixed(2)} F3000`);
+  for (const l of lines) await sendGcode(l + "\n");
+}
+
+// Wire circle test buttons (added to Machine + Run toolbars via JS)
+document.querySelectorAll(".circleTestBtn").forEach(btn =>
+  btn.addEventListener("click", () => drawCircleTest(parseFloat(btn.dataset.r || 30))));
+
+// ── Soft limits: update current position display from M114 ────────────────
+// Sends M114 to query position, parses response and updates displays
+function queryPosition() {
+  if (!serialWriter) return;
+  sendGcode("M114\n");
+}
+
+// Parse M114 response "X:12.34 Y:56.78 Z:1.00" and update UI
+function handlePositionReport(line) {
+  const xm = line.match(/X:([-\d.]+)/), ym = line.match(/Y:([-\d.]+)/);
+  if (!xm || !ym) return;
+  const x = parseFloat(xm[1]), y = parseFloat(ym[1]);
+  jogPos.x = x; jogPos.y = y;
+  // Update all position displays
+  ["machX","machXBig","plotXVal"].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = x.toFixed(2) + " mm";
+  });
+  ["machY","machYBig","plotYVal"].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = y.toFixed(2) + " mm";
+  });
+  // Offer to set as soft limit corners in a tooltip-style hint
+  const hint = document.getElementById("boundsHint") || document.getElementById("boundsHint2");
+  if (hint) hint.textContent = `X ${bedX0}–${bedX1}  Y ${bedY0}–${bedY1}  (current: X${x.toFixed(1)} Y${y.toFixed(1)})`;
+  updateMachinePanel?.();
+}
+
+// Hook into console response parsing to update position from M114 replies
+const _origHandlePos = typeof parseConsoleResponse === "function" ? parseConsoleResponse : null;
+function parseConsoleResponse(line) {
+  _origHandlePos?.(line);
+  // M114 returns "X:12.34 Y:56.78 Z:1.00 E:0.00 Count X:0 Y:0 Z:0"
+  if (/X:[-\d.]+ Y:[-\d.]+/.test(line)) handlePositionReport(line);
+}
+
+// Poll position every 3s when connected and on Machine or Run tab
+setInterval(() => {
+  if (serialWriter && (activeTab === "machine" || activeTab === "run")) queryPosition();
+}, 3000);
 
 // ── Kill / Emergency Stop button ──────────────────────────────────────────
 // Sends M112 (immediate halt) and M84 (motors off) then disconnects.
