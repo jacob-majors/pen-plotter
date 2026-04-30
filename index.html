@@ -2050,6 +2050,12 @@ async function ensureThreeLibs() {
 }
 
 
+// ── Bed / axis limits — declared early so all code can reference them ─────
+const BED_MIN_MM   = 5;    // mm margin from home corner
+const BED_MAX_X_MM = 205;  // X stops 10mm before end of 220mm travel
+const BED_MAX_Y_MM = 215;  // Y usable travel (220 - 5mm margin)
+const BED_MAX_MM   = BED_MAX_X_MM; // tighter axis sets shared max
+
 const video        = document.getElementById("video");
 const drawCanvas   = document.getElementById("drawCanvas");
 const overlayCanvas= document.getElementById("overlayCanvas");
@@ -2721,8 +2727,8 @@ let penUpZ    = 8;
 let penDownZ  = 2;
 let currentZ  = null;
 let turboMode = false;
-let boundBL   = { x: BED_MIN_MM,   y: BED_MIN_MM   };
-let boundTR   = { x: BED_MAX_X_MM, y: BED_MAX_Y_MM };
+let boundBL   = { x: 5,   y: 5   };   // BED_MIN_MM — updated after constants load
+let boundTR   = { x: 205, y: 215 };  // BED_MAX_X_MM / BED_MAX_Y_MM
 let jogPos    = { x: 110, y: 110 };  // current known head position in mm
 let svgPaths  = null;                // parsed SVG polylines [[{x,y},...],...]
 let trackPolylines = [];
@@ -3216,10 +3222,9 @@ window.addEventListener("keydown", e => {
 let serialPort = null, serialWriter = null;
 let lastGcodeX = null, lastGcodeY = null;
 const GCODE_STEP_PX  = 3;      // send when movement exceeds this many canvas pixels
-const BED_MIN_MM     = 5;      // margin from home corner (mm)
-const BED_MAX_X_MM   = 205;    // X stops 10mm before end of travel (user request)
-const BED_MAX_Y_MM   = 215;    // Y usable travel
-const BED_MAX_MM     = Math.min(BED_MAX_X_MM, BED_MAX_Y_MM); // shared fallback
+// BED constants declared at top of script — sync bounds here
+boundBL = { x: BED_MIN_MM,   y: BED_MIN_MM   };
+boundTR = { x: BED_MAX_X_MM, y: BED_MAX_Y_MM };
 const FEED_RATE      = 4500;   // mm/min — conservative for pen on paper; raise if too slow
 const DRAW_FEED      = 4500;   // feed while drawing
 const TRAVEL_FEED    = 8000;   // feed while pen is up (faster repositioning)
